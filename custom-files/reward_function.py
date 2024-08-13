@@ -1,353 +1,440 @@
-import math
+class Reward:
+    def __init__(self, verbose=False):
+        self.first_racingpoint_index = None
+        self.verbose = verbose
 
-def set_optimized_waypoints(params):
-    
-    params['optimized_waypoints'] = [(5.04807749189602, 0.8622253903486338),
- (5.040856470758886, 1.1611202139313068),
- (5.027804184097695, 1.4575152302804746),
- (5.007605906580058, 1.7506782966374625),
- (4.9788660994105385, 2.0397704655490223),
- (4.940379272547068, 2.3239717154514823),
- (4.891371762051188, 2.6026234356515867),
- (4.83097287502183, 2.8749661987577024),
- (4.7585349092731635, 3.140320542721116),
- (4.671381117491334, 3.3966709048227983),
- (4.567222772959681, 3.641934923581493),
- (4.443326932945431, 3.8733350930372765),
- (4.2958937035692415, 4.086574269177591),
- (4.1207849040660705, 4.275494874593353),
- (3.9241631626610265, 4.442874666457197),
- (3.709553227459784, 4.590333566324507),
- (3.480456320107443, 4.7203074835136),
- (3.2390978726048134, 4.834335111435396),
- (2.986931248506041, 4.933263155124971),
- (2.725248632885082, 5.017885873078885),
- (2.4554016136074193, 5.0892423679389935),
- (2.178470582138953, 5.1479968843253605),
- (1.8956993499319146, 5.195034846277556),
- (1.608524370229948, 5.231492084505419),
- (1.3184476390502402, 5.2584437463781475),
- (1.0270094827499663, 5.27675412749813),
- (0.7357698116853766, 5.2870247076648536),
- (0.44623654773278576, 5.289581629786858),
- (0.159745292018247, 5.284480518481152),
- (-0.12265890639395516, 5.271519355484401),
- (-0.4002758511120906, 5.250256332610409),
- (-0.6727081537741657, 5.2200337641014425),
- (-0.9397363218682326, 5.1800109887121355),
- (-1.2011544789488173, 5.129208897968972),
- (-1.456611838251412, 5.0665676034848905),
- (-1.7054896988646981, 4.991018372649531),
- (-1.9468307616804634, 4.901572589624392),
- (-2.1793398165345224, 4.797435271650203),
- (-2.4014933045159763, 4.678158433167196),
- (-2.6118425519927033, 4.543881322839562),
- (-2.8097595945363754, 4.39585691438932),
- (-2.9937219215581243, 4.234450711373386),
- (-3.162031432658523, 4.060196635123687),
- (-3.3122589134136287, 3.873449210649973),
- (-3.441504302710382, 3.674799308517164),
- (-3.544604109000643, 3.4646137282125617),
- (-3.6137210103162074, 3.244253137665927),
- (-3.6403592285441277, 3.018382033933975),
- (-3.6356005993110223, 2.7928697398202647),
- (-3.5968065916306067, 2.5710757319134245),
- (-3.5154442401876587, 2.3590485694707137),
- (-3.3824685211373082, 2.168293486631729),
- (-3.2136249651672886, 1.9993442005076367),
- (-3.015887779067247, 1.852205935214943),
- (-2.795607636253391, 1.724936910554168),
- (-2.5573973285644653, 1.6154543554688057),
- (-2.3052382587189877, 1.5211861962098276),
- (-2.0428087375468933, 1.4389663797814918),
- (-1.7735943651260437, 1.3651190704606648),
- (-1.5005112309880269, 1.2961975195706812),
- (-1.2285263760069673, 1.2298708536538336),
- (-0.9601143427135665, 1.1594787437033307),
- (-0.697621537828602, 1.0824395527785997),
- (-0.4433835822079619, 0.9963468875468037),
- (-0.19967729725413624, 0.8991374429110025),
- (0.031291991336272244, 0.7891907116030978),
- (0.24605709431324171, 0.6642065986685018),
- (0.4409042583763575, 0.5225076600933789),
- (0.6099830951994907, 0.3619649495056979),
- (0.7458039792522757, 0.18178754131873087),
- (0.851679767678915, -0.012061139000808564),
- (0.9216276934093895, -0.21810428385315006),
- (0.9458178539269466, -0.43295462812318436),
- (0.9117039883523763, -0.6465895314065682),
- (0.8315178710879436, -0.8491661324753104),
- (0.713275034267044, -1.0364565757709556),
- (0.5630242678500407, -1.2065567284214125),
- (0.3855719580589215, -1.3587471186091764),
- (0.18421784167916894, -1.492428362615919),
- (-0.03798940268906921, -1.6075016087416278),
- (-0.2780569826050593, -1.7044514920794764),
- (-0.532994594531644, -1.7843917019691364),
- (-0.8001031150788159, -1.8487223428135922),
- (-1.0765797817467246, -1.8996788690951767),
- (-1.3607984909895636, -1.9383834786570695),
- (-1.6511662750626255, -1.9662797159607015),
- (-1.9468073668887593, -1.9836978307551894),
- (-2.2370078875359702, -2.012385236259692),
- (-2.520399307559172, -2.053152722425436),
- (-2.795412123554519, -2.10736798961344),
- (-3.0603640104400824, -2.1762480581255064),
- (-3.313346532921129, -2.26094525393299),
- (-3.552073799114252, -2.36260515231554),
- (-3.773742702252804, -2.4823281629161906),
- (-3.97515940925385, -2.6208359663762026),
- (-4.1509047219919175, -2.779509600935274),
- (-4.294085877997553, -2.958354361151404),
- (-4.406569556862298, -3.151590742060883),
- (-4.487592906439584, -3.3558118782466044),
- (-4.532239352719563, -3.56818575738291),
- (-4.534287071813706, -3.7836299765175343),
- (-4.500573141242887, -3.996517365791483),
- (-4.4311034554068085, -4.202494335718902),
- (-4.325174161900511, -4.396614122694707),
- (-4.180030165178906, -4.571680455088468),
- (-4.002974521273014, -4.725776909765431),
- (-3.799738477662893, -4.858750002540378),
- (-3.5747553497758897, -4.971158902381042),
- (-3.331532224870541, -5.063812568150722),
- (-3.073336930149689, -5.138119897099674),
- (-2.802902982379171, -5.195572695108962),
- (-2.5229792524500105, -5.238413665385606),
- (-2.2359224064811087, -5.269064971217132),
- (-1.9436575153970184, -5.289913771625219),
- (-1.6476871546530707, -5.303137009884269),
- (-1.3491630912611359, -5.310655475843471),
- (-1.0490039995158948, -5.314244135380885),
- (-0.7478359973532229, -5.315247427837608),
- (-0.44619889557361603, -5.314986944198608),
- (-0.14444755017757416, -5.3144145011901855),
- (0.1573037952184677, -5.313841104507446),
- (0.4589424537917334, -5.312952494889414),
- (0.7598568494951178, -5.310046815671386),
- (1.0593130751209625, -5.303314528579348),
- (1.3564751038211722, -5.290975702715764),
- (1.6503959363933545, -5.271275212214233),
- (1.9398560612444466, -5.242188115849804),
- (2.2240212565577417, -5.202744470999544),
- (2.5016441115762547, -5.1513504385571105),
- (2.7718693356357553, -5.08729626349743),
- (3.034042080710404, -5.010269665003834),
- (3.2868751854751013, -4.91907313292749),
- (3.528861773067094, -4.812425254372038),
- (3.757854351389161, -4.688484146126068),
- (3.9712201599045294, -4.545236907367826),
- (4.1639653817983415, -4.378699131388313),
- (4.328321759448055, -4.18397295950772),
- (4.468960085565538, -3.9685915675141508),
- (4.589077269431569, -3.7369254053400214),
- (4.690651598295409, -3.491629826031808),
- (4.775449630264985, -3.2348362891479914),
- (4.8451347856185, -2.968345270236868),
- (4.901301685594804, -2.693715821503907),
- (4.945530689672487, -2.412337471293346),
- (4.979473369029866, -2.1255005887008274),
- (5.004637656185331, -1.8342972456159743),
- (5.022650609577855, -1.5397619912256983),
- (5.034989942587896, -1.2427481808257093),
- (5.042973876572422, -0.9439453285904958),
- (5.047726153229744, -0.6438901267748738),
- (5.050201630875717, -0.34299873288792604),
- (5.051273474336966, -0.04161499363832653),
- (5.051552057266235, 0.26003704965114594),
- (5.051019207357612, 0.5615952895375969),
- (5.04807749189602, 0.8622253903486338)]
+    def reward_function(self, params):
 
-def dist(point1, point2):
-    return ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2) ** 0.5
+        # Import package (needed for heading)
+        import math
 
-# thanks to https://stackoverflow.com/questions/20924085/python-conversion-between-coordinates
-def rect(r, theta):
-    """
-    theta in degrees
+        ################## HELPER FUNCTIONS ###################
 
-    returns tuple; (float, float); (x,y)
-    """
+        def dist_2_points(x1, x2, y1, y2):
+            return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
 
-    x = r * math.cos(math.radians(theta))
-    y = r * math.sin(math.radians(theta))
-    return x, y
+        def closest_2_racing_points_index(racing_coords, car_coords):
+
+            # Calculate all distances to racing points
+            distances = []
+            for i in range(len(racing_coords)):
+                distance = dist_2_points(x1=racing_coords[i][0], x2=car_coords[0],
+                                         y1=racing_coords[i][1], y2=car_coords[1])
+                distances.append(distance)
+
+            # Get index of the closest racing point
+            closest_index = distances.index(min(distances))
+
+            # Get index of the second closest racing point
+            distances_no_closest = distances.copy()
+            distances_no_closest[closest_index] = 999
+            second_closest_index = distances_no_closest.index(
+                min(distances_no_closest))
+
+            return [closest_index, second_closest_index]
+
+        def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
+            
+            # Calculate the distances between 2 closest racing points
+            a = abs(dist_2_points(x1=closest_coords[0],
+                                  x2=second_closest_coords[0],
+                                  y1=closest_coords[1],
+                                  y2=second_closest_coords[1]))
+
+            # Distances between car and closest and second closest racing point
+            b = abs(dist_2_points(x1=car_coords[0],
+                                  x2=closest_coords[0],
+                                  y1=car_coords[1],
+                                  y2=closest_coords[1]))
+            c = abs(dist_2_points(x1=car_coords[0],
+                                  x2=second_closest_coords[0],
+                                  y1=car_coords[1],
+                                  y2=second_closest_coords[1]))
+
+            # Calculate distance between car and racing line (goes through 2 closest racing points)
+            # try-except in case a=0 (rare bug in DeepRacer)
+            try:
+                distance = abs(-(a**4) + 2*(a**2)*(b**2) + 2*(a**2)*(c**2) -
+                               (b**4) + 2*(b**2)*(c**2) - (c**4))**0.5 / (2*a)
+            except:
+                distance = b
+
+            return distance
+
+        # Calculate which one of the closest racing points is the next one and which one the previous one
+        def next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading):
+
+            # Virtually set the car more into the heading direction
+            heading_vector = [math.cos(math.radians(
+                heading)), math.sin(math.radians(heading))]
+            new_car_coords = [car_coords[0]+heading_vector[0],
+                              car_coords[1]+heading_vector[1]]
+
+            # Calculate distance from new car coords to 2 closest racing points
+            distance_closest_coords_new = dist_2_points(x1=new_car_coords[0],
+                                                        x2=closest_coords[0],
+                                                        y1=new_car_coords[1],
+                                                        y2=closest_coords[1])
+            distance_second_closest_coords_new = dist_2_points(x1=new_car_coords[0],
+                                                               x2=second_closest_coords[0],
+                                                               y1=new_car_coords[1],
+                                                               y2=second_closest_coords[1])
+
+            if distance_closest_coords_new <= distance_second_closest_coords_new:
+                next_point_coords = closest_coords
+                prev_point_coords = second_closest_coords
+            else:
+                next_point_coords = second_closest_coords
+                prev_point_coords = closest_coords
+
+            return [next_point_coords, prev_point_coords]
+
+        def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
+
+            # Calculate the direction of the center line based on the closest waypoints
+            next_point, prev_point = next_prev_racing_point(closest_coords,
+                                                            second_closest_coords,
+                                                            car_coords,
+                                                            heading)
+
+            # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
+            track_direction = math.atan2(
+                next_point[1] - prev_point[1], next_point[0] - prev_point[0])
+
+            # Convert to degree
+            track_direction = math.degrees(track_direction)
+
+            # Calculate the difference between the track direction and the heading direction of the car
+            direction_diff = abs(track_direction - heading)
+            if direction_diff > 180:
+                direction_diff = 360 - direction_diff
+
+            return direction_diff
+
+        # Gives back indexes that lie between start and end index of a cyclical list 
+        # (start index is included, end index is not)
+        def indexes_cyclical(start, end, array_len):
+            print(start, end, array_len)
+            if end < start:
+                end += array_len
+
+            return [index % array_len for index in range(start, end)]
+
+        # Calculate how long car would take for entire lap, if it continued like it did until now
+        def projected_time(first_index, closest_index, step_count, times_list):
+
+            # Calculate how much time has passed since start
+            current_actual_time = (step_count-1) / 15
+
+            # Calculate which indexes were already passed
+            indexes_traveled = indexes_cyclical(first_index, closest_index, len(times_list))
+
+            # Calculate how much time should have passed if car would have followed optimals
+            current_expected_time = sum([times_list[i] for i in indexes_traveled])
+
+            # Calculate how long one entire lap takes if car follows optimals
+            total_expected_time = sum(times_list)
+
+            # Calculate how long car would take for entire lap, if it continued like it did until now
+            if current_expected_time is not None and total_expected_time is not None:
+                try:
+                    projected_time = (current_actual_time/current_expected_time) * total_expected_time
+                except ZeroDivisionError:
+                    projected_time = 9999
+            else:
+                projected_time = 9999
+
+            return projected_time
+
+        #################### RACING LINE ######################
+
+        # Optimal racing line
+        # Each row: [x,y,speed,timeFromPreviousPoint]
+        racing_track = [[5.03288, 0.85564, 4.0, 0.07447],
+        [5.01964, 1.15157, 4.0, 0.07406],
+        [5.00165, 1.44532, 4.0, 0.07357],
+        [4.97821, 1.73646, 3.89081, 0.07507],
+        [4.94839, 2.02446, 3.49189, 0.08292],
+        [4.91133, 2.30879, 3.10891, 0.09223],
+        [4.8662, 2.58891, 2.76219, 0.10272],
+        [4.81083, 2.86348, 2.44627, 0.1145],
+        [4.74332, 3.13117, 2.11927, 0.13027],
+        [4.66127, 3.3902, 1.83353, 0.14819],
+        [4.56186, 3.63823, 1.83353, 0.14574],
+        [4.44172, 3.87211, 1.83353, 0.1434],
+        [4.29589, 4.08657, 1.83353, 0.14145],
+        [4.11865, 4.27333, 2.0357, 0.12648],
+        [3.91788, 4.43579, 2.24976, 0.1148],
+        [3.69872, 4.57696, 2.46557, 0.10573],
+        [3.46468, 4.69918, 2.68924, 0.09818],
+        [3.21845, 4.80439, 2.96225, 0.09039],
+        [2.9625, 4.89466, 3.19042, 0.08507],
+        [2.69861, 4.97126, 3.41585, 0.08044],
+        [2.42843, 5.03527, 3.62983, 0.07649],
+        [2.15353, 5.08758, 3.76913, 0.07424],
+        [1.87532, 5.12861, 4.0, 0.0703],
+        [1.59531, 5.15937, 4.0, 0.07042],
+        [1.31471, 5.18034, 4.0, 0.07035],
+        [1.03457, 5.1919, 4.0, 0.07009],
+        [0.7558, 5.19431, 4.0, 0.0697],
+        [0.47916, 5.18771, 4.0, 0.06918],
+        [0.20532, 5.17222, 3.99827, 0.0686],
+        [-0.06522, 5.14795, 3.99827, 0.06794],
+        [-0.332, 5.11493, 3.99827, 0.06723],
+        [-0.59468, 5.07329, 3.96628, 0.06706],
+        [-0.85299, 5.02305, 3.83939, 0.06854],
+        [-1.10687, 4.96465, 3.72593, 0.06992],
+        [-1.35639, 4.89857, 3.34702, 0.07712],
+        [-1.60125, 4.82462, 3.05015, 0.08386],
+        [-1.8411, 4.74254, 2.72666, 0.09297],
+        [-2.07558, 4.65213, 2.56795, 0.09786],
+        [-2.30337, 4.55175, 2.52532, 0.09857],
+        [-2.52296, 4.43988, 2.32256, 0.10611],
+        [-2.73205, 4.31436, 2.08647, 0.11688],
+        [-2.92881, 4.17442, 1.82337, 0.13242],
+        [-3.11226, 4.02063, 1.59605, 0.14999],
+        [-3.27926, 3.85181, 1.53, 0.15521],
+        [-3.42475, 3.66642, 1.53, 0.15402],
+        [-3.54018, 3.4632, 1.53, 0.15276],
+        [-3.61372, 3.24425, 1.53, 0.15096],
+        [-3.64036, 3.01838, 1.41519, 0.16071],
+        [-3.6356, 2.79287, 1.41519, 0.15939],
+        [-3.59681, 2.57108, 1.41519, 0.1591],
+        [-3.51544, 2.35905, 1.41519, 0.16047],
+        [-3.38247, 2.16829, 1.6794, 0.13846],
+        [-3.21362, 1.99934, 1.87227, 0.12758],
+        [-3.01589, 1.85221, 2.13512, 0.11544],
+        [-2.79561, 1.72494, 2.41825, 0.1052],
+        [-2.5574, 1.61545, 2.76846, 0.0947],
+        [-2.30524, 1.52119, 3.25436, 0.08272],
+        [-2.04281, 1.43897, 4.0, 0.06875],
+        [-1.77359, 1.36512, 4.0, 0.06979],
+        [-1.50051, 1.2962, 3.73031, 0.0755],
+        [-1.22853, 1.22987, 3.24749, 0.08621],
+        [-0.96011, 1.15948, 2.90404, 0.09555],
+        [-0.69762, 1.08244, 2.53395, 0.10796],
+        [-0.44338, 0.99635, 2.25186, 0.1192],
+        [-0.19968, 0.89914, 1.95523, 0.13419],
+        [0.03129, 0.78919, 1.71069, 0.14953],
+        [0.24606, 0.66421, 1.71069, 0.14525],
+        [0.4409, 0.52251, 1.63682, 0.14719],
+        [0.60998, 0.36196, 1.45884, 0.15982],
+        [0.7458, 0.18179, 1.3, 0.17357],
+        [0.85168, -0.01206, 1.3, 0.16991],
+        [0.92163, -0.2181, 1.3, 0.16738],
+        [0.94582, -0.43295, 1.3, 0.16631],
+        [0.9117, -0.64659, 1.44815, 0.14939],
+        [0.83152, -0.84917, 1.57766, 0.1381],
+        [0.71328, -1.03646, 1.71728, 0.12898],
+        [0.56302, -1.20656, 1.8737, 0.12113],
+        [0.38557, -1.35875, 2.02013, 0.11572],
+        [0.18422, -1.49243, 2.18851, 0.11044],
+        [-0.03799, -1.6075, 2.38894, 0.10475],
+        [-0.27806, -1.70445, 2.63312, 0.09833],
+        [-0.53299, -1.78439, 2.90818, 0.09187],
+        [-0.8001, -1.84872, 3.29096, 0.08348],
+        [-1.07658, -1.89968, 3.57147, 0.07872],
+        [-1.3608, -1.93838, 3.70565, 0.07741],
+        [-1.65117, -1.96628, 3.39598, 0.0859],
+        [-1.94681, -1.9837, 3.1271, 0.09471],
+        [-2.23701, -2.01239, 2.87889, 0.10129],
+        [-2.5204, -2.05315, 2.64084, 0.10842],
+        [-2.79541, -2.10737, 2.41219, 0.1162],
+        [-3.06036, -2.17625, 2.20927, 0.12391],
+        [-3.31335, -2.26095, 1.96054, 0.13608],
+        [-3.55207, -2.36261, 1.7453, 0.14867],
+        [-3.77374, -2.48233, 1.7453, 0.14435],
+        [-3.97516, -2.62084, 1.7453, 0.14006],
+        [-4.1509, -2.77951, 1.64376, 0.14405],
+        [-4.29409, -2.95835, 1.5193, 0.15079],
+        [-4.40657, -3.15159, 1.5193, 0.14717],
+        [-4.48759, -3.35581, 1.5193, 0.14461],
+        [-4.53224, -3.56819, 1.5193, 0.14284],
+        [-4.53429, -3.78363, 1.56721, 0.13748],
+        [-4.50057, -3.99652, 1.56721, 0.13753],
+        [-4.4311, -4.20249, 1.56721, 0.1387],
+        [-4.32517, -4.39661, 1.56721, 0.14111],
+        [-4.18003, -4.57168, 1.73242, 0.13127],
+        [-4.00297, -4.72578, 1.91855, 0.12234],
+        [-3.79974, -4.85875, 2.11931, 0.1146],
+        [-3.57476, -4.97116, 2.32964, 0.10796],
+        [-3.33153, -5.06381, 2.57991, 0.10088],
+        [-3.07334, -5.13812, 2.84665, 0.09438],
+        [-2.8029, -5.19557, 3.20329, 0.08631],
+        [-2.52298, -5.23841, 3.63931, 0.07781],
+        [-2.23592, -5.26906, 4.0, 0.07217],
+        [-1.94366, -5.28991, 4.0, 0.07325],
+        [-1.64769, -5.30314, 4.0, 0.07407],
+        [-1.34916, -5.31066, 4.0, 0.07465],
+        [-1.049, -5.31424, 4.0, 0.07505],
+        [-0.74784, -5.31525, 4.0, 0.07529],
+        [-0.44644, -5.31426, 4.0, 0.07535],
+        [-0.14587, -5.31101, 4.0, 0.07515],
+        [0.15356, -5.30511, 4.0, 0.07487],
+        [0.45157, -5.29604, 4.0, 0.07454],
+        [0.74786, -5.28326, 4.0, 0.07414],
+        [1.0421, -5.26623, 4.0, 0.07368],
+        [1.334, -5.24442, 4.0, 0.07318],
+        [1.62322, -5.21729, 4.0, 0.07262],
+        [1.90935, -5.1842, 3.62696, 0.07941],
+        [2.19188, -5.14438, 3.24731, 0.08786],
+        [2.47004, -5.09662, 2.89788, 0.09739],
+        [2.74282, -5.03943, 2.62753, 0.10607],
+        [3.009, -4.97118, 2.28948, 0.12003],
+        [3.26699, -4.88982, 1.97688, 0.13684],
+        [3.5147, -4.79295, 1.75856, 0.15125],
+        [3.7499, -4.67837, 1.75856, 0.14877],
+        [3.96844, -4.54204, 1.75856, 0.14647],
+        [4.16397, -4.3787, 1.75856, 0.14488],
+        [4.32832, -4.18397, 2.09863, 0.12142],
+        [4.46896, -3.96859, 2.33544, 0.11014],
+        [4.58908, -3.73693, 2.54375, 0.10259],
+        [4.69065, -3.49163, 2.7691, 0.09588],
+        [4.77545, -3.23484, 3.01727, 0.08963],
+        [4.84513, -2.96835, 3.29217, 0.08367],
+        [4.9013, -2.69372, 3.60466, 0.07776],
+        [4.94553, -2.41234, 3.98163, 0.07154],
+        [4.97947, -2.1255, 4.0, 0.07221],
+        [5.00464, -1.8343, 4.0, 0.07307],
+        [5.02265, -1.53976, 4.0, 0.07377],
+        [5.03499, -1.24275, 4.0, 0.07432],
+        [5.04297, -0.94395, 4.0, 0.07473],
+        [5.04773, -0.64389, 4.0, 0.07502],
+        [5.0502, -0.343, 4.0, 0.07523],
+        [5.05029, -0.04181, 4.0, 0.0753],
+        [5.04772, 0.25863, 4.0, 0.07511],
+        [5.04206, 0.55788, 4.0, 0.07483]]
+
+        ################## INPUT PARAMETERS ###################
+
+        # Read all input parameters
+        all_wheels_on_track = params['all_wheels_on_track']
+        x = params['x']
+        y = params['y']
+        distance_from_center = params['distance_from_center']
+        is_left_of_center = params['is_left_of_center']
+        heading = params['heading']
+        progress = params['progress']
+        steps = params['steps']
+        speed = params['speed']
+        steering_angle = params['steering_angle']
+        track_width = params['track_width']
+        waypoints = params['waypoints']
+        closest_waypoints = params['closest_waypoints']
+        is_offtrack = params['is_offtrack']
+
+        ############### OPTIMAL X,Y,SPEED,TIME ################
+
+        # Get closest indexes for racing line (and distances to all points on racing line)
+        closest_index, second_closest_index = closest_2_racing_points_index(
+            racing_track, [x, y])
+
+        # Get optimal [x, y, speed, time] for closest and second closest index
+        optimals = racing_track[closest_index]
+        optimals_second = racing_track[second_closest_index]
+
+        # Save first racingpoint of episode for later
+        if self.verbose == True:
+            self.first_racingpoint_index = 0 # this is just for testing purposes
+        if self.first_racingpoint_index is None:
+            self.first_racingpoint_index = closest_index
+
+        ################ REWARD AND PUNISHMENT ################
+
+        ## Define the default reward ##
+        reward = 1
+
+        ## Reward if car goes close to optimal racing line ##
+        DISTANCE_MULTIPLE = 1
+        dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
+        distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
+        reward += distance_reward * DISTANCE_MULTIPLE
+
+        ## Reward if speed is close to optimal speed ##
+        SPEED_DIFF_NO_REWARD = 1
+        SPEED_MULTIPLE = 2
+        speed_diff = abs(optimals[2]-speed)
+        if speed_diff <= SPEED_DIFF_NO_REWARD:
+            # we use quadratic punishment (not linear) bc we're not as confident with the optimal speed
+            # so, we do not punish small deviations from optimal speed
+            speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
+        else:
+            speed_reward = 0
+        reward += speed_reward * SPEED_MULTIPLE
+
+        # Reward if less steps
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
+        STANDARD_TIME = 22
+        FASTEST_TIME = 18
+        times_list = [row[3] for row in racing_track]
+
+        projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
+        try:
+            steps_prediction = projected_time * 15 + 1
+            reward_prediction = max(1e-3, (-REWARD_PER_STEP_FOR_FASTEST_TIME*(FASTEST_TIME) /
+                                           (STANDARD_TIME-FASTEST_TIME))*(steps_prediction-(STANDARD_TIME*15+1)))
+            steps_reward = min(REWARD_PER_STEP_FOR_FASTEST_TIME, reward_prediction / steps_prediction)
+        except:
+            steps_reward = 0
+        reward += steps_reward
+
+        # Zero reward if obviously wrong direction (e.g. spin)
+        direction_diff = racing_direction_diff(
+            optimals[0:2], optimals_second[0:2], [x, y], heading)
+        if direction_diff > 30:
+            reward = 1e-3
+
+        # Zero reward of obviously too slow
+        speed_diff_zero = optimals[2]-speed
+        if speed_diff_zero > 0.5:
+            reward = 1e-3
+
+        ## Incentive for finishing the lap in less steps ##
+        REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
+        STANDARD_TIME = 21  # seconds (time that is easily done by model)
+        FASTEST_TIME = 18  # seconds (best time of 1st place on the track)
+        if progress == 100:
+            finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
+                      (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
+        else:
+            finish_reward = 0
+        reward += finish_reward
+
+        ## Zero reward if off track ##
+        is_crashed = params['is_crashed']
+        track_width = params['track_width']
+        distance_from_center = params['distance_from_center']
+
+        # Zero reward if the center of the car is off the track.
+
+        if is_crashed:
+            reward = min(reward, 0.01)
+        elif not all_wheels_on_track and distance_from_center >= (track_width/2):
+            reward = min(reward, 0.01)
+
+        ####################### VERBOSE #######################
+
+        if self.verbose == True:
+            print("Closest index: %i" % closest_index)
+            print("Distance to racing line: %f" % dist)
+            print("=== Distance reward (w/out multiple): %f ===" % (distance_reward))
+            print("Optimal speed: %f" % optimals[2])
+            print("Speed difference: %f" % speed_diff)
+            print("=== Speed reward (w/out multiple): %f ===" % speed_reward)
+            print("Direction difference: %f" % direction_diff)
+            print("Predicted time: %f" % projected_time)
+            print("=== Steps reward: %f ===" % steps_reward)
+            print("=== Finish reward: %f ===" % finish_reward)
+
+        #################### RETURN REWARD ####################
+
+        # Always return a float value
+        return float(reward)
 
 
-# thanks to https://stackoverflow.com/questions/20924085/python-conversion-between-coordinates
-def polar(x, y):
-    """
-    returns r, theta(degrees)
-    """
+reward_object = Reward() # add parameter verbose=True to get noisy output for testing
 
-    r = (x ** 2 + y ** 2) ** .5
-    theta = math.degrees(math.atan2(y,x))
-    return r, theta
-
-
-def angle_mod_360(angle):
-    """
-    Maps an angle to the interval -180, +180.
-
-    Examples:
-    angle_mod_360(362) == 2
-    angle_mod_360(270) == -90
-
-    :param angle: angle in degree
-    :return: angle in degree. Between -180 and +180
-    """
-
-    n = math.floor(angle/360.0)
-
-    angle_between_0_and_360 = angle - n*360.0
-
-    if angle_between_0_and_360 <= 180.0:
-        return angle_between_0_and_360
-    else:
-        return angle_between_0_and_360 - 360
-
-
-def get_waypoints_ordered_in_driving_direction(params):
-    # waypoints are always provided in counter clock wise order
-    if params['is_reversed']: # driving clock wise.
-        return list(reversed(params['optimized_waypoints']))
-    else: # driving counter clock wise.
-        return params['optimized_waypoints']
-
-
-def up_sample(waypoints, factor):
-    """
-    Adds extra waypoints in between provided waypoints
-
-    :param waypoints:
-    :param factor: integer. E.g. 3 means that the resulting list has 3 times as many points.
-    :return:
-    """
-    p = waypoints
-    n = len(p)
-
-    return [[i / factor * p[(j+1) % n][0] + (1 - i / factor) * p[j][0],
-             i / factor * p[(j+1) % n][1] + (1 - i / factor) * p[j][1]] for j in range(n) for i in range(factor)]
-
-
-def get_target_point(params):
-    waypoints = up_sample(get_waypoints_ordered_in_driving_direction(params), 10)
-
-    car = [params['x'], params['y']]
-
-    distances = [dist(p, car) for p in waypoints]
-    min_dist = min(distances)
-    i_closest = distances.index(min_dist)
-
-    n = len(waypoints)
-
-    waypoints_starting_with_closest = [waypoints[(i+i_closest) % n] for i in range(n)]
-
-    r = params['track_width'] * 0.3
-
-    is_inside = [dist(p, car) < r for p in waypoints_starting_with_closest]
-    i_first_outside = is_inside.index(False)
-
-    if i_first_outside < 0:  # this can only happen if we choose r as big as the entire track
-        return waypoints[i_closest]
-
-    return waypoints_starting_with_closest[i_first_outside]
-
-
-def get_target_steering_degree(params):
-    tx, ty = get_target_point(params)
-    car_x = params['x']
-    car_y = params['y']
-    dx = tx-car_x
-    dy = ty-car_y
-    heading = params['heading']
-
-    _, target_angle = polar(dx, dy)
-
-    steering_angle = target_angle - heading
-
-    return angle_mod_360(steering_angle)
-
-
-def score_steer_to_point_ahead(params):
-    best_steering_angle = get_target_steering_degree(params)
-    steering_angle = params['steering_angle']
-
-    error = (steering_angle - best_steering_angle) / 60.0  # 60 degree is already really bad
-
-    score = 1.0 - abs(error)
-
-    return max(score, 0.01)  # optimizer is rumored to struggle with negative numbers and numbers too close to zero
-
-def calculate_speed_reward(params):
-    progress = params['progress']
-    steps = params['steps']
-
-    best_steering_angle = get_target_steering_degree(params)
-    steering_angle = params['steering_angle']
-
-    steering_diff = (steering_angle - best_steering_angle)
-    abs_steering_diff = abs(steering_diff)
-    speed_multiplier = 0
-    
-    if abs_steering_diff <= 3:
-        speed_multiplier = .1
-    elif abs_steering_diff <= 2:
-        speed_multiplier = .2
-    elif abs_steering_diff <= 1:
-        speed_multiplier = .3
-    elif abs_steering_diff <= 0.5:
-        speed_multiplier = .4
-    elif abs_steering_diff <= 0.2:
-        speed_multiplier = .6
-    elif abs_steering_diff <= 0.1:
-        speed_multiplier = .8
-    elif abs_steering_diff <= 0.05:
-        speed_multiplier = 1.0
-    
-    print(f'progress: {progress}')
-    print(f'steps: {steps}')
-    print(f'progress per step: {progress/steps}')
-    
-    # Define the optimal progress per step
-    optimal_progress_per_step = .340  # Adjust this value based on your specific scenario
-
-    # Calculate the actual progress per step
-    actual_progress_per_step = progress / steps
-
-    # Calculate the speed score
-    speed_score = (actual_progress_per_step / optimal_progress_per_step) * speed_multiplier
-
-    return speed_score
 
 def reward_function(params):
-    # Sets optimized waypoints to be equal to precalced list of waypoints from optimal racing line.
-    set_optimized_waypoints(params)
-    
-    # If we are on step 1, log optimized_waypoints and regular waypoints for viewing/drawing later from log results.
-    if params['steps'] == 2:
-        print(params)
-        
-    # Speed reward depends upon how close to steering towards the optimal racing line the car is.
-    speed_reward = float(calculate_speed_reward(params))
-    print(f'speed_reward: {speed_reward}')
-    
-    directional_reward = float(score_steer_to_point_ahead(params))
-    print(f'directional_reward: {directional_reward}')
-    
-    final_reward = directional_reward + speed_reward
-    print(f'final_reward: {final_reward}')
-    
-    is_crashed = params['is_crashed']
-    all_wheels_on_track = params['all_wheels_on_track']
-    track_width = params['track_width']
-    distance_from_center = params['distance_from_center']
+    return reward_object.reward_function(params)
 
-    # Zeros out reward if the entire car is off the track. 
-    # That means the distance from the center is greater than half the track width + car length of 0.1 meters.
-    if is_crashed:
-        final_reward = min(final_reward, 0.01)
-    elif not all_wheels_on_track and distance_from_center > (track_width/2):
-        final_reward = min(final_reward, 0.01)
-    
-    return final_reward
