@@ -207,12 +207,19 @@ def angle_mod_360(angle):
         return angle_between_0_and_360 - 360
 
 
-def get_waypoints_ordered_in_driving_direction(params):
+def get_optimized_waypoints_ordered_in_driving_direction(params):
     # waypoints are always provided in counter clock wise order
     if params['is_reversed']: # driving clock wise.
         return list(reversed(params['optimized_waypoints']))
     else: # driving counter clock wise.
         return params['optimized_waypoints']
+    
+def get_waypoints_ordered_in_driving_direction(params):
+    # waypoints are always provided in counter clock wise order
+    if params['is_reversed']: # driving clock wise.
+        return list(reversed(params['waypoints']))
+    else: # driving counter clock wise.
+        return params['waypoints']
 
 
 def up_sample(waypoints, factor):
@@ -254,7 +261,7 @@ def get_target_point(params):
     return waypoints_starting_with_closest[i_first_outside]
 
 def get_closest_waypoint(params):
-    waypoints = up_sample(get_waypoints_ordered_in_driving_direction(params), 10)
+    waypoints = up_sample(get_optimized_waypoints_ordered_in_driving_direction(params), 10)
 
     car = [params['x'], params['y']]
 
@@ -333,9 +340,9 @@ def calculate_speed_reward(params):
 def calculate_step_reward(params):
     progress = params['progress']
     steps = params['steps']
-    every_15_step_reward_multiplier = 0.5
-    every_5_step_reward_multiplier = 0.1
-    every_step_reward_multiplier = 0.01
+    ten_percent_progress_multiplier = 0.5
+    five_percent_progress_multiplier = 0.1
+    two_percent_progress_multiplier = 0.01
     
     # Define the optimal progress per step
     optimal_progress_per_step = .340  # Adjust this value based on your specific scenario
@@ -344,12 +351,12 @@ def calculate_step_reward(params):
     actual_progress_per_step = progress / steps
 
     # Give a reward every 5 steps
-    if steps % 15 == 0:
-        step_reward = (actual_progress_per_step / optimal_progress_per_step) * every_15_step_reward_multiplier
-    elif steps % 5 == 0:
-        step_reward = (actual_progress_per_step / optimal_progress_per_step) * every_5_step_reward_multiplier
-    else:
-        step_reward = actual_progress_per_step / optimal_progress_per_step * every_step_reward_multiplier
+    if int(progress) % 10 == 0:
+        step_reward = (actual_progress_per_step / optimal_progress_per_step) * ten_percent_progress_multiplier
+    elif int(progress) % 5 == 0:
+        step_reward = (actual_progress_per_step / optimal_progress_per_step) * five_percent_progress_multiplier
+    elif int(progress) % 2 == 0:
+        step_reward = actual_progress_per_step / optimal_progress_per_step * two_percent_progress_multiplier
 
     return step_reward
 
