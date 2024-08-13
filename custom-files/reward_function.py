@@ -243,7 +243,7 @@ def get_target_point(params):
 
     waypoints_starting_with_closest = [waypoints[(i+i_closest) % n] for i in range(n)]
 
-    r = params['track_width'] * 0.3
+    r = params['track_width'] * 0.9
 
     is_inside = [dist(p, car) < r for p in waypoints_starting_with_closest]
     i_first_outside = is_inside.index(False)
@@ -252,6 +252,20 @@ def get_target_point(params):
         return waypoints[i_closest]
 
     return waypoints_starting_with_closest[i_first_outside]
+
+def get_closest_waypoint(params):
+    waypoints = up_sample(get_waypoints_ordered_in_driving_direction(params), 10)
+
+    car = [params['x'], params['y']]
+
+    distances = [dist(p, car) for p in waypoints]
+    min_dist = min(distances)
+    i_closest = distances.index(min_dist)
+
+    n = len(waypoints)
+
+    waypoints_starting_with_closest = [waypoints[(i+i_closest) % n] for i in range(n)]
+    return waypoints_starting_with_closest[0]
 
 
 def get_target_steering_degree(params):
@@ -291,19 +305,15 @@ def calculate_speed_reward(params):
     speed_multiplier = 0
     
     if abs_steering_diff <= 3:
-        speed_multiplier = .1
-    elif abs_steering_diff <= 2:
         speed_multiplier = .2
-    elif abs_steering_diff <= 1:
-        speed_multiplier = .3
-    elif abs_steering_diff <= 0.5:
+    elif abs_steering_diff <= 2:
         speed_multiplier = .4
-    elif abs_steering_diff <= 0.2:
+    elif abs_steering_diff <= 1:
         speed_multiplier = .6
-    elif abs_steering_diff <= 0.1:
+    elif abs_steering_diff <= 0.5:
         speed_multiplier = .8
-    elif abs_steering_diff <= 0.05:
-        speed_multiplier = 1.0
+    elif abs_steering_diff <= 0.1:
+        speed_multiplier = 1
     
     print(f'progress: {progress}')
     print(f'steps: {steps}')
@@ -320,6 +330,75 @@ def calculate_speed_reward(params):
 
     return speed_score
 
+def calculate_step_reward(params):
+    progress = params['progress']
+    steps = params['steps']
+    every_15_step_reward_multiplier = 0.5
+    every_5_step_reward_multiplier = 0.1
+    every_step_reward_multiplier = 0.01
+    
+    # Define the optimal progress per step
+    optimal_progress_per_step = .340  # Adjust this value based on your specific scenario
+
+    # Calculate the actual progress per step
+    actual_progress_per_step = progress / steps
+
+    # Give a reward every 5 steps
+    if steps % 15 == 0:
+        step_reward = (actual_progress_per_step / optimal_progress_per_step) * every_15_step_reward_multiplier
+    elif steps % 5 == 0:
+        step_reward = (actual_progress_per_step / optimal_progress_per_step) * every_5_step_reward_multiplier
+    else:
+        step_reward = actual_progress_per_step / optimal_progress_per_step * every_step_reward_multiplier
+
+    return step_reward
+
+def calculate_position_reward(params):
+    # Get the closest waypoint
+    closest_waypoint = get_closest_waypoint(params)
+
+    # Calculate the distance to the closest waypoint
+    distance_to_closest_waypoint = dist([params['x'], params['y']], closest_waypoint)
+
+    # Normalize the distance to a value between 0 and 1
+    normalized_distance = distance_to_closest_waypoint / (params['track_width'] / 2)
+
+    # Calculate the reward
+    reward = 1 - normalized_distance
+
+    # Clamp the reward between 0.01 and 1
+    reward = max(min(reward, 1), 0.01)
+
+    return reward
+
+def calculate_progress_reward(params):
+    progress = params['progress']
+    steps = params['steps']
+    multiplier = 0.05
+    progress_reward = progress/100 * multiplier
+    progress_per_step = progress/steps
+    step_threshold1 = .333
+    step_threshold2 = .350
+    step_threshold3 = .365
+    step_threshold4 = .380
+    step_threshold5 = .390
+    step_threshold6 = .400
+    if progress == 100:
+        progress_reward += 10
+        if progress_per_step > step_threshold1:
+            progress_reward += 20
+        if progress_per_step > step_threshold2:
+            progress_reward += 50
+        if progress_per_step > step_threshold3:
+            progress_reward += 100
+        if progress_per_step > step_threshold4:
+            progress_reward += 200
+        if progress_per_step > step_threshold5:
+            progress_reward += 500
+        if progress_per_step > step_threshold6:
+            progress_reward += 1000
+    return progress_reward
+
 def reward_function(params):
     # Sets optimized waypoints to be equal to precalced list of waypoints from optimal racing line.
     set_optimized_waypoints(params)
@@ -331,11 +410,20 @@ def reward_function(params):
     # Speed reward depends upon how close to steering towards the optimal racing line the car is.
     speed_reward = float(calculate_speed_reward(params))
     print(f'speed_reward: {speed_reward}')
+
+    step_reward = float(calculate_step_reward(params))
+    print(f'step_reward: {step_reward}')
     
     directional_reward = float(score_steer_to_point_ahead(params))
     print(f'directional_reward: {directional_reward}')
     
-    final_reward = directional_reward + speed_reward
+    position_reward = float(calculate_position_reward(params))
+    print(f'position_reward: {position_reward}')
+    
+    progress_reward = float(calculate_progress_reward(params))
+    print(f'progress_reward: {progress_reward}')
+    
+    final_reward = directional_reward + speed_reward + step_reward + position_reward + progress_reward
     print(f'final_reward: {final_reward}')
     
     is_crashed = params['is_crashed']
@@ -347,7 +435,7 @@ def reward_function(params):
     # That means the distance from the center is greater than half the track width + car length of 0.1 meters.
     if is_crashed:
         final_reward = min(final_reward, 0.01)
-    elif not all_wheels_on_track and distance_from_center > (track_width/2):
+    elif not all_wheels_on_track and distance_from_center >= (track_width/2):
         final_reward = min(final_reward, 0.01)
     
     return final_reward
