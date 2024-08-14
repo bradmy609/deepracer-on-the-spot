@@ -290,15 +290,15 @@ def get_target_steering_degree(params):
     return angle_mod_360(steering_angle)
 
 
-# def score_steer_to_point_ahead(params):
-#     best_steering_angle = get_target_steering_degree(params)
-#     steering_angle = params['steering_angle']
+def score_steer_to_point_ahead(params):
+    best_steering_angle = get_target_steering_degree(params)
+    steering_angle = params['steering_angle']
 
-#     error = (steering_angle - best_steering_angle) / 60.0  # 60 degree is already really bad
+    error = (steering_angle - best_steering_angle) / 60.0  # 60 degree is already really bad
 
-#     score = 1.0 - abs(error)
+    score = 1.0 - abs(error)
 
-#     return max(score**2, 0.01)  # optimizer is rumored to struggle with negative numbers and numbers too close to zero
+    return max(score**2, 0.01)  # optimizer is rumored to struggle with negative numbers and numbers too close to zero
 
 def calculate_progress_per_step_reward(x):
     x1, y1 = 0.1, 0.1
@@ -374,7 +374,7 @@ def calculate_position_reward(params):
     distance_to_closest_waypoint = dist([params['x'], params['y']], closest_waypoint)
 
     # Normalize the distance to a value between 0 and 1
-    normalized_distance = distance_to_closest_waypoint / (params['track_width'] / 2)
+    normalized_distance = distance_to_closest_waypoint / (params['track_width'])
 
     # Calculate the reward
     reward = (1 - normalized_distance)
@@ -386,7 +386,7 @@ def calculate_position_reward(params):
 
 def calculate_progress_reward(params):
     # This multiplier determines how much the car prioritizes staying on track w/o crashing
-    multiplier = 0.3
+    multiplier = 0.5
     progress = params['progress']
     steps = params['steps']
     progress_reward = progress/100 * multiplier
@@ -413,8 +413,8 @@ def reward_function(params):
     step_reward = float(calculate_step_reward(params))
     print(f'step_reward: {step_reward}')
     
-    # directional_reward = float(score_steer_to_point_ahead(params))
-    # print(f'directional_reward: {directional_reward}')
+    directional_reward = float(score_steer_to_point_ahead(params))
+    print(f'directional_reward: {directional_reward}')
     
     position_reward = float(calculate_position_reward(params))
     print(f'position_reward: {position_reward}')
@@ -422,7 +422,7 @@ def reward_function(params):
     progress_reward = float(calculate_progress_reward(params))
     print(f'progress_reward: {progress_reward}')
     
-    final_reward = step_reward + position_reward + progress_reward
+    final_reward = step_reward + position_reward + progress_reward + directional_reward
     print(f'final_reward: {final_reward}')
     
     is_crashed = params['is_crashed']
