@@ -413,8 +413,8 @@ def reward_function(params):
     step_reward = float(calculate_step_reward(params))
     print(f'step_reward: {step_reward}')
     
-    directional_reward = float(score_steer_to_point_ahead(params))
-    print(f'directional_reward: {directional_reward}')
+    # directional_reward = float(score_steer_to_point_ahead(params))
+    # print(f'directional_reward: {directional_reward}')
     
     position_reward = float(calculate_position_reward(params))
     print(f'position_reward: {position_reward}')
@@ -422,7 +422,7 @@ def reward_function(params):
     progress_reward = float(calculate_progress_reward(params))
     print(f'progress_reward: {progress_reward}')
     
-    final_reward = step_reward + position_reward + progress_reward + directional_reward
+    final_reward = step_reward + position_reward + progress_reward
     print(f'final_reward: {final_reward}')
     
     is_crashed = params['is_crashed']
