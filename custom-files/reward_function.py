@@ -345,8 +345,8 @@ checkpoints_2 = list(range(0, 101, 2))
 def calculate_step_reward(params):
     progress = params['progress']
     steps = params['steps']
-    two_percent_progress_multiplier = 1
-    regular_multiplier = 0.5
+    two_percent_progress_multiplier = 2
+    regular_multiplier = 1
 
     # Calculate the actual progress per step
     actual_progress_per_step = progress / steps
@@ -383,7 +383,7 @@ def calculate_position_reward(params):
 def calculate_progress_reward(params):
     progress = params['progress']
     steps = params['steps']
-    multiplier = 0.2
+    multiplier = 0.3
     progress_reward = progress/100 * multiplier
     if progress == 100:
         actual_progress_per_step = progress/steps
