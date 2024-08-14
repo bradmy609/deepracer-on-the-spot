@@ -416,22 +416,22 @@ def reward_function(params):
         
     # Speed reward depends upon how close to steering towards the optimal racing line the car is.
     speed_reward = float(calculate_speed_reward(params))
-    print(f'speed_reward: {speed_reward}')
+    # print(f'speed_reward: {speed_reward}')
 
     step_reward = float(calculate_step_reward(params))
-    print(f'step_reward: {step_reward}')
+    # print(f'step_reward: {step_reward}')
     
     directional_reward = float(score_steer_to_point_ahead(params))
-    print(f'directional_reward: {directional_reward}')
+    # print(f'directional_reward: {directional_reward}')
     
     position_reward = float(calculate_position_reward(params))
-    print(f'position_reward: {position_reward}')
+    # print(f'position_reward: {position_reward}')
     
     progress_reward = float(calculate_progress_reward(params))
-    print(f'progress_reward: {progress_reward}')
+    # print(f'progress_reward: {progress_reward}')
     
     final_reward = directional_reward + speed_reward + step_reward + position_reward + progress_reward
-    print(f'final_reward: {final_reward}')
+    # print(f'final_reward: {final_reward}')
     
     is_crashed = params['is_crashed']
     all_wheels_on_track = params['all_wheels_on_track']
