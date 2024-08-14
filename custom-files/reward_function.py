@@ -298,7 +298,7 @@ def score_steer_to_point_ahead(params):
 
     score = 1.0 - abs(error)
 
-    return max(score, 0.01)  # optimizer is rumored to struggle with negative numbers and numbers too close to zero
+    return max(score**2, 0.01)  # optimizer is rumored to struggle with negative numbers and numbers too close to zero
 
 def calculate_progress_per_step_reward(x):
     x1, y1 = 0.1, 0.1
@@ -306,65 +306,52 @@ def calculate_progress_per_step_reward(x):
     y = y1 + (x - x1) * ((y2 - y1) / (x2 - x1))
     return y
 
-def calculate_speed_reward(params):
-    progress = params['progress']
-    steps = params['steps']
+# def calculate_speed_reward(params):
+#     progress = params['progress']
+#     steps = params['steps']
 
-    best_steering_angle = get_target_steering_degree(params)
-    steering_angle = params['steering_angle']
+#     best_steering_angle = get_target_steering_degree(params)
+#     steering_angle = params['steering_angle']
 
-    steering_diff = (steering_angle - best_steering_angle)
-    abs_steering_diff = abs(steering_diff)
-    speed_multiplier = 0
+#     steering_diff = (steering_angle - best_steering_angle)
+#     abs_steering_diff = abs(steering_diff)
+#     speed_multiplier = 0
     
-    if abs_steering_diff <= 3:
-        speed_multiplier = .2
-    elif abs_steering_diff <= 2:
-        speed_multiplier = .4
-    elif abs_steering_diff <= 1:
-        speed_multiplier = .6
-    elif abs_steering_diff <= 0.5:
-        speed_multiplier = .8
-    elif abs_steering_diff <= 0.1:
-        speed_multiplier = 1
+#     if abs_steering_diff <= 3:
+#         speed_multiplier = .2
+#     elif abs_steering_diff <= 2:
+#         speed_multiplier = .4
+#     elif abs_steering_diff <= 1:
+#         speed_multiplier = .6
+#     elif abs_steering_diff <= 0.5:
+#         speed_multiplier = .8
+#     elif abs_steering_diff <= 0.1:
+#         speed_multiplier = 1
     
-    print(f'progress: {progress}')
-    print(f'steps: {steps}')
-    print(f'progress per step: {progress/steps}')
+#     print(f'progress: {progress}')
+#     print(f'steps: {steps}')
+#     print(f'progress per step: {progress/steps}')
     
-    # Calculate the actual progress per step
-    actual_progress_per_step = progress / steps
+#     # Calculate the actual progress per step
+#     actual_progress_per_step = progress / steps
 
-    # Calculate the speed score
-    speed_score = calculate_progress_per_step_reward(actual_progress_per_step) * speed_multiplier
+#     # Calculate the speed score
+#     speed_score = calculate_progress_per_step_reward(actual_progress_per_step) * speed_multiplier
 
-    return max(speed_score, 0.01)
+#     return max(speed_score**2, 0.01)
         
 checkpoints_2 = list(range(0, 101, 2))
-checkpoints_5 = list(range(0, 101, 5))
-checkpoints_10 = list(range(0, 101, 10))
 
 def calculate_step_reward(params):
     progress = params['progress']
     steps = params['steps']
-    ten_percent_progress_multiplier = 0.5
-    five_percent_progress_multiplier = 0.1
-    two_percent_progress_multiplier = 0.01
+    two_percent_progress_multiplier = 1
+    regular_multiplier = 0.5
 
     # Calculate the actual progress per step
     actual_progress_per_step = progress / steps
 
-    step_reward = 0
-    for checkpoint in checkpoints_10:
-        if int(progress) >= checkpoint:
-            step_reward = calculate_progress_per_step_reward(actual_progress_per_step) * ten_percent_progress_multiplier
-            checkpoints_10.remove(checkpoint)
-            break
-    for checkpoint in checkpoints_5:
-        if int(progress) >= checkpoint:
-            step_reward = calculate_progress_per_step_reward(actual_progress_per_step) * five_percent_progress_multiplier
-            checkpoints_5.remove(checkpoint)
-            break
+    step_reward = calculate_progress_per_step_reward(actual_progress_per_step) * regular_multiplier
     for checkpoint in checkpoints_2:
         if int(progress) >= checkpoint:
             step_reward = calculate_progress_per_step_reward(actual_progress_per_step) * two_percent_progress_multiplier
@@ -372,7 +359,8 @@ def calculate_step_reward(params):
             break
         
     print(f'giving step reward: {step_reward}')
-    return max(step_reward, 0.01)
+    step_reward = max(step_reward**2, 0.01)
+    return 
 
 def calculate_position_reward(params):
     # Get the closest waypoint
@@ -385,25 +373,25 @@ def calculate_position_reward(params):
     normalized_distance = distance_to_closest_waypoint / (params['track_width'] / 2)
 
     # Calculate the reward
-    reward = (1 - normalized_distance) * 2
+    reward = (1 - normalized_distance)
 
     # Clamp the reward between 0.01 and 1
-    reward = max(reward, 0.01)
+    reward = max(reward**2, 0.01)
 
     return reward
 
 def calculate_progress_reward(params):
     progress = params['progress']
     steps = params['steps']
-    multiplier = 0.05
+    multiplier = 0.2
     progress_reward = progress/100 * multiplier
     if progress == 100:
         actual_progress_per_step = progress/steps
         progress_reward += calculate_progress_per_step_reward(actual_progress_per_step)
-        progress_reward *= 20
+        progress_reward *= 50
         progress_reward += 10
         
-    return progress_reward
+    return max(progress_reward, 0.01)
 
 def reward_function(params):
     # Sets optimized waypoints to be equal to precalced list of waypoints from optimal racing line.
@@ -414,7 +402,7 @@ def reward_function(params):
     #     print(params)
         
     # Speed reward depends upon how close to steering towards the optimal racing line the car is.
-    speed_reward = float(calculate_speed_reward(params))
+    # speed_reward = float(calculate_speed_reward(params))
     # print(f'speed_reward: {speed_reward}')
 
     step_reward = float(calculate_step_reward(params))
