@@ -413,8 +413,8 @@ def reward_function(params):
     step_reward = float(calculate_step_reward(params))
     print(f'step_reward: {step_reward}')
     
-    # directional_reward = float(score_steer_to_point_ahead(params))
-    # print(f'directional_reward: {directional_reward}')
+    directional_reward = float(score_steer_to_point_ahead(params))
+    print(f'directional_reward: {directional_reward}')
     
     position_reward = float(calculate_position_reward(params))
     print(f'position_reward: {position_reward}')
