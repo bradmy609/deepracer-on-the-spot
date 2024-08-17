@@ -383,6 +383,10 @@ class Reward:
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         if direction_diff > 30:
             reward = 1e-3
+        elif direction_diff > 20:
+            reward *= 0.8
+        elif direction_diff > 15:
+            reward *= 0.9
 
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
@@ -404,12 +408,13 @@ class Reward:
         is_crashed = params['is_crashed']
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
+        car_width = 0.1
 
         # Zero reward if the center of the car is off the track.
 
         if is_crashed:
             reward = min(reward, 0.01)
-        elif not all_wheels_on_track and abs(distance_from_center) > (track_width/2):
+        elif not all_wheels_on_track and abs(distance_from_center) > ((track_width/2)+car_width/2):
             reward = min(reward, 0.01)
 
         ####################### VERBOSE #######################
@@ -437,4 +442,3 @@ reward_object = Reward() # add parameter verbose=True to get noisy output for te
 
 def reward_function(params):
     return reward_object.reward_function(params)
-
