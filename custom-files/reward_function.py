@@ -157,7 +157,7 @@ def set_optimized_waypoints(params):
        [ 5.04771686,  0.25863085],
        [ 5.04205797,  0.55788288],
        [ 5.03288116,  0.85563751]]
-
+    
 def dist(point1, point2):
     return ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2) ** 0.5
 
@@ -250,7 +250,7 @@ def get_target_point(params):
 
     waypoints_starting_with_closest = [waypoints[(i+i_closest) % n] for i in range(n)]
 
-    r = params['track_width'] * 0.9
+    r = params['track_width'] * 0.6
 
     is_inside = [dist(p, car) < r for p in waypoints_starting_with_closest]
     i_first_outside = is_inside.index(False)
@@ -289,28 +289,18 @@ def get_target_steering_degree(params):
 
     return angle_mod_360(steering_angle)
 
-
-def score_steer_to_point_ahead(params):
-    best_steering_angle = get_target_steering_degree(params)
-    steering_angle = params['steering_angle']
-
-    error = (steering_angle - best_steering_angle) / 60.0  # 60 degree is already really bad
-
-    score = 1.0 - abs(error)
-
-    return max(score**2, 0.01)  # optimizer is rumored to struggle with negative numbers and numbers too close to zero
-
 def calculate_progress_per_step_reward(params):
     progress = params['progress']
     steps = params['steps']
     
     x = progress/steps
-    x1, y1 = 0.1, 0.1
-    x2, y2 = 0.5, 2
+    x1, y1 = 0.2, 0.1
+    x2, y2 = 0.45, 1
     y = y1 + (x - x1) * ((y2 - y1) / (x2 - x1))
-    return y
+    reward = max(y**2, 0.01)
+    return reward
 
-def calculate_speed_reward(params):
+def calculate_directional_reward(params):
     base_reward = calculate_progress_per_step_reward(params)
 
     best_steering_angle = get_target_steering_degree(params)
@@ -319,46 +309,14 @@ def calculate_speed_reward(params):
     steering_diff = (steering_angle - best_steering_angle)
     abs_steering_diff = abs(steering_diff)
     
-    if abs_steering_diff <= 3:
-        reward = base_reward * 0.2
-    elif abs_steering_diff <= 2:
-        reward = base_reward * 0.4
-    elif abs_steering_diff <= 1:
-        reward = base_reward * 0.6
-    elif abs_steering_diff <= 0.5:
-        reward = base_reward * 0.8
-    elif abs_steering_diff <= 0.1:
-        reward = base_reward * 1
-    else:
-        reward = 0.01
+    steering_reward = (1 - abs_steering_diff/60)**2
+    reward = base_reward * steering_reward
 
     return max(reward, 0.01)
 
-# def calculate_step_reward(params):
-#     # These multiplier determine how much the car prioritizes optimizing progress per step at every point,
-#     # as well as progress per step at 2% progress interval checkpoints.
-#     two_percent_progress_multiplier = 2
-#     regular_multiplier = 1
-#     progress = params['progress']
-#     steps = params['steps']
-
-#     # Calculate the actual progress per step
-#     actual_progress_per_step = progress / steps
-
-#     step_reward = calculate_progress_per_step_reward(actual_progress_per_step) * regular_multiplier
-#     for checkpoint in checkpoints_2:
-#         if int(progress) >= checkpoint:
-#             step_reward = calculate_progress_per_step_reward(actual_progress_per_step) * two_percent_progress_multiplier
-#             checkpoints_2.remove(checkpoint)
-#             break
-        
-#     print(f'giving step reward: {step_reward}')
-#     step_reward = max(step_reward**2, 0.01)
-#     return step_reward
-
 def calculate_position_reward(params):
     # This multiplier determines how much the car prioritizes adhering to racing line
-    multiplier = 2
+    base_reward = calculate_progress_per_step_reward(params)
     # Get the closest waypoint
     closest_waypoint = get_closest_optimized_waypoint(params)
 
@@ -368,95 +326,58 @@ def calculate_position_reward(params):
     # Normalize the distance to a value between 0 and 1
     normalized_distance = distance_to_closest_waypoint / (params['track_width'])
 
-    base_reward = calculate_progress_per_step_reward(params)
-
-    # Define the thresholds
-    thresholds = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-
-    # Calculate the reward based on the thresholds
-    if normalized_distance <= thresholds[0]:
-        reward = base_reward
-    elif normalized_distance <= thresholds[1]:
-        reward = base_reward * 0.9
-    elif normalized_distance <= thresholds[2]:
-        reward = base_reward * 0.8
-    elif normalized_distance <= thresholds[3]:
-        reward = base_reward * 0.7
-    elif normalized_distance <= thresholds[4]:
-        reward = base_reward * 0.6
-    elif normalized_distance <= thresholds[5]:
-        reward = base_reward * 0.5
-    elif normalized_distance <= thresholds[6]:
-        reward = base_reward * 0.4
-    elif normalized_distance <= thresholds[7]:
-        reward = base_reward * 0.3
-    elif normalized_distance <= thresholds[8]:
-        reward = base_reward * 0.2
-    elif normalized_distance <= thresholds[9]:
-        reward = base_reward * 0.15
-    elif normalized_distance <= thresholds[10]:
-        reward = base_reward * 0.1
-    elif normalized_distance <= thresholds[11]:
-        reward = base_reward * 0.05
-    else:
-        reward = base_reward * 0.01
-
+    distance_reward = (1 - normalized_distance)**2
+    reward = base_reward * distance_reward
+    
     # Clamp the reward between 0.01 and 1
-    reward = max(reward, 0.01) * multiplier
-
-    return reward
-
-def calculate_progress_reward(params):
-    # This multiplier determines how much the car prioritizes staying on track w/o crashing
-    multiplier = 0.2
-    progress = params['progress']
-    steps = params['steps']
-    progress_reward = progress/100 * multiplier
-    if progress == 100:
-        actual_progress_per_step = progress/steps
-        progress_reward += calculate_progress_per_step_reward(params)
-        progress_reward *= 10
-        progress_reward += 10
-        
-    return max(progress_reward, 0.01)
+    return max(reward, 0.01)
 
 def reward_function(params):
     # Sets optimized waypoints to be equal to precalced list of waypoints from optimal racing line.
     set_optimized_waypoints(params)
     
-    # If we are on step 1, log optimized_waypoints and regular waypoints for viewing/drawing later from log results.
-    # if params['steps'] == 2:
-    #     print(params)
-        
-    # Speed reward depends upon how close to steering towards the optimal racing line the car is.
-    # speed_reward = float(calculate_speed_reward(params))
-    # print(f'speed_reward: {speed_reward}')
-
-    # step_reward = float(calculate_step_reward(params))
-    # print(f'step_reward: {step_reward}')
-    
-    directional_reward = float(score_steer_to_point_ahead(params))
+    directional_reward = float(calculate_directional_reward(params))
     print(f'directional_reward: {directional_reward}')
     
     position_reward = float(calculate_position_reward(params))
     print(f'position_reward: {position_reward}')
     
-    progress_reward = float(calculate_progress_reward(params))
-    print(f'progress_reward: {progress_reward}')
-    
-    final_reward = position_reward + progress_reward + directional_reward
-    print(f'final_reward: {final_reward}')
-    
     is_crashed = params['is_crashed']
     all_wheels_on_track = params['all_wheels_on_track']
     track_width = params['track_width']
     distance_from_center = params['distance_from_center']
+    heading = params['heading']
+    car_width = 0.1
+#   Reward penalties
 
-    # Zeros out reward if the entire car is off the track. 
-    # That means the distance from the center is greater than half the track width + car length of 0.1 meters.
     if is_crashed:
-        final_reward = min(final_reward, 0.01)
-    elif not all_wheels_on_track and distance_from_center >= (track_width/2):
-        final_reward = min(final_reward, 0.01)
+        position_reward = min(position_reward, 0.01)
+    elif not all_wheels_on_track:
+        if abs(distance_from_center) > (track_width/2):
+            position_reward = min(position_reward, 0.01)
+        
+    car_heading = params['heading']
+    closest_waypoints = params['closest_waypoints']
+    waypoints = params['waypoints']
+    
+    # Get the coordinates of the closest waypoints
+    waypoint_1 = waypoints[closest_waypoints[0]]
+    waypoint_2 = waypoints[closest_waypoints[1]]
+    
+    # Calculate the direction of the track (angle) between the closest waypoints
+    track_direction = math.degrees(math.atan2(waypoint_2[1] - waypoint_1[1], waypoint_2[0] - waypoint_1[0]))
+    
+    # Calculate the difference between the car's heading and the track direction
+    heading_difference = abs(track_direction - car_heading)
+    if heading_difference > 180:
+        heading_difference = 360 - heading_difference
+    
+    # Determine if the car is too close to the track's edge
+    if abs(distance_from_center) >= (track_width / 2) * 0.9:
+        if heading_difference > 10:  # If the car is turning too much compared to the track direction
+            directional_reward *= 0.5
+        
+    final_reward = position_reward + directional_reward
+    print(f'final_reward: {final_reward}')
     
     return final_reward
