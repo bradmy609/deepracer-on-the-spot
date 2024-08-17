@@ -250,7 +250,7 @@ def get_target_point(params):
 
     waypoints_starting_with_closest = [waypoints[(i+i_closest) % n] for i in range(n)]
 
-    r = params['track_width'] * 0.6
+    r = params['track_width'] * 0.7
 
     is_inside = [dist(p, car) < r for p in waypoints_starting_with_closest]
     i_first_outside = is_inside.index(False)
@@ -294,10 +294,10 @@ def calculate_progress_per_step_reward(params):
     steps = params['steps']
     
     x = progress/steps
-    x1, y1 = 0.2, 0.1
-    x2, y2 = 0.45, 1
+    x1, y1 = 0.25, 0.1
+    x2, y2 = 0.5, 1
     y = y1 + (x - x1) * ((y2 - y1) / (x2 - x1))
-    reward = max(y**2, 0.01)
+    reward = max(y2, 0.01)
     return reward
 
 def calculate_directional_reward(params):
@@ -347,9 +347,8 @@ def reward_function(params):
     track_width = params['track_width']
     distance_from_center = params['distance_from_center']
     heading = params['heading']
-    car_width = 0.1
+    
 #   Reward penalties
-
     if is_crashed:
         position_reward = min(position_reward, 0.01)
     elif not all_wheels_on_track:
@@ -374,7 +373,7 @@ def reward_function(params):
     
     # Determine if the car is too close to the track's edge
     if abs(distance_from_center) >= (track_width / 2) * 0.9:
-        if heading_difference > 10:  # If the car is turning too much compared to the track direction
+        if heading_difference > 12:  # If the car is turning too much compared to the track direction
             directional_reward *= 0.5
         
     final_reward = position_reward + directional_reward
