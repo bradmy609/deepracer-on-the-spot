@@ -311,17 +311,14 @@ class Reward:
         all_wheels_on_track = params['all_wheels_on_track']
         x = params['x']
         y = params['y']
-        distance_from_center = params['distance_from_center']
-        is_left_of_center = params['is_left_of_center']
         heading = params['heading']
         progress = params['progress']
         steps = params['steps']
         speed = params['speed']
-        steering_angle = params['steering_angle']
         track_width = params['track_width']
-        waypoints = params['waypoints']
-        closest_waypoints = params['closest_waypoints']
         is_offtrack = params['is_offtrack']
+        is_crashed = params['is_crashed']
+        track_width = params['track_width']
 
         ############### OPTIMAL X,Y,SPEED,TIME ################
 
@@ -387,10 +384,9 @@ class Reward:
             reward *= 0.05
         elif direction_diff > 30:
             reward *= 0.1
-        elif direction_diff > 25:
-            reward *= 0.8
-        elif direction_diff > 20:
-            reward *= 0.9
+            
+        direction_reward = (1 - (direction_diff / 60))
+        reward += direction_reward
 
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
@@ -408,18 +404,14 @@ class Reward:
             finish_reward = 0
         reward += finish_reward
 
-        ## Zero reward if off track ##
-        is_crashed = params['is_crashed']
-        track_width = params['track_width']
-        distance_from_center = params['distance_from_center']
-        car_width = 0.1
-
         # Zero reward if the center of the car is off the track.
         # This will add a margin of 
 
         if is_crashed:
             reward = min(reward, 0.01)
-        elif not all_wheels_on_track and abs(distance_from_center) > ((track_width/2) + car_width / 2 - 0.01):
+        if not all_wheels_on_track:
+            reward = min(reward, 0.01)
+        if is_offtrack:
             reward = min(reward, 0.01)
 
         ####################### VERBOSE #######################
