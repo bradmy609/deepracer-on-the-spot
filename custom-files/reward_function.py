@@ -378,14 +378,18 @@ class Reward:
             steps_reward = 0
         reward += steps_reward
 
-        # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
-        if direction_diff > 30:
-            reward = 1e-3
-        elif direction_diff > 20:
+        # Harshly punish if direction is obviously wrong
+        if direction_diff > 60:
+            reward *= 0.01
+        elif direction_diff > 45:
+            reward *= 0.05
+        elif direction_diff > 30:
+            reward *= 0.1
+        elif direction_diff > 25:
             reward *= 0.8
-        elif direction_diff > 15:
+        elif direction_diff > 20:
             reward *= 0.9
 
         # Zero reward of obviously too slow
@@ -411,10 +415,11 @@ class Reward:
         car_width = 0.1
 
         # Zero reward if the center of the car is off the track.
+        # This will add a margin of 
 
         if is_crashed:
             reward = min(reward, 0.01)
-        elif not all_wheels_on_track and abs(distance_from_center) > ((track_width/2)+car_width/2):
+        elif not all_wheels_on_track and abs(distance_from_center) > ((track_width/2) + car_width / 2 - 0.01):
             reward = min(reward, 0.01)
 
         ####################### VERBOSE #######################
