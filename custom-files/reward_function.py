@@ -1,3 +1,7 @@
+# Import package (needed for heading)
+import math
+import numpy as np
+
 class STATE:
     prev_speed = None
     prev_steering_angle = None 
@@ -12,9 +16,6 @@ class Reward:
         self.verbose = verbose
 
     def reward_function(self, params):
-
-        # Import package (needed for heading)
-        import math
 
         ################## HELPER FUNCTIONS ###################
 
@@ -445,8 +446,9 @@ class Reward:
         reward += steps_reward
 
         # PROGRESS REWARD #
-        # Calculate progress interval
-        pi = int(params['progress'] // 10)  # Calculate which 10% segment we're in
+        # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
+        progress_multiplier = 5 # This determines how much the car prioritizes lap completion.
+        pi = int(progress // 10)  # Calculate which 10% segment we're in
         
         # Initialize intermediate_progress_bonus to 0 for safety
         intermediate_progress_bonus = 0
@@ -454,7 +456,7 @@ class Reward:
         # Check if this segment has been completed before
         if pi != 0 and STATE.intermediate_progress[pi] == 0:
             # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
-            intermediate_progress_bonus = pi
+            intermediate_progress_bonus = (pi * progress/steps) * progress_multiplier
             # Mark this segment as rewarded
             STATE.intermediate_progress[pi] = intermediate_progress_bonus
 
@@ -469,6 +471,10 @@ class Reward:
             reward *= 0.05
         elif direction_diff > 30:
             reward *= 0.1
+        elif direction_diff > 25:
+            reward *= 0.8
+        elif direction_diff > 20:
+            reward *= 0.9
         # I have found that the model struggles to learn if direction reward is given linearly
         # in proportion to distance reward... Perhaps they conflict. Turning this off for now.
         # direction_reward = (1 - (direction_diff / 60)) * direction_multiplier
@@ -477,6 +483,7 @@ class Reward:
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
         
+        # This gives a harsh penalty if the car is not steering in range.
         if not is_within_range:
             print('Penalizing the car for heading off track.')
             print('heading: ', heading)
@@ -508,7 +515,7 @@ class Reward:
         # Cut reward in half if one wheel is off the track
         if not all_wheels_on_track:
             reward *= 0.5
-            # reduce reward to nothing if car is halfway off the track, this is too risky for now.
+            # reduce reward to nothing if car is halfway off the track, this is too risky until laps are reliable.
             if distance_from_center >= 0.5 * track_width:
                 reward = min(reward, 0.001)
 
