@@ -385,7 +385,6 @@ class Reward:
         steps = params['steps']
         speed = params['speed']
         track_width = params['track_width']
-        is_offtrack = params['is_offtrack']
         is_crashed = params['is_crashed']
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
@@ -471,12 +470,13 @@ class Reward:
         elif direction_diff > 30:
             reward *= 0.1
         # I have found that the model struggles to learn if direction reward is given linearly
-        # in proportion to distance reward... Perhaps they conflict.
+        # in proportion to distance reward... Perhaps they conflict. Turning this off for now.
         # direction_reward = (1 - (direction_diff / 60)) * direction_multiplier
         # reward += direction_reward
             
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        
         if not is_within_range:
             print('Penalizing the car for heading off track.')
             print('heading: ', heading)
