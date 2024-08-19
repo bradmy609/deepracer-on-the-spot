@@ -152,25 +152,26 @@ class Reward:
             closest_waypoints = params['closest_waypoints']
             track_width = params['track_width']
             
-            waypoint1 = waypoints[closest_waypoints[1]]
-            waypoint2 = waypoints[closest_waypoints[0]]
-            # Step 1: Calculate the direction vector from waypoint1 to waypoint2
-            direction_vector = np.array([waypoint2[0] - waypoint1[0], waypoint2[1] - waypoint1[1]])
+            next_waypoint = waypoints[closest_waypoints[1]]
+            prev_waypoint = waypoints[closest_waypoints[0]]
             
-            # Step 2: Calculate the perpendicular vector
+            # Calculate the direction vector from prev_waypoint to next_waypoint
+            direction_vector = np.array([next_waypoint[0] - prev_waypoint[0], next_waypoint[1] - prev_waypoint[1]])
+            
+            # Calculate the perpendicular vector
             perpendicular_vector = np.array([-direction_vector[1], direction_vector[0]])
             
-            # Step 3: Normalize the perpendicular vector
+            # Normalize the perpendicular vector
             perpendicular_vector = perpendicular_vector / np.linalg.norm(perpendicular_vector)
             
-            # Step 4: Calculate the half-width of the track
+            # Calculate the half-width of the track
             half_width = track_width / 2.0
             
-            # Step 5: Calculate inner and outer border points
-            inner_border2 = np.array(waypoint1) - perpendicular_vector * half_width
-            outer_border2 = np.array(waypoint1) + perpendicular_vector * half_width
-            inner_border1 = np.array(waypoint2) - perpendicular_vector * half_width
-            outer_border1 = np.array(waypoint2) + perpendicular_vector * half_width
+            # Calculate the border points
+            inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
+            outer_border1 = np.array(prev_waypoint) + perpendicular_vector * half_width
+            inner_border2 = np.array(next_waypoint) - perpendicular_vector * half_width
+            outer_border2 = np.array(next_waypoint) + perpendicular_vector * half_width
             
             return inner_border1, outer_border1, inner_border2, outer_border2
         
@@ -402,14 +403,12 @@ class Reward:
         ## Define the default reward ##
         reward = 1
 
-        # DISTANCE REWARD CALCULATION #
         ## Reward if car goes close to optimal racing line ##
         DISTANCE_MULTIPLE = 1
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
         distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
         distance_reward *= DISTANCE_MULTIPLE
 
-        # SPEED REWARD CALCULATION #
         ## Reward if speed is close to optimal speed ##
         SPEED_DIFF_NO_REWARD = 1
         SPEED_MULTIPLE = 2
@@ -422,7 +421,6 @@ class Reward:
             speed_reward = 0
         speed_reward *= SPEED_MULTIPLE
 
-        # STEPS REWARD CALCULATION #
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
         STANDARD_TIME = 22
@@ -438,12 +436,10 @@ class Reward:
         except:
             steps_reward = 0
 
-        # DIRECTION REWARD CALCULATION #
         direction_reward = 0
-        direction_multiple = 0.5
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
-        # Penalty for being way off direction of racing line.
+        # Harshly punish if direction is obviously wrong
         if abs(direction_diff) > 60:
             reward *= 0.01
         elif abs(direction_diff) > 45:
@@ -451,10 +447,10 @@ class Reward:
         elif abs(direction_diff) > 30:
             reward *= 0.1
         elif abs(direction_diff) < 30:
+            # If direction diff is less than 30, add direction reward, max of 1.
             direction_reward = (1 - (direction_diff / 30))
-        direction_reward *= direction_multiple
-            
-        # FINISH REWARD CALCULATION #
+            # reward += max(direction_reward, 0.001)
+
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
         STANDARD_TIME = 22  # seconds (time that is easily done by model)
@@ -464,19 +460,27 @@ class Reward:
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
         else:
             finish_reward = 0
-            
-        # Reward combining
-        # directional_reward, distance_reward, speed_reward, steps_reward, finish_reward
-
-        ####################### Penalties #######################
+        
+        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
+        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        
+        # Rewards: direction_reward, distance_reward, speed_reward, steps_reward, finish_reward
+        # combo
+        
+        if not is_within_range:
+            print('Penalizing the car for heading off track.')
+            print('heading: ', heading)
+            print('min_heading: ', min_heading)
+            print('max_heading: ', max_heading )
+            reward *= min(reward, 0.001)
         
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.5:
             reward = 1e-3
-        
         if is_crashed:
             reward = min(reward, 0.001)
+        # Moderate punishment for even 1 wheel offtrack... This can be removed/reduced once we are getting reliable lap completions in evals.
         if not all_wheels_on_track:
             reward *= 0.5
             if distance_from_center > track_width/2:
