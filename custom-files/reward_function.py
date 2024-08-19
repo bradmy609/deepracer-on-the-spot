@@ -505,12 +505,12 @@ class Reward:
 
         if is_crashed:
             reward = min(reward, 0.001)
+        # Cut reward in half if one wheel is off the track
         if not all_wheels_on_track:
             reward *= 0.5
+            # reduce reward to nothing if car is halfway off the track, this is too risky for now.
             if distance_from_center >= 0.5 * track_width:
                 reward = min(reward, 0.001)
-        if is_offtrack:
-            reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
 
