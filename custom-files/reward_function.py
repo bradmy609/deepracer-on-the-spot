@@ -98,27 +98,30 @@ class Reward:
 
             return [next_point_coords, prev_point_coords]
 
-        def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
+        # def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
+        #     # Calculate the direction of the center line based on the closest waypoints
+        #     next_point, prev_point = next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading)
 
-            # Calculate the direction of the center line based on the closest waypoints
-            next_point, prev_point = next_prev_racing_point(closest_coords,
-                                                            second_closest_coords,
-                                                            car_coords,
-                                                            heading)
+        #     # Calculate the direction in radians, the result is (-pi, pi) in radians
+        #     track_direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0])
 
-            # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
-            track_direction = math.atan2(
-                next_point[1] - prev_point[1], next_point[0] - prev_point[0])
+        #     # Convert to degrees
+        #     track_direction = math.degrees(track_direction)
 
-            # Convert to degree
-            track_direction = math.degrees(track_direction)
+        #     # Normalize angles to be within -180 to 180 degrees
+        #     track_direction = (track_direction + 360) % 360
+        #     heading = (heading + 360) % 360
 
-            # Calculate the difference between the track direction and the heading direction of the car
-            direction_diff = abs(track_direction - heading)
-            if direction_diff > 180:
-                direction_diff = 360 - direction_diff
+        #     # Calculate the difference between the track direction and the heading direction of the car
+        #     direction_diff = track_direction - heading
+            
+        #     # Account for cyclical difference
+        #     if direction_diff > 180:
+        #         direction_diff -= 360
+        #     elif direction_diff < -180:
+        #         direction_diff += 360
 
-            return direction_diff
+        #     return abs(direction_diff)
 
         # Gives back indexes that lie between start and end index of a cyclical list 
         # (start index is included, end index is not)
@@ -187,33 +190,39 @@ class Reward:
             car_x = params['x']
             car_y = params['y']
             car_heading = params['heading']
-            
+
             # Calculate the vector from the car to the inner border
             inner_vector_x = inner_border2[0] - car_x
             inner_vector_y = inner_border2[1] - car_y
-            
+
             # Calculate the vector from the car to the outer border
             outer_vector_x = outer_border2[0] - car_x
             outer_vector_y = outer_border2[1] - car_y
-            
+
             # Compute the angles in degrees
             inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
             outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
-            
+
             # Normalize angles to be within 0 to 360 degrees
             inner_heading = (inner_heading + 360) % 360
             outer_heading = (outer_heading + 360) % 360
-            
-            # Ensure car heading is in the same range
+
+            # Normalize car heading to be within 0 to 360 degrees
             car_heading = (car_heading + 360) % 360
-            
+            print(f'car_heading: {car_heading}')
+
             # Get the min and max headings
-            min_heading = min(inner_heading, outer_heading) - 1
-            max_heading = max(inner_heading, outer_heading) + 1
-            
-            # Check if the car's heading is within the range
-            is_within_range = min_heading <= car_heading <= max_heading
-            
+            min_heading = min(inner_heading, outer_heading)
+            max_heading = max(inner_heading, outer_heading)
+
+            # Check if the car's heading is within the range considering circular nature
+            if max_heading - min_heading <= 180:
+                # Normal case where min_heading is less than max_heading and the angle difference is <= 180
+                is_within_range = min_heading <= car_heading <= max_heading
+            else:
+                # Case where angles wrap around, e.g., min_heading=60, max_heading=270, car_heading=350
+                is_within_range = car_heading >= max_heading or car_heading <= min_heading
+
             return min_heading, max_heading, is_within_range
 
         #################### RACING LINE ######################
@@ -389,6 +398,10 @@ class Reward:
         is_crashed = params['is_crashed']
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
+        closest_waypoints = params['closest_waypoints']
+        is_left_of_center = params['is_left_of_center']
+        prev_waypoint_index = closest_waypoints[0]
+        next_waypoint_index = closest_waypoints[1]
 
         ############### OPTIMAL X,Y,SPEED,TIME ################
 
@@ -462,27 +475,38 @@ class Reward:
 
         reward += intermediate_progress_bonus
 
-        direction_diff = racing_direction_diff(
-            optimals[0:2], optimals_second[0:2], [x, y], heading)
-        # Harshly punish if direction is obviously wrong
-        if direction_diff > 60:
-            reward = 1e-3
-        elif direction_diff > 45:
-            reward *= 0.05
-        elif direction_diff > 30:
-            reward *= 0.1
-        elif direction_diff > 25:
-            reward *= 0.8
-        elif direction_diff > 20:
-            reward *= 0.9
-        # I have found that the model struggles to learn if direction reward is given linearly
-        # in proportion to distance reward... Perhaps they conflict. Turning this off for now.
+        # Turning all checks for direction diff from racing line off for now... This should work now,
+        # but I haven't tested it thoroughly so don't want to risk it causing problems.
+        # direction_diff = racing_direction_diff(
+        #     optimals[0:2], optimals_second[0:2], [x, y], heading)
+        # # Harshly punish if direction is obviously wrong
+        # if direction_diff > 60:
+        #     reward = 1e-3
+        # elif direction_diff > 45:
+        #     reward *= 0.05
+        # elif direction_diff > 30:
+        #     reward *= 0.1
+        # elif direction_diff > 25:
+        #     reward *= 0.8
+        # elif direction_diff > 20:
+        #     reward *= 0.9
         # direction_reward = (1 - (direction_diff / 60)) * direction_multiplier
         # reward += direction_reward
             
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
         
+        marker1 = 0.5 * (track_width/2)
+        if is_within_range:
+            reward += ((progress/steps)**2) * 2
+            # Give special rewards for the right hand turn. Reward for being in right lane and for 
+            # being far from the center line.
+            if next_waypoint_index > 59 and next_waypoint_index < 81:
+                if not is_left_of_center:
+                    reward += ((progress/steps)**2) * 5
+                if distance_from_center > marker1 and next_waypoint_index > 65 and next_waypoint_index < 78:
+                    reward += ((progress/steps)**2) * 5
+                    
         # This gives a harsh penalty if the car is not steering in range.
         if not is_within_range:
             print('Penalizing the car for heading off track.')
