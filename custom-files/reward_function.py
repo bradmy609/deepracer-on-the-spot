@@ -275,7 +275,7 @@ class Reward:
             if correct_side:
                 side_multiplier = 1
             else:
-                side_multiplier = 0.01
+                side_multiplier = 0.6
             
             if in_range:
                 range_multiplier = 1
@@ -702,10 +702,10 @@ class Reward:
         elif abs(direction_diff) > 30:
             reward *= 0.1
         # Turning off direction reward for now
-        # elif abs(direction_diff) < 30:
+        elif abs(direction_diff) < 30:
             # If direction diff is less than 30, add direction reward, max of 1.
-            # direction_reward = (1 - (direction_diff / 30))
-            # reward += max(direction_reward, 0.001)
+            direction_reward = (1 - (direction_diff / 30))
+            reward += max(direction_reward, 0.001)
 
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
