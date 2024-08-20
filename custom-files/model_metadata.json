@@ -21,9 +21,9 @@
         {"steering_angle": 12.5, "speed": 1.7},
         {"steering_angle": 15, "speed": 1.5},
         {"steering_angle": 17.5, "speed": 1.4},
-        {"steering_angle": 20, "speed": 1.3},
+        {"steering_angle": 20, "speed": 1.4},
         {"steering_angle": -12.5, "speed": 1.7},
-        {"steering_angle": -20, "speed": 1.3}
+        {"steering_angle": -20, "speed": 1.4}
     ],
     "sensor": ["FRONT_FACING_CAMERA"],
     "neural_network": "DEEP_CONVOLUTIONAL_NETWORK_SHALLOW",
