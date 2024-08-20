@@ -97,31 +97,33 @@ class Reward:
                 prev_point_coords = closest_coords
 
             return [next_point_coords, prev_point_coords]
+        # This function calculates the difference between the direction the car is heading
+        # and the direction of the racing line waypoints. This has not been tested, and I am unsure if it
+        # is working properly.
+        def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
+            # Calculate the direction of the center line based on the closest waypoints
+            next_point, prev_point = next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading)
 
-        # def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
-        #     # Calculate the direction of the center line based on the closest waypoints
-        #     next_point, prev_point = next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading)
+            # Calculate the direction in radians, the result is (-pi, pi) in radians
+            track_direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0])
 
-        #     # Calculate the direction in radians, the result is (-pi, pi) in radians
-        #     track_direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0])
+            # Convert to degrees
+            track_direction = math.degrees(track_direction)
 
-        #     # Convert to degrees
-        #     track_direction = math.degrees(track_direction)
+            # Normalize angles to be within -180 to 180 degrees
+            track_direction = (track_direction + 360) % 360
+            heading = (heading + 360) % 360
 
-        #     # Normalize angles to be within -180 to 180 degrees
-        #     track_direction = (track_direction + 360) % 360
-        #     heading = (heading + 360) % 360
-
-        #     # Calculate the difference between the track direction and the heading direction of the car
-        #     direction_diff = track_direction - heading
+            # Calculate the difference between the track direction and the heading direction of the car
+            direction_diff = track_direction - heading
             
-        #     # Account for cyclical difference
-        #     if direction_diff > 180:
-        #         direction_diff -= 360
-        #     elif direction_diff < -180:
-        #         direction_diff += 360
+            # Account for cyclical difference
+            if direction_diff > 180:
+                direction_diff -= 360
+            elif direction_diff < -180:
+                direction_diff += 360
 
-        #     return abs(direction_diff)
+            return abs(direction_diff)
 
         # Gives back indexes that lie between start and end index of a cyclical list 
         # (start index is included, end index is not)
@@ -428,7 +430,8 @@ class Reward:
         DISTANCE_MULTIPLE = 1
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
         distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-        reward += distance_reward * DISTANCE_MULTIPLE
+        dc = max(distance_reward * DISTANCE_MULTIPLE, 0.001)
+        # reward += distance_reward * DISTANCE_MULTIPLE
 
         ## Reward if speed is close to optimal speed ##
         SPEED_DIFF_NO_REWARD = 1
@@ -440,12 +443,43 @@ class Reward:
             speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
         else:
             speed_reward = 0
-        reward += speed_reward * SPEED_MULTIPLE
+            
+        sc = max(speed_reward * SPEED_MULTIPLE, 0.001)
+        # reward += speed_reward * SPEED_MULTIPLE
 
+        direction_diff = racing_direction_diff(
+            optimals[0:2], optimals_second[0:2], [x, y], heading)
+        
+        direction_reward = (1 - (direction_diff / 60))
+        hc = direction_reward
+        
+        rew1 = hc ** 2
+        rew2 = dc ** 2
+        rew3 = sc ** 2
+        rew4 = hc * dc
+        rew5 = hc * sc
+        rew6 = dc * sc
+        rew7 = (hc * dc * sc) * 2
+        # Reward calculated below. This is new strategy. Punishments will be given after reward.
+        # bonus rewards will be given after punishments.
+        reward = rew1 + rew2 + rew3 + rew4 + rew5 + rew6 + rew7
+        
+        # Punish direction different from racing line
+        if direction_diff > 60:
+            reward = 1e-3
+        elif direction_diff > 45:
+            reward *= 0.05
+        elif direction_diff > 30:
+            reward *= 0.1
+        elif direction_diff > 25:
+            reward *= 0.8
+        elif direction_diff > 20:
+            reward *= 0.9
+        
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
         STANDARD_TIME = 22
-        FASTEST_TIME = 18.5
+        FASTEST_TIME = 18
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -457,10 +491,28 @@ class Reward:
         except:
             steps_reward = 0
         reward += steps_reward
-
+            
+        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
+        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        
+        if is_within_range:
+            reward += ((progress/steps)**2)
+        # This gives a harsh penalty if the car is not steering in range.
+        if not is_within_range:
+            print('Penalizing the car for heading off track.')
+            print('heading: ', heading)
+            print('min_heading: ', min_heading)
+            print('max_heading: ', max_heading )
+            reward = 1e-3
+        
+        # Zero reward of obviously too slow
+        speed_diff_zero = optimals[2]-speed
+        if speed_diff_zero > 0.5:
+            reward *= 0.5
+        
         # PROGRESS REWARD #
         # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
-        progress_multiplier = 5 # This determines how much the car prioritizes lap completion.
+        progress_multiplier = 2 # This determines how much the car prioritizes lap completion.
         pi = int(progress // 10)  # Calculate which 10% segment we're in
         
         # Initialize intermediate_progress_bonus to 0 for safety
@@ -475,84 +527,53 @@ class Reward:
 
         reward += intermediate_progress_bonus
 
-        # Turning all checks for direction diff from racing line off for now... This should work now,
-        # but I haven't tested it thoroughly so don't want to risk it causing problems.
-        # direction_diff = racing_direction_diff(
-        #     optimals[0:2], optimals_second[0:2], [x, y], heading)
-        # # Harshly punish if direction is obviously wrong
-        # if direction_diff > 60:
-        #     reward = 1e-3
-        # elif direction_diff > 45:
-        #     reward *= 0.05
-        # elif direction_diff > 30:
-        #     reward *= 0.1
-        # elif direction_diff > 25:
-        #     reward *= 0.8
-        # elif direction_diff > 20:
-        #     reward *= 0.9
-        # direction_reward = (1 - (direction_diff / 60)) * direction_multiplier
-        # reward += direction_reward
-            
-        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
-        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
-        
-        marker1 = 0.5 * (track_width/2)
-        if is_within_range:
-            reward += ((progress/steps)**2) * 2
-            # Give special rewards for the right hand turn. Reward for being in right lane and for 
-            # being far from the center line.
-            if next_waypoint_index > 59 and next_waypoint_index < 81:
-                if not is_left_of_center:
-                    reward += ((progress/steps)**2) * 5
-                if distance_from_center > marker1 and next_waypoint_index > 65 and next_waypoint_index < 78:
-                    reward += ((progress/steps)**2) * 5
-        # This gives a harsh penalty if the car is not steering in range.
-        if not is_within_range:
-            print('Penalizing the car for heading off track.')
-            print('heading: ', heading)
-            print('min_heading: ', min_heading)
-            print('max_heading: ', max_heading )
-            reward = 1e-3
-
-        # Zero reward of obviously too slow
-        speed_diff_zero = optimals[2]-speed
-        if speed_diff_zero > 0.5:
-            reward = 1e-3
-
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
         STANDARD_TIME = 21  # seconds (time that is easily done by model)
-        FASTEST_TIME = 18.5  # seconds (best time of 1st place on the track)
+        FASTEST_TIME = 18  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
         else:
             finish_reward = 0
         reward += finish_reward
-
-        # Zero reward if the center of the car is off the track.
-        # This will add a margin of 
-
-        if is_crashed:
-            reward = min(reward, 0.001)
+        
+        # Must be on the inside quarter of the track on turns.
+        marker1 = 0.5 * (track_width/2)
+        # Hardcoding waypoint indexes
+        if next_waypoint_index > 59 and next_waypoint_index < 81:
+            # Stay to the right on right hand turn. This is very important and has been problematic so giving big reward for
+            # being on the right hand side of the track, and the inside quadrant of the track.
+            if not is_left_of_center:
+                reward += ((progress/steps)**2) * 4
+                if distance_from_center > marker1 and next_waypoint_index > 65 and next_waypoint_index < 78:
+                    reward += ((progress/steps)**2) * 4
+        if (next_waypoint_index > 10 and next_waypoint_index < 20) or (next_waypoint_index > 35 and next_waypoint_index < 53) or (next_waypoint_index > 92 and next_waypoint_index < 107) or (next_waypoint_index > 130 and next_waypoint_index < 139):
+            if is_left_of_center:
+                reward += ((progress/steps)**2) * 2
+                if distance_from_center > marker1:
+                    reward += ((progress/steps)**2) * 2
+        
         # Cut reward in half if one wheel is off the track
         if not all_wheels_on_track:
-            if distance_from_center >= 0.5 * track_width:
-                reward = min(reward, 0.001)
+            if abs(distance_from_center) >= 0.5 * track_width:
+                reward *= 0.5
+                if abs(distance_from_center) >= (0.5 * track_width) + 0.05:
+                    reward = 1e-3
 
         ####################### VERBOSE #######################
 
-        if self.verbose == True:
-            print("Closest index: %i" % closest_index)
-            print("Distance to racing line: %f" % dist)
-            print("=== Distance reward (w/out multiple): %f ===" % (distance_reward))
-            print("Optimal speed: %f" % optimals[2])
-            print("Speed difference: %f" % speed_diff)
-            print("=== Speed reward (w/out multiple): %f ===" % speed_reward)
-            # print("Direction difference: %f" % direction_diff)
-            print("Predicted time: %f" % projected_time)
-            print("=== Steps reward: %f ===" % steps_reward)
-            print("=== Finish reward: %f ===" % finish_reward)
+        # if self.verbose == True:
+        #     print("Closest index: %i" % closest_index)
+        #     print("Distance to racing line: %f" % dist)
+        #     print("=== Distance reward (w/out multiple): %f ===" % (distance_reward))
+        #     print("Optimal speed: %f" % optimals[2])
+        #     print("Speed difference: %f" % speed_diff)
+        #     print("=== Speed reward (w/out multiple): %f ===" % speed_reward)
+        #     # print("Direction difference: %f" % direction_diff)
+        #     print("Predicted time: %f" % projected_time)
+        #     print("=== Steps reward: %f ===" % steps_reward)
+        #     print("=== Finish reward: %f ===" % finish_reward)
 
         #################### RETURN REWARD ####################
 
