@@ -506,7 +506,6 @@ class Reward:
                     reward += ((progress/steps)**2) * 5
                 if distance_from_center > marker1 and next_waypoint_index > 65 and next_waypoint_index < 78:
                     reward += ((progress/steps)**2) * 5
-                    
         # This gives a harsh penalty if the car is not steering in range.
         if not is_within_range:
             print('Penalizing the car for heading off track.')
@@ -538,8 +537,6 @@ class Reward:
             reward = min(reward, 0.001)
         # Cut reward in half if one wheel is off the track
         if not all_wheels_on_track:
-            reward *= 0.5
-            # reduce reward to nothing if car is halfway off the track, this is too risky until laps are reliable.
             if distance_from_center >= 0.5 * track_width:
                 reward = min(reward, 0.001)
 
@@ -552,7 +549,7 @@ class Reward:
             print("Optimal speed: %f" % optimals[2])
             print("Speed difference: %f" % speed_diff)
             print("=== Speed reward (w/out multiple): %f ===" % speed_reward)
-            print("Direction difference: %f" % direction_diff)
+            # print("Direction difference: %f" % direction_diff)
             print("Predicted time: %f" % projected_time)
             print("=== Steps reward: %f ===" % steps_reward)
             print("=== Finish reward: %f ===" % finish_reward)
