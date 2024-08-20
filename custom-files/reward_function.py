@@ -275,7 +275,7 @@ class Reward:
             if correct_side:
                 side_multiplier = 1
             else:
-                side_multiplier = 0.5
+                side_multiplier = 0.01
             
             if in_range:
                 range_multiplier = 1
