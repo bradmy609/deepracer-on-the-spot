@@ -1,4 +1,3 @@
-# Import package (needed for heading)
 import math
 import numpy as np
 
@@ -16,6 +15,10 @@ class Reward:
         self.verbose = verbose
 
     def reward_function(self, params):
+
+        # Import package (needed for heading)
+        import math
+        import numpy as np
 
         ################## HELPER FUNCTIONS ###################
 
@@ -215,6 +218,75 @@ class Reward:
             is_within_range = min_heading <= car_heading <= max_heading
             
             return min_heading, max_heading, is_within_range
+            
+        def get_closest_waypoints_info(params, cl_dists):
+            prev_waypoint = params['closest_waypoints'][0] % len(cl_dists)
+            next_waypoint = params['closest_waypoints'][1] % len(cl_dists)
+            
+            # Get the absolute distance from center and side values
+            prev_abs_dist = cl_dists[prev_waypoint][0]
+            prev_side = cl_dists[prev_waypoint][1]
+            next_abs_dist = cl_dists[next_waypoint][0]
+            next_side = cl_dists[next_waypoint][1]
+            return prev_abs_dist, prev_side, next_abs_dist, next_side
+                
+        def is_car_on_correct_side(prev_side, next_side, is_left_of_center):
+            if prev_side == 1 and next_side == -1:
+                return True
+            elif prev_side == -1 and next_side == 1:
+                return True
+            elif prev_side == 1 and next_side == 1 and is_left_of_center:
+                return True
+            elif prev_side == -1 and next_side == -1 and not is_left_of_center:
+                return True
+            else:
+                return False
+                
+        def is_car_in_range(prev_abs_dist, next_abs_dist, distance_from_center):
+            minimum = min(prev_abs_dist, next_abs_dist)
+            maximum = max(prev_abs_dist, next_abs_dist)
+            if distance_from_center >= minimum and distance_from_center <= maximum:
+                return True
+            else:
+                return False
+                
+        def calculate_distance_from_range(distance_from_center, prev_abs_dist, next_abs_dist, track_width):
+            min_dist = min(prev_abs_dist, next_abs_dist)
+            max_dist = min(prev_abs_dist, next_abs_dist)
+            # Calculate how far the car is outside of the range
+            distance_outside_range = min(abs(distance_from_center - min_dist), abs(distance_from_center - max_dist))
+            # Normalize the distance by half the track width
+            normalized_distance = distance_outside_range / (0.5 * track_width)
+        
+            return normalized_distance
+            
+        def calculate_distance_reward(params, cl_dists):
+            distance_from_center = abs(params['distance_from_center'])
+            is_left_of_center = params['is_left_of_center']
+            
+            # Retrieve the closest waypoints info
+            prev_abs_dist, prev_side, next_abs_dist, next_side = get_closest_waypoints_info(params, cl_dists)
+        
+            distance_reward = 1
+            
+            correct_side = is_car_on_correct_side(prev_side, next_side, is_left_of_center)
+            in_range = is_car_in_range(prev_abs_dist, next_abs_dist, distance_from_center)
+            
+            if correct_side:
+                side_multiplier = 1
+            else:
+                side_multiplier = 0.5
+            
+            if in_range:
+                range_multiplier = 1
+            else:
+                distance_from_range = calculate_distance_from_range(distance_from_center, prev_abs_dist, next_abs_dist, track_width)
+                range_multiplier = max(0.001, 0.8 - distance_from_range)
+            
+            distance_reward *= side_multiplier * range_multiplier
+            distance_reward = max(0.001, distance_reward)
+        
+            return distance_reward
 
         #################### RACING LINE ######################
 
@@ -374,6 +446,162 @@ class Reward:
         [5.05029, -0.04181, 4.0, 0.0753],
         [5.04772, 0.25863, 4.0, 0.07511],
         [5.04206, 0.55788, 4.0, 0.07483]]
+        
+        cl_dists = [[0.020237057859624274, 1.0],
+        [0.03468055388332198, 1.0],
+        [0.05432052055854427, 1.0],
+        [0.08005490139075633, 1.0],
+        [0.11303260958139062, 1.0],
+        [0.15379436746105463, 1.0],
+        [0.20285737680752725, 1.0],
+        [0.2658898683453689, 1.0],
+        [0.34717310072816254, 1.0],
+        [0.4298194108394461, 1.0],
+        [0.4877103248812322, 1.0],
+        [0.5085800251713676, 1.0],
+        [0.5073033272381243, 1.0],
+        [0.5023582428838707, 1.0],
+        [0.49266345102797454, 1.0],
+        [0.4762650995192625, 1.0],
+        [0.45657448399905376, 1.0],
+        [0.4309889613985661, 1.0],
+        [0.39583199016569504, 1.0],
+        [0.35333590205411936, 1.0],
+        [0.3025299346542182, 1.0],
+        [0.24912259275340462, 1.0],
+        [0.2014375996263383, 1.0],
+        [0.16629074217061374, 1.0],
+        [0.14180813613684387, 1.0],
+        [0.12922975416144178, 1.0],
+        [0.12960417740680827, 1.0],
+        [0.1431865310996151, 1.0],
+        [0.169010620845397, 1.0],
+        [0.2057959307279901, 1.0],
+        [0.2528054057570386, 1.0],
+        [0.30939425454622, 1.0],
+        [0.3760607621724892, 1.0],
+        [0.4513522497503347, 1.0],
+        [0.423783731229156, 1.0],
+        [0.4655417595250993, 1.0],
+        [0.4928659631151789, 1.0],
+        [0.5013895151581883, 1.0],
+        [0.5059124219462622, 1.0],
+        [0.5096229431844997, 1.0],
+        [0.5116989097009685, 1.0],
+        [0.5144929929208357, 1.0],
+        [0.5171981548022795, 1.0],
+        [0.518692744778065, 1.0],
+        [0.5191840687989955, 1.0],
+        [0.5171887310000329, 1.0],
+        [0.5119093154984041, 1.0],
+        [0.5079101096122944, 1.0],
+        [0.5043794983783491, 1.0],
+        [0.5081047345243662, 1.0],
+        [0.5069366656213239, 1.0],
+        [0.4991058847095161, 1.0],
+        [0.47030779150277974, 1.0],
+        [0.42182532377394816, 1.0],
+        [0.36449206394723455, 1.0],
+        [0.302412719833937, 1.0],
+        [0.23617749273868394, 1.0],
+        [0.17342252968768476, 1.0],
+        [0.10625704051936612, 1.0],
+        [0.04522392602673052, 1.0],
+        [0.01698472408899849, -1.0],
+        [0.09024736259332479, -1.0],
+        [0.17670340150537955, -1.0],
+        [0.2750538355615476, -1.0],
+        [0.37280255453242234, -1.0],
+        [0.44203518317572266, -1.0],
+        [0.48838380581629365, -1.0],
+        [0.5095465752710988, -1.0],
+        [0.5118559668257942, -1.0],
+        [0.5089916453817883, -1.0],
+        [0.5015646663596905, -1.0],
+        [0.49962955690410776, -1.0],
+        [0.5061931196699034, -1.0],
+        [0.49225490565216906, -1.0],
+        [0.49442798154140094, -1.0],
+        [0.501546103786599, -1.0],
+        [0.5024338305301388, -1.0],
+        [0.48729976061590297, -1.0],
+        [0.4506281918515226, -1.0],
+        [0.3858258117191973, -1.0],
+        [0.30458720103054215, -1.0],
+        [0.21121332187837577, -1.0],
+        [0.1404306759034293, -1.0],
+        [0.08513151971222795, -1.0],
+        [0.04435869352434843, -1.0],
+        [0.01593241880657353, -1.0],
+        [0.0007996397367263395, 1.0],
+        [0.030024746666493782, 1.0],
+        [0.0730419401400649, 1.0],
+        [0.13187553024596474, 1.0],
+        [0.20785881112993568, 1.0],
+        [0.30644144608540486, 1.0],
+        [0.40818892357073355, 1.0],
+        [0.47238495532980324, 1.0],
+        [0.5023874426533972, 1.0],
+        [0.5082722833207497, 1.0],
+        [0.5063954921252202, 1.0],
+        [0.5024303664458067, 1.0],
+        [0.5008198624651237, 1.0],
+        [0.5074553387631133, 1.0],
+        [0.5063192402793517, 1.0],
+        [0.497901233217846, 1.0],
+        [0.5002995100625862, 1.0],
+        [0.5061473154779466, 1.0],
+        [0.5072712541203668, 1.0],
+        [0.48934817982175666, 1.0],
+        [0.4459649029958472, 1.0],
+        [0.37766002061460746, 1.0],
+        [0.29087025956237145, 1.0],
+        [0.20528719751639712, 1.0],
+        [0.13598975416014758, 1.0],
+        [0.0876888161016598, 1.0],
+        [0.05369135921191419, 1.0],
+        [0.030175485435750306, 1.0],
+        [0.015152956902322191, 1.0],
+        [0.006464424997001081, 1.0],
+        [0.002017521435172072, 1.0],
+        [0.0003329145489522657, 1.0],
+        [0.0007681751286834032, 1.0],
+        [0.0036947547930427874, 1.0],
+        [0.00950216997203639, 1.0],
+        [0.018784238470149314, 1.0],
+        [0.03216256985988811, 1.0],
+        [0.05024363479574919, 1.0],
+        [0.07362933855185311, 1.0],
+        [0.10307212848827087, 1.0],
+        [0.13920410041405606, 1.0],
+        [0.18231878287130052, 1.0],
+        [0.23509592868918824, 1.0],
+        [0.3026894264868888, 1.0],
+        [0.37603689999848716, 1.0],
+        [0.4424302470359432, 1.0],
+        [0.48705057507807575, 1.0],
+        [0.5073080173304498, 1.0],
+        [0.5098234899552727, 1.0],
+        [0.5059224990744793, 1.0],
+        [0.5013578072636998, 1.0],
+        [0.4826188393431452, 1.0],
+        [0.44643368858228455, 1.0],
+        [0.38645374515370673, 1.0],
+        [0.30665205133796686, 1.0],
+        [0.22799051242688223, 1.0],
+        [0.16278531233441493, 1.0],
+        [0.11438430485220366, 1.0],
+        [0.07776916594363681, 1.0],
+        [0.05040894322445061, 1.0],
+        [0.030922067665322173, 1.0],
+        [0.017703628195484416, 1.0],
+        [0.00918468483218551, 1.0],
+        [0.0041151725928919875, 1.0],
+        [0.0014718779685806364, 1.0],
+        [0.001292598297877385, 1.0],
+        [0.004084866647740022, 1.0],
+        [0.010244825549734472, 1.0],
+        [0.020237057859624274, 1.0]]
 
         ################## INPUT PARAMETERS ###################
 
@@ -412,10 +640,12 @@ class Reward:
         reward = 1
 
         ## Reward if car goes close to optimal racing line ##
-        DISTANCE_MULTIPLE = 1
-        dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-        distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-        reward += distance_reward * DISTANCE_MULTIPLE
+        # DISTANCE_MULTIPLE = 1
+        # dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
+        # distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
+        # reward += distance_reward * DISTANCE_MULTIPLE
+        distance_reward = calculate_distance_reward(params, cl_dists)
+        reward += distance_reward
 
         ## Reward if speed is close to optimal speed ##
         SPEED_DIFF_NO_REWARD = 1
@@ -444,7 +674,7 @@ class Reward:
         except:
             steps_reward = 0
         reward += steps_reward
-
+        
         # PROGRESS REWARD #
         # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
         progress_multiplier = 5 # This determines how much the car prioritizes lap completion.
@@ -465,31 +695,17 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         # Harshly punish if direction is obviously wrong
-        if direction_diff > 60:
-            reward = 1e-3
-        elif direction_diff > 45:
+        if abs(direction_diff) > 60:
+            reward *= 0.01
+        elif abs(direction_diff) > 45:
             reward *= 0.05
-        elif direction_diff > 30:
+        elif abs(direction_diff) > 30:
             reward *= 0.1
-        elif direction_diff > 25:
-            reward *= 0.8
-        elif direction_diff > 20:
-            reward *= 0.9
-        # I have found that the model struggles to learn if direction reward is given linearly
-        # in proportion to distance reward... Perhaps they conflict. Turning this off for now.
-        # direction_reward = (1 - (direction_diff / 60)) * direction_multiplier
-        # reward += direction_reward
-            
-        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
-        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
-        
-        # This gives a harsh penalty if the car is not steering in range.
-        if not is_within_range:
-            print('Penalizing the car for heading off track.')
-            print('heading: ', heading)
-            print('min_heading: ', min_heading)
-            print('max_heading: ', max_heading )
-            reward = 1e-3
+        # Turning off direction reward for now
+        # elif abs(direction_diff) < 30:
+            # If direction diff is less than 30, add direction reward, max of 1.
+            # direction_reward = (1 - (direction_diff / 30))
+            # reward += max(direction_reward, 0.001)
 
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
@@ -498,7 +714,7 @@ class Reward:
 
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
-        STANDARD_TIME = 21  # seconds (time that is easily done by model)
+        STANDARD_TIME = 22  # seconds (time that is easily done by model)
         FASTEST_TIME = 18.5  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
@@ -506,24 +722,33 @@ class Reward:
         else:
             finish_reward = 0
         reward += finish_reward
-
+        
+        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
+        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        
+        if not is_within_range:
+            print('Penalizing the car for heading off track.')
+            print('heading: ', heading)
+            print('min_heading: ', min_heading)
+            print('max_heading: ', max_heading )
+            reward *= min(reward, 0.001)
+            
         # Zero reward if the center of the car is off the track.
-        # This will add a margin of 
 
         if is_crashed:
             reward = min(reward, 0.001)
-        # Cut reward in half if one wheel is off the track
+        # Slight punishment for 1 wheel offtrack... This can be removed/reduced once we are getting reliable lap completions in evals
         if not all_wheels_on_track:
-            reward *= 0.5
-            # reduce reward to nothing if car is halfway off the track, this is too risky until laps are reliable.
-            if distance_from_center >= 0.5 * track_width:
+            reward *= 0.9
+            # Harsh punishment for 4 wheels offtrack.
+            if distance_from_center > track_width/2 + 0.05:
                 reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
 
         if self.verbose == True:
             print("Closest index: %i" % closest_index)
-            print("Distance to racing line: %f" % dist)
+            # print("Distance to racing line: %f" % dist)
             print("=== Distance reward (w/out multiple): %f ===" % (distance_reward))
             print("Optimal speed: %f" % optimals[2])
             print("Speed difference: %f" % speed_diff)
