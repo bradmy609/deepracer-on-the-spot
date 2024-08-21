@@ -503,11 +503,11 @@ class Reward:
             print('heading: ', heading)
             print('min_heading: ', min_heading)
             print('max_heading: ', max_heading )
-            reward = 1e-3
+            reward *= 0.1
         
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
-        if speed_diff_zero > 0.5:
+        if speed_diff_zero > 0.75:
             reward *= 0.5
         
         # PROGRESS REWARD #
@@ -541,18 +541,22 @@ class Reward:
         # Must be on the inside quarter of the track on turns.
         marker1 = 0.5 * (track_width/2)
         # Hardcoding waypoint indexes
-        if next_waypoint_index > 59 and next_waypoint_index < 81:
+        if (next_waypoint_index > 59 and next_waypoint_index < 83):
             # Stay to the right on right hand turn. This is very important and has been problematic so giving big reward for
             # being on the right hand side of the track, and the inside quadrant of the track.
             if not is_left_of_center:
-                reward += ((progress/steps)**2) * 4
+                reward += ((progress/steps)**2) * 12
                 if distance_from_center > marker1 and next_waypoint_index > 65 and next_waypoint_index < 78:
-                    reward += ((progress/steps)**2) * 4
+                    reward += ((progress/steps)**2) * 12
+                else:
+                    reward *= 0.5
         if (next_waypoint_index > 10 and next_waypoint_index < 20) or (next_waypoint_index > 35 and next_waypoint_index < 53) or (next_waypoint_index > 92 and next_waypoint_index < 107) or (next_waypoint_index > 130 and next_waypoint_index < 139):
             if is_left_of_center:
-                reward += ((progress/steps)**2) * 2
+                reward += ((progress/steps)**2) * 4
                 if distance_from_center > marker1:
-                    reward += ((progress/steps)**2) * 2
+                    reward += ((progress/steps)**2) * 4
+            if not is_left_of_center:
+                reward *= 0.5
         
         # Cut reward in half if one wheel is off the track
         if not all_wheels_on_track:
