@@ -205,6 +205,8 @@ class Reward:
             # Compute the angles in degrees
             inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
             outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
+            print(inner_heading)
+            print(outer_heading)
 
             # Normalize angles to be within 0 to 360 degrees
             inner_heading = (inner_heading + 360) % 360
