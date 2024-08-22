@@ -164,7 +164,7 @@ class Reward:
             closest_waypoints = params['closest_waypoints']
             track_width = params['track_width']
             
-            next_waypoint_index = (closest_waypoints[1] + 1) % len(waypoints)
+            next_waypoint_index = (closest_waypoints[1])
             next_waypoint = waypoints[next_waypoint_index]
             prev_waypoint = waypoints[closest_waypoints[0]]
             
@@ -179,6 +179,7 @@ class Reward:
             
             # Calculate the half-width of the track
             half_width = track_width / 2.0
+            half_width += 0.2
             
             # Calculate the border points
             inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
