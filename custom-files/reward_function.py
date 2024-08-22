@@ -445,7 +445,7 @@ class Reward:
         reward += speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 1
         STANDARD_TIME = 22
         FASTEST_TIME = 18.5
         times_list = [row[3] for row in racing_track]
