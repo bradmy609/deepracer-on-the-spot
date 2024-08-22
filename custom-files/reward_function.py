@@ -3,6 +3,8 @@ import math
 import numpy as np
 
 class STATE:
+    heading_in_right_direction = False
+    has_steering_angle_changed = False
     prev_speed = None
     prev_steering_angle = None 
     prev_steps = None
@@ -98,6 +100,17 @@ class Reward:
                 prev_point_coords = closest_coords
 
             return [next_point_coords, prev_point_coords]
+        
+        def get_track_direction(closest_coords, second_closest_coords, car_coords, heading):
+            # Calculate the direction of the center line based on the closest waypoints
+            next_point, prev_point = next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading)
+
+            # Calculate the direction in radians, the result is (-pi, pi) in radians
+            track_direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0])
+
+            # Convert to degrees
+            track_direction = math.degrees(track_direction)
+            return track_direction
 
         def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
             # Calculate the direction of the center line based on the closest waypoints
@@ -164,7 +177,7 @@ class Reward:
             closest_waypoints = params['closest_waypoints']
             track_width = params['track_width']
             
-            next_waypoint_index = (closest_waypoints[1])
+            next_waypoint_index = closest_waypoints[1]
             next_waypoint = waypoints[next_waypoint_index]
             prev_waypoint = waypoints[closest_waypoints[0]]
             
@@ -432,8 +445,8 @@ class Reward:
         ## Reward if car goes close to optimal racing line ##
         DISTANCE_MULTIPLE = 1.5
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-        distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-        reward += distance_reward * DISTANCE_MULTIPLE
+        normalized_dist = dist/(track_width*0.5)
+        distance_reward = max(1e-3, 1 - normalized_dist) * DISTANCE_MULTIPLE
 
         ## Reward if speed is close to optimal speed ##
         SPEED_DIFF_NO_REWARD = 1
@@ -445,7 +458,7 @@ class Reward:
             speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
         else:
             speed_reward = 0
-        reward += speed_reward * SPEED_MULTIPLE
+        speed_reward = speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1
@@ -494,17 +507,52 @@ class Reward:
         right_lane_reward = 0
         dist_from_cent_reward = 0
         
+        #Penalize making the heading direction worse
+        heading_decrease_bonus = 0
+        if STATE.prev_direction_diff is not None:
+            if STATE.is_heading_in_right_direction:
+                if abs( STATE.prev_direction_diff / direction_diff ) > 1:
+                    heading_decrease_bonus = min(10, abs( STATE.prev_direction_diff / direction_diff ))
+        
+        distance_reduction_bonus = 1
+        if STATE.prev_normalized_distance_from_route is not None and STATE.prev_normalized_distance_from_route > normalized_dist:
+            if abs(normalized_dist) > 0:
+                distance_reduction_bonus = min( abs( STATE.prev_normalized_distance_from_route / normalized_dist ), 2)
+                
+        steering_angle_maintain_bonus = 1 
+        #Not changing the steering angle is a good thing if heading in the right direction
+        if STATE.prev_steering_angle is not None and STATE.prev_steering_angle != params['steering_angle']:
+            STATE.has_steering_angle_changed = True
+            
+        if STATE.is_heading_in_right_direction and not STATE.has_steering_angle_changed:
+            if abs(direction_diff) < 10:
+                steering_angle_maintain_bonus *= 2
+            if abs(direction_diff) < 5:
+                steering_angle_maintain_bonus *= 2
+            if STATE.prev_direction_diff is not None and abs(STATE.prev_direction_diff) > abs(direction_diff):
+                steering_angle_maintain_bonus *= 2
+        
+        HC = direction_reward * steering_angle_maintain_bonus
+        DC = distance_reward * distance_reduction_bonus
+        SC = speed_reward
+        IC = ( HC + DC + SC ) ** 2 + ( HC * DC * SC )
+        reward += IC
+        
         def is_in_right_turn(next_waypoint_index):
             return next_waypoint_index > 61 and next_waypoint_index < 79
         
         # Hardcoding waypoint indexes for bonus rewards during difficult portions of track.
-        if is_in_right_turn(next_waypoint_index) and next_waypoint_index not in STATE.rewarded_waypoints:
+        if is_in_right_turn(next_waypoint_index):
+            if heading < -15 and heading > -150:
+                reward += 1
+            if params['steering_angle'] < -5:
+                reward += 1
             # Reward for staying right of center on right turn. 1 per waypoint.
             if not is_left_of_center:
                 reward *= 2
                 right_lane_reward = 1
                 reward += right_lane_reward
-                STATE.rewarded_waypoints.append(next_waypoint_index)
+                # STATE.rewarded_waypoints.append(next_waypoint_index)
                 print("Car is in the right lane on right turn. Multiplying reward by 2.")
                 print("Car is in the right lane on right turn. Adding 1 to reward.")
             # If the car is on left lane during a right hand turn, give it a reward that scales with distance from center_line.
@@ -513,7 +561,7 @@ class Reward:
                 dist_from_cent_reward = (1 - dist_from_cent_norm)
                 print("Car is in the left lane during right turn. Giving bonus dist from center reward.")
                 reward += dist_from_cent_reward
-                STATE.rewarded_waypoints.append(next_waypoint_index)
+                # STATE.rewarded_waypoints.append(next_waypoint_index)
         # # Reward for staying close to center line on difficult straightaway after right hand turn.
         # elif next_waypoint_index > 79 and next_waypoint_index < 88 and next_waypoint_index not in STATE.rewarded_waypoints:
         #     dist_from_cent_norm = distance_from_center / (track_width/2)
@@ -545,6 +593,7 @@ class Reward:
             reward *= 0.1
             
         # Punish based on how far off the car's heading is from racing line. This is a rather light punishment, as i've found that works better.
+        direction_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
         if direction_diff > 60:
             reward *= 0.01
         elif direction_diff > 45:
@@ -552,14 +601,13 @@ class Reward:
         elif direction_diff > 30:
             reward *= 0.5
         elif direction_diff > 25:
-            reward *= 0.6
-        elif direction_diff > 20:
-            reward *= 0.7
-        elif direction_diff > 15:
             reward *= 0.8
-        elif direction_diff > 10:
+        elif direction_diff > 20:
             reward *= 0.9
-
+        elif direction_diff <= 20:
+            STATE.heading_in_right_direction = True
+            direction_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
+                
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1500 # should be adapted to track length and other rewards
         STANDARD_TIME = 22  # seconds (time that is easily done by model)
@@ -605,7 +653,7 @@ class Reward:
         STATE.prev_steering_angle = params['steering_angle']
         STATE.prev_direction_diff = direction_diff
         STATE.prev_steps = params['steps']
-        STATE.prev_normalized_distance_from_route = dist
+        STATE.prev_normalized_distance_from_route = normalized_dist
 
         # Always return a float value
         return float(reward)
