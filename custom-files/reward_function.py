@@ -489,6 +489,7 @@ class Reward:
         # Quarter of track marker.
         # marker1 = 0.5 * (track_width/2)
         right_lane_reward = 0
+        dist_from_cent_reward = 0
         
         def is_in_right_turn(next_waypoint_index):
             return next_waypoint_index > 61 and next_waypoint_index < 79
@@ -504,7 +505,7 @@ class Reward:
                 print("Car is in the right lane on right turn. Multiplying reward by 2.")
                 print("Car is in the right lane on right turn. Adding 1 to reward.")
             # If the car is on left lane during a right hand turn, give it a reward that scales with distance from center_line.
-            elif is_left_of_center and is_in_right_turn():
+            elif is_left_of_center and is_in_right_turn(next_waypoint_index):
                 dist_from_cent_norm = distance_from_center / (track_width/2)
                 dist_from_cent_reward = (1 - dist_from_cent_norm)
                 print("Car is in the left lane during right turn. Giving bonus dist from center reward.")
@@ -580,6 +581,8 @@ class Reward:
         if self.verbose == True and is_in_right_turn(next_waypoint_index):
             print(f'Car is inbetween waypoints {prev_waypoint_index} and {next_waypoint_index}')
             print('\n### PRINTING REWARDS ###\n')
+            print("=== Dist from cent %f ===" % dist_from_cent_reward)
+            print("=== Right lane reward %f ===" % right_lane_reward)
             print("=== Progress: %f ===" % progress)
             print("Closest index: %i" % closest_index)
             print("Distance to racing line: %f" % dist)
