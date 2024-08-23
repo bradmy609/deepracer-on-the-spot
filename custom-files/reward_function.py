@@ -445,7 +445,7 @@ class Reward:
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
         STANDARD_TIME = 22
-        FASTEST_TIME = 18
+        FASTEST_TIME = 18.5
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -466,13 +466,9 @@ class Reward:
         elif direction_diff > 25:
             reward *= 0.5
         elif direction_diff > 20:
-            reward *= 0.7
-        elif direction_diff > 15:
             reward *= 0.8
-        elif direction_diff > 10:
+        elif direction_diff > 15:
             reward *= 0.9
-        elif direction_diff < 10:
-            reward *= 1
             
             
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
@@ -502,13 +498,16 @@ class Reward:
             else:
                 reward *= 0.5
         # Steer straight on straight sections of the track.
-        if (next_waypoint_index > 0 and next_waypoint_index < 7) or (next_waypoint_index > 22 and next_waypoint_index < 34) or (next_waypoint_index > 112 and next_waypoint_index < 128) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63):
+        if (next_waypoint_index > -1 and next_waypoint_index < 7) or (next_waypoint_index > 22 and next_waypoint_index < 34) or (next_waypoint_index > 112 and next_waypoint_index < 128) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63):
             # Harshly punish sharp steering on straight section.
-            if params['steering_angle'] > 5 or params['steering_angle'] < -5:
+            if params['steering_angle'] > 3 or params['steering_angle'] < -3:
                 reward *= 0.1
             # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
             if params['distance_from_center'] > (track_width/2) * 0.9:
                 reward *= 0.1
+            else:
+                reward += speed_reward * SPEED_MULTIPLE
+            
         
         ################ React to State Changes ################
         
