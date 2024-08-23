@@ -438,7 +438,7 @@ class Reward:
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
         STANDARD_TIME = 22
-        FASTEST_TIME = 18
+        FASTEST_TIME = 18.2
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -451,31 +451,46 @@ class Reward:
             steps_reward = 0
         reward += steps_reward
 
+        ################## DIRECTION PUNISHMENT ##################
+
         # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
+        # Harsh punishment if off by 30+ degrees.
         if direction_diff > 30:
             reward = 1e-3
+        # Moderate punishment if off by 25+ degrees.
         elif direction_diff > 25:
             reward *= 0.5
+        # Mild punishment if off by 20+ degrees.
         elif direction_diff > 20:
             reward *= 0.8
-        elif direction_diff > 15:
-            reward *= 0.9
-            
+        
+        ################## END DIRECTION PUNISHMENT ##################
+        
+        ################## HARDCODED WAYPOINT INCENTIVES ##################
+        
+        # Reward for staying inside on sharp 180 degree right turn, punishment for being outside.
         if next_waypoint_index > 63 and next_waypoint_index < 72:
-            if params['is_left_of_center']:
-                reward *= 0.5
+            if params['is_left_of_center']: 
+                reward *= 0.5 # Half reward if in left during right turn.
             else:
-                reward *= 1.5
+                reward += 0.5 # Add small reward for being in right on right turn.
+                
+        # Slight reward for staying inside on sharp 180 degree left turn, punishment for being outside.
         if next_waypoint_index > 91 and next_waypoint_index < 100:
             if params['is_left_of_center']:
-                reward *= 1.5
-            else:
+                reward += 0.5 # Slight reward for being in left during left turn.
+            else: # Half reward if in right during left turn.
                 reward *= 0.5
+        
+        ################## END WAYPOINT INCENTIVES #####################
 
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        
+        # Steering limiter. If car isn't in range of triangle formed between car and next border 
+        # waypoints, set reward to zero.
         if not is_within_range:
             reward = 1e-3
         # Zero reward of obviously too slow
@@ -486,7 +501,7 @@ class Reward:
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
         STANDARD_TIME = 21  # seconds (time that is easily done by model)
-        FASTEST_TIME = 18  # seconds (best time of 1st place on the track)
+        FASTEST_TIME = 18.2  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
@@ -501,9 +516,8 @@ class Reward:
 
         # Zero reward if the center of the car is off the track.
 
-        if is_crashed:
-            reward = min(reward, 0.001)
-        elif not all_wheels_on_track and abs(distance_from_center) > (track_width/2):
+        # Harsh punishment for half the car being off-track.
+        if not all_wheels_on_track and abs(distance_from_center) > (track_width/2):
             reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
