@@ -4,8 +4,7 @@ import numpy as np
 
 class STATE:
     prev_speed = None
-    prev_steering_angle = None 
-    prev_steps = None
+    prev_steering = None 
     prev_direction_diff = None
     prev_normalized_distance_from_route = None
     intermediate_progress = {i: 0 for i in range(1, 11)}
@@ -427,7 +426,8 @@ class Reward:
         ## Reward if car goes close to optimal racing line ##
         DISTANCE_MULTIPLE = 1
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-        distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
+        normalized_dist = dist/(track_width*0.5)
+        distance_reward = max(1e-3, 1 - normalized_dist)
         reward += distance_reward * DISTANCE_MULTIPLE
 
         ## Reward if speed is close to optimal speed ##
@@ -445,7 +445,7 @@ class Reward:
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
         STANDARD_TIME = 22
-        FASTEST_TIME = 18.5
+        FASTEST_TIME = 18
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -466,13 +466,13 @@ class Reward:
         elif direction_diff > 25:
             reward *= 0.5
         elif direction_diff > 20:
-            reward *= 0.8
+            reward *= 0.7
         elif direction_diff > 15:
-            reward *= 0.9
+            reward *= 0.8
         elif direction_diff > 10:
-            reward *= 1
+            reward *= 0.9
         elif direction_diff < 10:
-            reward *= 1.1
+            reward *= 1
             
             
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
@@ -501,28 +501,67 @@ class Reward:
                 reward += 0.5
             else:
                 reward *= 0.5
-                
         # Steer straight on straight sections of the track.
-        if (next_waypoint_index > 0 and next_waypoint_index < 7) or (next_waypoint_index > 20 and next_waypoint_index < 37) or (next_waypoint_index > 112 and next_waypoint_index < 128):
+        if (next_waypoint_index > 0 and next_waypoint_index < 7) or (next_waypoint_index > 22 and next_waypoint_index < 34) or (next_waypoint_index > 112 and next_waypoint_index < 128) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63):
+            # Harshly punish sharp steering on straight section.
             if params['steering_angle'] > 5 or params['steering_angle'] < -5:
                 reward *= 0.1
-                    
-        # PROGRESS REWARD #
-        # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
-        progress_multiplier = 5 # This determines how much the car prioritizes lap completion.
-        pi = int(progress // 10)  # Calculate which 10% segment we're in
+            # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
+            if params['distance_from_center'] > (track_width/2) * 0.9:
+                reward *= 0.1
         
-        # Initialize intermediate_progress_bonus to 0 for safety
-        intermediate_progress_bonus = 0
+        ################ React to State Changes ################
+        
+        if STATE.prev_direction_diff is not None:
+            # Punish harshly for 30+ degree heading change, punish moderately for 20+ degree heading change.
+            delta_direction_diff = direction_diff - STATE.prev_direction_diff
+            if delta_direction_diff > 1:
+                reward *= 0.9
+            elif delta_direction_diff > 3:
+                reward *= 0.8
+            elif delta_direction_diff > 5:
+                reward *= 0.5
+            elif delta_direction_diff > 10:
+                reward *= 0.1
+        
+        if STATE.prev_normalized_distance_from_route is not None:
+            # Reward for moving closer to racing line, mild to moderate punishment for moving away.
+            delta_distance = normalized_dist - STATE.prev_normalized_distance_from_route
+            if delta_distance > 0.1:
+                reward *= 0.9
+            elif delta_distance > 0.2:
+                reward *= 0.8
+            elif delta_distance > 0.3:
+                reward *= 0.5
+            elif delta_distance > 0.5:
+                reward *= 0.01
+        
+        # Punish harshly for 30+ degree turn angle change, punish moderately for 20+ degree angle change.
+        if STATE.prev_steering is not None:
+            delta_turn_angle = abs(params['steering_angle'] - STATE.prev_steering)
+            if delta_turn_angle > 30:
+                reward = 1e-3
+            elif delta_turn_angle > 20:
+                reward *= 0.5
+            
+                    
+        # # PROGRESS REWARD #
+        # # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
+        # progress_multiplier = 10 # This determines how much the car prioritizes lap completion.
+        # pi = int(progress // 10)  # Calculate which 10% segment we're in
+        
+        # # Initialize intermediate_progress_bonus to 0 for safety
+        # intermediate_progress_bonus = 0
 
-        # Check if this segment has been completed before
-        if pi != 0 and STATE.intermediate_progress[pi] == 0:
-            # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
-            intermediate_progress_bonus = (pi * progress/steps) * progress_multiplier
-            # Mark this segment as rewarded
-            STATE.intermediate_progress[pi] = intermediate_progress_bonus
+        # # Check if this segment has been completed before
+        # if pi != 0 and STATE.intermediate_progress[pi] == 0:
+        #     # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
+        #     intermediate_progress_bonus = (pi * ((progress/steps)**2)) * progress_multiplier
+        #     # Mark this segment as rewarded
+        #     STATE.intermediate_progress[pi] = intermediate_progress_bonus
 
-        reward += intermediate_progress_bonus
+        # reward += intermediate_progress_bonus
+        
         # This gives a harsh penalty if the car is not steering in range.
         if not is_within_range:
             print('Penalizing the car for heading off track.')
@@ -531,7 +570,7 @@ class Reward:
             print('max_heading: ', max_heading )
             reward = 1e-3
 
-        # Zero reward of obviously too slow
+        # Zero reward of obviously too slow. Exception made for sharp right turn waypoints.
         speed_diff_zero = optimals[2]-speed
         speed_threshold = 0.5
         if next_waypoint_index > 55 and next_waypoint_index < 79:
@@ -549,7 +588,8 @@ class Reward:
         else:
             finish_reward = 0
         reward += finish_reward
-
+        
+                
         # Zero reward if the center of the car is off the track.
         # This will add a margin of 
 
@@ -559,6 +599,12 @@ class Reward:
         if not all_wheels_on_track:
             if distance_from_center >= 0.5 * track_width + 0.05:
                 reward = min(reward, 0.001)
+                
+        ##################### UPDATE STATE #####################
+        
+        STATE.prev_steering = params['steering_angle']
+        STATE.prev_normalized_distance_from_route = normalized_dist
+        STATE.prev_direction_diff = direction_diff
 
         ####################### VERBOSE #######################
 
