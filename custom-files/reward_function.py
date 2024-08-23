@@ -1,3 +1,5 @@
+import numpy as np
+
 class Reward:
     def __init__(self, verbose=False):
         self.first_racingpoint_index = None
@@ -145,6 +147,75 @@ class Reward:
                 projected_time = 9999
 
             return projected_time
+        
+        def find_border_points(params):
+            waypoints = params['waypoints']
+            closest_waypoints = params['closest_waypoints']
+            track_width = params['track_width']
+            
+            next_waypoint_index = closest_waypoints[1]
+            next_waypoint = waypoints[next_waypoint_index]
+            prev_waypoint = waypoints[closest_waypoints[0]]
+            
+            # Calculate the direction vector from prev_waypoint to next_waypoint
+            direction_vector = np.array([next_waypoint[0] - prev_waypoint[0], next_waypoint[1] - prev_waypoint[1]])
+            
+            # Calculate the perpendicular vector
+            perpendicular_vector = np.array([-direction_vector[1], direction_vector[0]])
+            
+            # Normalize the perpendicular vector
+            perpendicular_vector = perpendicular_vector / np.linalg.norm(perpendicular_vector)
+            
+            # Calculate the half-width of the track
+            half_width = track_width / 2.0
+            half_width += 0.05
+            
+            # Calculate the border points
+            inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
+            outer_border1 = np.array(prev_waypoint) + perpendicular_vector * half_width
+            inner_border2 = np.array(next_waypoint) - perpendicular_vector * half_width
+            outer_border2 = np.array(next_waypoint) + perpendicular_vector * half_width
+            
+            return inner_border1, outer_border1, inner_border2, outer_border2
+        
+        def find_min_max_heading(params, inner_border2, outer_border2):
+            car_x = params['x']
+            car_y = params['y']
+            car_heading = params['heading']
+
+            # Calculate the vector from the car to the inner border
+            inner_vector_x = inner_border2[0] - car_x
+            inner_vector_y = inner_border2[1] - car_y
+
+            # Calculate the vector from the car to the outer border
+            outer_vector_x = outer_border2[0] - car_x
+            outer_vector_y = outer_border2[1] - car_y
+
+            # Compute the angles in degrees
+            inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
+            outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
+
+            # Normalize angles to be within 0 to 360 degrees
+            inner_heading = (inner_heading + 360) % 360
+            outer_heading = (outer_heading + 360) % 360
+
+            # Normalize car heading to be within 0 to 360 degrees
+            car_heading = (car_heading + 360) % 360
+            print(f'car_heading: {car_heading}')
+
+            # Get the min and max headings
+            min_heading = min(inner_heading, outer_heading)
+            max_heading = max(inner_heading, outer_heading)
+
+            # Check if the car's heading is within the range considering circular nature
+            if max_heading - min_heading <= 180:
+                # Normal case where min_heading is less than max_heading and the angle difference is <= 180
+                is_within_range = min_heading <= car_heading <= max_heading
+            else:
+                # Case where angles wrap around, e.g., min_heading=60, max_heading=270, car_heading=350
+                is_within_range = car_heading >= max_heading or car_heading <= min_heading
+
+            return min_heading, max_heading, is_within_range
 
         #################### RACING LINE ######################
 
@@ -321,6 +392,8 @@ class Reward:
         track_width = params['track_width']
         waypoints = params['waypoints']
         closest_waypoints = params['closest_waypoints']
+        next_waypoint_index = closest_waypoints[1]
+        prev_waypoint_index = closest_waypoints[0]
         is_offtrack = params['is_offtrack']
 
         ############### OPTIMAL X,Y,SPEED,TIME ################
@@ -383,11 +456,28 @@ class Reward:
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         if direction_diff > 30:
             reward = 1e-3
+        elif direction_diff > 25:
+            reward *= 0.5
         elif direction_diff > 20:
             reward *= 0.8
         elif direction_diff > 15:
             reward *= 0.9
+            
+        if next_waypoint_index > 63 and next_waypoint_index < 72:
+            if params['is_left_of_center']:
+                reward *= 0.5
+            else:
+                reward *= 1.5
+        if next_waypoint_index > 91 and next_waypoint_index < 100:
+            if params['is_left_of_center']:
+                reward *= 1.5
+            else:
+                reward *= 0.5
 
+        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
+        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        if not is_within_range:
+            reward = 1e-3
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.5:
@@ -396,7 +486,7 @@ class Reward:
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
         STANDARD_TIME = 21  # seconds (time that is easily done by model)
-        FASTEST_TIME = 17.5  # seconds (best time of 1st place on the track)
+        FASTEST_TIME = 18  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
@@ -408,14 +498,13 @@ class Reward:
         is_crashed = params['is_crashed']
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
-        car_width = 0.1
 
         # Zero reward if the center of the car is off the track.
 
         if is_crashed:
-            reward = min(reward, 0.01)
-        elif not all_wheels_on_track and abs(distance_from_center) > ((track_width/2)+car_width/2):
-            reward = min(reward, 0.01)
+            reward = min(reward, 0.001)
+        elif not all_wheels_on_track and abs(distance_from_center) > (track_width/2):
+            reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
 
@@ -442,3 +531,4 @@ reward_object = Reward() # add parameter verbose=True to get noisy output for te
 
 def reward_function(params):
     return reward_object.reward_function(params)
+
