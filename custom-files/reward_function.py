@@ -445,7 +445,7 @@ class Reward:
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
         STANDARD_TIME = 22
-        FASTEST_TIME = 18.5
+        FASTEST_TIME = 18.3
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -466,10 +466,11 @@ class Reward:
         elif direction_diff > 25:
             reward *= 0.5
         elif direction_diff > 20:
-            reward *= 0.8
+            reward *= 0.7
         elif direction_diff > 15:
+            reward *= 0.8
+        elif direction_diff > 10:
             reward *= 0.9
-            
             
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -505,7 +506,7 @@ class Reward:
             # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
             if params['distance_from_center'] > (track_width/2) * 0.9:
                 reward *= 0.1
-            else:
+            else: # Double speed reward during straight aways.
                 reward += speed_reward * SPEED_MULTIPLE
             
         
@@ -516,11 +517,11 @@ class Reward:
             delta_direction_diff = direction_diff - STATE.prev_direction_diff
             if delta_direction_diff > 1:
                 reward *= 0.9
-            elif delta_direction_diff > 3:
+            elif delta_direction_diff > 2:
                 reward *= 0.8
-            elif delta_direction_diff > 5:
+            elif delta_direction_diff > 3:
                 reward *= 0.5
-            elif delta_direction_diff > 10:
+            elif delta_direction_diff > 5:
                 reward *= 0.1
         
         if STATE.prev_normalized_distance_from_route is not None:
@@ -542,11 +543,15 @@ class Reward:
                 reward = 1e-3
             elif delta_turn_angle > 20:
                 reward *= 0.5
-            
-                    
-        # # PROGRESS REWARD #
-        # # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
-        # progress_multiplier = 10 # This determines how much the car prioritizes lap completion.
+        
+        ################ END React to State Changes ################
+        
+        ###################### PROGRESS REWARD ######################
+        
+        # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
+        
+        # progress_multiplier = 40 # This determines how much the car prioritizes lap completion.
+        
         # pi = int(progress // 10)  # Calculate which 10% segment we're in
         
         # # Initialize intermediate_progress_bonus to 0 for safety
@@ -554,12 +559,15 @@ class Reward:
 
         # # Check if this segment has been completed before
         # if pi != 0 and STATE.intermediate_progress[pi] == 0:
+        #     cubed_progress_per_step = progress/steps**3
         #     # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
-        #     intermediate_progress_bonus = (pi * ((progress/steps)**2)) * progress_multiplier
+        #     intermediate_progress_bonus = pi * cubed_progress_per_step * progress_multiplier
         #     # Mark this segment as rewarded
         #     STATE.intermediate_progress[pi] = intermediate_progress_bonus
 
         # reward += intermediate_progress_bonus
+        
+        ###################### PROGRESS REWARD ######################
         
         # This gives a harsh penalty if the car is not steering in range.
         if not is_within_range:
@@ -580,7 +588,7 @@ class Reward:
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
         STANDARD_TIME = 21  # seconds (time that is easily done by model)
-        FASTEST_TIME = 18.5  # seconds (best time of 1st place on the track)
+        FASTEST_TIME = 18.3  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
