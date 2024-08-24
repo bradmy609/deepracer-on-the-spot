@@ -496,8 +496,9 @@ class Reward:
                 reward += distance_reward
             else: # Punish for being in right lane during sharp left turn.
                 reward *= 0.5
+                
         # Straight sections punishments and bonuses.
-        if (next_waypoint_index > -1 and next_waypoint_index < 7) or (next_waypoint_index > 22 and next_waypoint_index < 34) or (next_waypoint_index > 112 and next_waypoint_index < 128) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63):
+        if (next_waypoint_index > -1 and next_waypoint_index < 6) or (next_waypoint_index > 22 and next_waypoint_index < 30) or (next_waypoint_index > 112 and next_waypoint_index < 127) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63) or (next_waypoint_index > 82 and next_waypoint_index < 89):
             # Harshly punish sharp steering on straight section.
             if params['steering_angle'] > 3 or params['steering_angle'] < -3:
                 reward *= 0.1
@@ -506,6 +507,7 @@ class Reward:
                 reward *= 0.01
             else: # Double speed reward during straight aways.
                 reward += speed_reward
+                
         # Gentle left turn bonuses and punishment. Currently same as sharp turn rewards.
         if (next_waypoint_index > 9 and next_waypoint_index < 15) or (next_waypoint_index > 129 and next_waypoint_index < 136):
             # Punish for steering right during sharp left turn.
