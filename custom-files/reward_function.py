@@ -445,7 +445,7 @@ class Reward:
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
         STANDARD_TIME = 22
-        FASTEST_TIME = 18.3
+        FASTEST_TIME = 18.2
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -504,7 +504,7 @@ class Reward:
                 reward *= 0.1
             # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
             if params['distance_from_center'] > (track_width/2) * 0.9:
-                reward *= 0.01
+                reward *= 0.1
             else: # Double speed reward during straight aways.
                 reward += speed_reward
                 
@@ -552,9 +552,9 @@ class Reward:
         if STATE.prev_steering is not None:
             delta_turn_angle = abs(params['steering_angle'] - STATE.prev_steering)
             if delta_turn_angle > 30:
-                reward = 1e-3
-            elif delta_turn_angle > 20:
                 reward *= 0.5
+            elif delta_turn_angle > 20:
+                reward *= 0.8
         
         ################ END React to State Changes ################
         
@@ -600,7 +600,7 @@ class Reward:
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
         STANDARD_TIME = 21  # seconds (time that is easily done by model)
-        FASTEST_TIME = 18.3  # seconds (best time of 1st place on the track)
+        FASTEST_TIME = 18.2  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
