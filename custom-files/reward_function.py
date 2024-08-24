@@ -466,75 +466,85 @@ class Reward:
         elif direction_diff > 25:
             reward *= 0.5
         elif direction_diff > 20:
-            reward *= 0.7
-        elif direction_diff > 15:
             reward *= 0.8
-        elif direction_diff > 10:
-            reward *= 0.9
             
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
         
+        # Sharp right turn punishments and bonus.
         if next_waypoint_index > 62 and next_waypoint_index < 73:
             # Punishment for not steering right during sharp right turn.
             if params['steering_angle'] > 0:
                 reward *= 0.1
             # Reward slightly for being in correct lane during first half of turn.
             if not params['is_left_of_center']:
-                reward += 0.5
+                reward += distance_reward
             else:
                 reward *= 0.5
-        if next_waypoint_index > 72 and next_waypoint_index < 78:
+        # Second half of right turn punishment.
+        if next_waypoint_index > 72 and next_waypoint_index < 77:
             # Harsh punishment for steering left during right turn.
             if params['steering_angle'] > 0:
                 reward *= 0.1
-        # Punishment for steering right and bonus being in the left lane during sharp left turn.
-        if (next_waypoint_index > 90 and next_waypoint_index < 101) or (next_waypoint_index > 37 and next_waypoint_index < 49):
+        # Sharp left turn punishments and bonuses
+        if (next_waypoint_index > 90 and next_waypoint_index < 103) or (next_waypoint_index > 36 and next_waypoint_index < 49):
             # Punish for steering right during sharp left turn.
             if params['steering_angle'] < 0:
                 reward *= 0.1
             # Bonus reward for being in left lane during sharp left turn.
             if params['is_left_of_center']:
-                reward += 0.5
-            else:
+                reward += distance_reward
+            else: # Punish for being in right lane during sharp left turn.
                 reward *= 0.5
-        # Steer straight on straight sections of the track.
+        # Straight sections punishments and bonuses.
         if (next_waypoint_index > -1 and next_waypoint_index < 7) or (next_waypoint_index > 22 and next_waypoint_index < 34) or (next_waypoint_index > 112 and next_waypoint_index < 128) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63):
             # Harshly punish sharp steering on straight section.
             if params['steering_angle'] > 3 or params['steering_angle'] < -3:
                 reward *= 0.1
             # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
             if params['distance_from_center'] > (track_width/2) * 0.9:
-                reward *= 0.1
+                reward *= 0.01
             else: # Double speed reward during straight aways.
-                reward += speed_reward * SPEED_MULTIPLE
-            
+                reward += speed_reward
+        # Gentle left turn bonuses and punishment. Currently same as sharp turn rewards.
+        if (next_waypoint_index > 9 and next_waypoint_index < 15) or (next_waypoint_index > 129 and next_waypoint_index < 136):
+            # Punish for steering right during sharp left turn.
+            if params['steering_angle'] < 0:
+                reward *= 0.1
+            # Bonus reward for being in left lane during sharp left turn.
+            if params['is_left_of_center']:
+                reward += distance_reward
+            else: # Punish for being in right lane during sharp left turn.
+                reward *= 0.5
+        if (next_waypoint_index > 56 and next_waypoint_index < 63):
+            if params['steering_angle'] > 10 or params['steering_angle'] < -10:
+                reward *= 0.1
         
         ################ React to State Changes ################
         
-        if STATE.prev_direction_diff is not None:
-            # Punish harshly for 30+ degree heading change, punish moderately for 20+ degree heading change.
-            delta_direction_diff = direction_diff - STATE.prev_direction_diff
-            if delta_direction_diff > 1:
-                reward *= 0.9
-            elif delta_direction_diff > 2:
-                reward *= 0.8
-            elif delta_direction_diff > 3:
-                reward *= 0.5
-            elif delta_direction_diff > 5:
-                reward *= 0.1
+        # if STATE.prev_direction_diff is not None:
+        #     delta_direction_diff = direction_diff - STATE.prev_direction_diff
+        #     # Punish based off degree of change from racing line heading. No punishment for small changes.
+        #     if delta_direction_diff > 1:
+        #         reward *= 0.9
+        #     elif delta_direction_diff > 2:
+        #         reward *= 0.8
+        #     elif delta_direction_diff > 3:
+        #         reward *= 0.5
+        #     elif delta_direction_diff > 5:
+        #         reward *= 0.1
         
-        if STATE.prev_normalized_distance_from_route is not None:
-            # Reward for moving closer to racing line, mild to moderate punishment for moving away.
-            delta_distance = normalized_dist - STATE.prev_normalized_distance_from_route
-            if delta_distance > 0.1:
-                reward *= 0.9
-            elif delta_distance > 0.2:
-                reward *= 0.8
-            elif delta_distance > 0.3:
-                reward *= 0.5
-            elif delta_distance > 0.5:
-                reward *= 0.01
+        # if STATE.prev_normalized_distance_from_route is not None:
+        #     # Reward for moving closer to racing line, mild to moderate punishment for moving away.
+        #     delta_distance = normalized_dist - STATE.prev_normalized_distance_from_route
+        #     if delta_distance > 0.1:
+        #         reward *= 0.9
+        #     elif delta_distance > 0.2:
+        #         reward *= 0.8
+        #     elif delta_distance > 0.3:
+        #         reward *= 0.5
+        #     elif delta_distance > 0.5:
+        #         reward *= 0.01
         
         # Punish harshly for 30+ degree turn angle change, punish moderately for 20+ degree angle change.
         if STATE.prev_steering is not None:
@@ -604,7 +614,7 @@ class Reward:
             reward = min(reward, 0.001)
         # Cut reward in half if one wheel is off the track
         if not all_wheels_on_track:
-            if distance_from_center >= 0.5 * track_width + 0.05:
+            if distance_from_center >= 0.5 * track_width:
                 reward = min(reward, 0.001)
                 
         ##################### UPDATE STATE #####################
