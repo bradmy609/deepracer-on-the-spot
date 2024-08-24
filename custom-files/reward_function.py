@@ -443,9 +443,9 @@ class Reward:
         reward += speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 1 
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 1.5
         STANDARD_TIME = 22
-        FASTEST_TIME = 18.2
+        FASTEST_TIME = 18
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -481,46 +481,46 @@ class Reward:
                 reward += distance_reward
             else:
                 reward *= 0.5
-        # Second half of right turn punishment.
-        if next_waypoint_index > 72 and next_waypoint_index < 77:
-            # Harsh punishment for steering left during right turn.
-            if params['steering_angle'] > 0:
-                reward *= 0.1
-        # Sharp left turn punishments and bonuses
-        if (next_waypoint_index > 90 and next_waypoint_index < 103) or (next_waypoint_index > 36 and next_waypoint_index < 49):
-            # Punish for steering right during sharp left turn.
-            if params['steering_angle'] < 0:
-                reward *= 0.1
-            # Bonus reward for being in left lane during sharp left turn.
-            if params['is_left_of_center']:
-                reward += distance_reward
-            else: # Punish for being in right lane during sharp left turn.
-                reward *= 0.5
+        # # Second half of right turn punishment.
+        # if next_waypoint_index > 72 and next_waypoint_index < 77:
+        #     # Harsh punishment for steering left during right turn.
+        #     if params['steering_angle'] > 0:
+        #         reward *= 0.1
+        # # Sharp left turn punishments and bonuses
+        # if (next_waypoint_index > 90 and next_waypoint_index < 103) or (next_waypoint_index > 36 and next_waypoint_index < 49):
+        #     # Punish for steering right during sharp left turn.
+        #     if params['steering_angle'] < 0:
+        #         reward *= 0.1
+        #     # Bonus reward for being in left lane during sharp left turn.
+        #     if params['is_left_of_center']:
+        #         reward += distance_reward
+        #     else: # Punish for being in right lane during sharp left turn.
+        #         reward *= 0.5
                 
-        # Straight sections punishments and bonuses.
-        if (next_waypoint_index > -1 and next_waypoint_index < 6) or (next_waypoint_index > 22 and next_waypoint_index < 30) or (next_waypoint_index > 112 and next_waypoint_index < 127) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63) or (next_waypoint_index > 82 and next_waypoint_index < 89):
-            # Harshly punish sharp steering on straight section.
-            if params['steering_angle'] > 3 or params['steering_angle'] < -3:
-                reward *= 0.1
-            # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
-            if params['distance_from_center'] > (track_width/2) * 0.9:
-                reward *= 0.1
-            else: # Double speed reward during straight aways.
-                reward += speed_reward
+        # # Straight sections punishments and bonuses.
+        # if (next_waypoint_index > -1 and next_waypoint_index < 6) or (next_waypoint_index > 22 and next_waypoint_index < 30) or (next_waypoint_index > 112 and next_waypoint_index < 127) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63) or (next_waypoint_index > 82 and next_waypoint_index < 89):
+        #     # Harshly punish sharp steering on straight section.
+        #     if params['steering_angle'] > 3 or params['steering_angle'] < -3:
+        #         reward *= 0.1
+        #     # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
+        #     if params['distance_from_center'] > (track_width/2) * 0.9:
+        #         reward *= 0.1
+        #     else: # Double speed reward during straight aways.
+        #         reward += speed_reward
                 
-        # Gentle left turn bonuses and punishment. Currently same as sharp turn rewards.
-        if (next_waypoint_index > 9 and next_waypoint_index < 15) or (next_waypoint_index > 129 and next_waypoint_index < 136):
-            # Punish for steering right during sharp left turn.
-            if params['steering_angle'] < 0:
-                reward *= 0.1
-            # Bonus reward for being in left lane during sharp left turn.
-            if params['is_left_of_center']:
-                reward += distance_reward
-            else: # Punish for being in right lane during sharp left turn.
-                reward *= 0.5
-        if (next_waypoint_index > 56 and next_waypoint_index < 63):
-            if params['steering_angle'] > 10 or params['steering_angle'] < -10:
-                reward *= 0.1
+        # # Gentle left turn bonuses and punishment. Currently same as sharp turn rewards.
+        # if (next_waypoint_index > 9 and next_waypoint_index < 15) or (next_waypoint_index > 129 and next_waypoint_index < 136):
+        #     # Punish for steering right during sharp left turn.
+        #     if params['steering_angle'] < 0:
+        #         reward *= 0.1
+        #     # Bonus reward for being in left lane during sharp left turn.
+        #     if params['is_left_of_center']:
+        #         reward += distance_reward
+        #     else: # Punish for being in right lane during sharp left turn.
+        #         reward *= 0.5
+        # if (next_waypoint_index > 56 and next_waypoint_index < 63):
+        #     if params['steering_angle'] > 10 or params['steering_angle'] < -10:
+        #         reward *= 0.1
         
         ################ React to State Changes ################
         
@@ -598,9 +598,9 @@ class Reward:
             reward = 1e-3
 
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
-        STANDARD_TIME = 21  # seconds (time that is easily done by model)
-        FASTEST_TIME = 18.2  # seconds (best time of 1st place on the track)
+        REWARD_FOR_FASTEST_TIME = 1500 # should be adapted to track length and other rewards
+        STANDARD_TIME = 22  # seconds (time that is easily done by model)
+        FASTEST_TIME = 18  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
