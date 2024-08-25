@@ -461,12 +461,21 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         # Harshly punish if direction is obviously wrong
+        heading_reward = 0
         if direction_diff > 30:
             reward *= 0.01
         elif direction_diff > 25:
             reward *= 0.5
         elif direction_diff > 20:
             reward *= 0.8
+        elif direction_diff > 15:
+            reward *= 0.9
+        elif direction_diff < 5:
+            heading_reward = 1
+        elif direction_diff < 10:
+            heading_reward = 0.5
+        elif direction_diff < 15:
+            heading_reward = 0.2
             
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -478,7 +487,7 @@ class Reward:
                 reward *= 0.1
             # Reward slightly for being in correct lane during first half of turn.
             if not params['is_left_of_center']:
-                reward += distance_reward
+                reward += heading_reward * 2
             else:
                 reward *= 0.5
         # Second half of right turn punishment.
@@ -486,8 +495,12 @@ class Reward:
             # Harsh punishment for steering left during right turn.
             if params['steering_angle'] > 0:
                 reward *= 0.1
+            elif params['is_left_of_center']:
+                reward += heading_reward * 2
+                
         if next_waypoint_index > 76 and next_waypoint_index < 84:
             reward += distance_reward
+            reward += heading_reward * 2
         # Sharp left turn punishments and bonuses
         if (next_waypoint_index > 90 and next_waypoint_index < 103) or (next_waypoint_index > 36 and next_waypoint_index < 49):
             # Punish for steering right during sharp left turn.
@@ -495,13 +508,14 @@ class Reward:
                 reward *= 0.1
             # Bonus reward for being in left lane during sharp left turn.
             if params['is_left_of_center']:
-                reward += distance_reward
+                reward += 0.5
+                reward += heading_reward * 2
             else: # Punish for being in right lane during sharp left turn.
                 reward *= 0.5
                 
         # Straight sections punishments and bonuses.
-        if (next_waypoint_index > -1 and next_waypoint_index < 4) or (next_waypoint_index > 22 and next_waypoint_index < 30) or (next_waypoint_index > 112 and next_waypoint_index < 127) or (next_waypoint_index > 140 and next_waypoint_index < 155) or (next_waypoint_index > 56 and next_waypoint_index < 63) or (next_waypoint_index > 82 and next_waypoint_index < 89):
             # Harshly punish sharp steering on straight section.
+        if (next_waypoint_index > 22 and next_waypoint_index < 30) or (next_waypoint_index > 112 and next_waypoint_index < 127) or (next_waypoint_index > 140):
             if params['steering_angle'] > 3 or params['steering_angle'] < -3:
                 reward *= 0.1
             # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
@@ -517,12 +531,16 @@ class Reward:
                 reward *= 0.1
             # Bonus reward for being in left lane during sharp left turn.
             if params['is_left_of_center']:
-                reward += distance_reward
+                reward += 0.5
+                reward += heading_reward * 2
             else: # Punish for being in right lane during sharp left turn.
                 reward *= 0.5
         if (next_waypoint_index > 56 and next_waypoint_index < 63):
             if params['steering_angle'] > 10 or params['steering_angle'] < -10:
                 reward *= 0.1
+            else:
+                reward += 0.5
+                reward += heading_reward * 2
         
         ################ React to State Changes ################
         
@@ -588,22 +606,22 @@ class Reward:
         
         # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
         
-        # progress_multiplier = 40 # This determines how much the car prioritizes lap completion.
+        progress_multiplier = 40 # This determines how much the car prioritizes lap completion.
         
-        # pi = int(progress // 10)  # Calculate which 10% segment we're in
+        pi = int(progress // 10)  # Calculate which 10% segment we're in
         
         # # Initialize intermediate_progress_bonus to 0 for safety
-        # intermediate_progress_bonus = 0
+        intermediate_progress_bonus = 0
 
         # # Check if this segment has been completed before
-        # if pi != 0 and STATE.intermediate_progress[pi] == 0:
-        #     cubed_progress_per_step = progress/steps**3
-        #     # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
-        #     intermediate_progress_bonus = pi * cubed_progress_per_step * progress_multiplier
-        #     # Mark this segment as rewarded
-        #     STATE.intermediate_progress[pi] = intermediate_progress_bonus
+        if pi != 0 and STATE.intermediate_progress[pi] == 0:
+            cubed_progress_per_step = progress/steps**3
+            # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
+            intermediate_progress_bonus = pi * cubed_progress_per_step * progress_multiplier
+            # Mark this segment as rewarded
+            STATE.intermediate_progress[pi] = intermediate_progress_bonus
 
-        # reward += intermediate_progress_bonus
+        reward += intermediate_progress_bonus
         
         ###################### PROGRESS REWARD ######################
         
