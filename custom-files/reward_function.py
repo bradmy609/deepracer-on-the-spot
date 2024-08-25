@@ -3,8 +3,8 @@ import math
 import numpy as np
 
 class STATE:
-    prev_speed = None
-    prev_steering = None 
+    prev_speed_diff = None
+    prev_steering = None
     prev_direction_diff = None
     prev_normalized_distance_from_route = None
     intermediate_progress = {i: 0 for i in range(1, 11)}
@@ -488,6 +488,8 @@ class Reward:
                 reward *= 0.1
             else:
                 reward += distance_reward
+        if next_waypoint_index > 76 and next_waypoint_index < 81:
+            reward += distance_reward
         # Sharp left turn punishments and bonuses
         if (next_waypoint_index > 90 and next_waypoint_index < 103) or (next_waypoint_index > 36 and next_waypoint_index < 49):
             # Punish for steering right during sharp left turn.
@@ -523,29 +525,20 @@ class Reward:
         
         ################ React to State Changes ################
         
-        # if STATE.prev_direction_diff is not None:
-        #     delta_direction_diff = direction_diff - STATE.prev_direction_diff
-        #     # Punish based off degree of change from racing line heading. No punishment for small changes.
-        #     if delta_direction_diff > 1:
-        #         reward *= 0.9
-        #     elif delta_direction_diff > 2:
-        #         reward *= 0.8
-        #     elif delta_direction_diff > 3:
-        #         reward *= 0.5
-        #     elif delta_direction_diff > 5:
-        #         reward *= 0.1
+        if STATE.prev_direction_diff != None and STATE.prev_normalized_distance_from_route != None and STATE.prev_speed_diff != None and STATE.prev_steering != None:
+            steering_angle_change =  params['steering_angle'] != STATE.prev_steering
         
-        # if STATE.prev_normalized_distance_from_route is not None:
-        #     # Reward for moving closer to racing line, mild to moderate punishment for moving away.
-        #     delta_distance = normalized_dist - STATE.prev_normalized_distance_from_route
-        #     if delta_distance > 0.1:
-        #         reward *= 0.9
-        #     elif delta_distance > 0.2:
-        #         reward *= 0.8
-        #     elif delta_distance > 0.3:
-        #         reward *= 0.5
-        #     elif delta_distance > 0.5:
-        #         reward *= 0.01
+            steering_angle_maintain_bonus = 0
+            # Not changing the steering angle is a good thing if heading in the right direction
+            if direction_diff < 10 and not steering_angle_change:
+                if abs(direction_diff) < 10:
+                    steering_angle_maintain_bonus += 0.1
+                if abs(direction_diff) < 5:
+                    steering_angle_maintain_bonus += 0.25
+                if STATE.prev_direction_diff is not None and abs(STATE.prev_direction_diff) > abs(direction_diff):
+                    steering_angle_maintain_bonus += 0.1
+                    
+            reward += steering_angle_maintain_bonus
         
         # Punish harshly for 30+ degree turn angle change, punish moderately for 20+ degree angle change.
         if STATE.prev_steering is not None:
@@ -623,6 +616,7 @@ class Reward:
         STATE.prev_steering = params['steering_angle']
         STATE.prev_normalized_distance_from_route = normalized_dist
         STATE.prev_direction_diff = direction_diff
+        STATE.prev_speed_diff = speed_diff
 
         ####################### VERBOSE #######################
 
