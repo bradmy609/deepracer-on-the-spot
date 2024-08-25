@@ -444,8 +444,8 @@ class Reward:
 
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 1.5
-        STANDARD_TIME = 22
-        FASTEST_TIME = 18
+        STANDARD_TIME = 20
+        FASTEST_TIME = 16
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -620,8 +620,8 @@ class Reward:
             reward = 1e-3
 
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 1500 # should be adapted to track length and other rewards
-        STANDARD_TIME = 22  # seconds (time that is easily done by model)
+        REWARD_FOR_FASTEST_TIME = 1000 # should be adapted to track length and other rewards
+        STANDARD_TIME = 20  # seconds (time that is easily done by model)
         FASTEST_TIME = 18  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
