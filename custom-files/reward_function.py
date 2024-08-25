@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 class STATE:
-    prev_speed = None
+    prev_speed_diff = None
     prev_steering = None 
     prev_direction_diff = None
     prev_normalized_distance_from_route = None
@@ -524,6 +524,28 @@ class Reward:
         
         ################ React to State Changes ################
         
+        # if STATE.prev_direction_diff != None and STATE.prev_normalized_distance_from_route != None and STATE.prev_speed_diff != None and STATE.prev_steering != None:
+        #     steering_angle_change =  params['steering_angle'] != STATE.prev_steering
+        #     steering_angle_diff = abs(params['steering_angle'] - STATE.prev_steering)
+        #     distance_diff_change = normalized_dist - STATE.prev_normalized_distance_from_route
+        #     speed_diff_change = speed_diff - STATE.prev_speed_diff
+        #     direction_diff_change = direction_diff - STATE.prev_direction_diff
+        
+            # If car steers and all factors get worse, reduce reward by 50%. It should always be possible to improve at least one.
+            # if steering_angle_change and (speed_diff_change > 0 and distance_diff_change > 0 and direction_diff_change > 0):
+            #     reward *= 0.5
+                
+            # if not steering_angle_change and (speed_diff_change < 0 and distance_diff_change < 0 and direction_diff_change < 0):
+            #     reward *= 1.5
+            
+                # Slight reward for improving speed/dist/direction
+                # if speed_diff_change != None and speed_diff_change < 0:
+                #     reward += 0.1
+                # if distance_diff_change != None and distance_diff_change < 0:
+                #     reward += 0.1
+                # if direction_diff_change != None and direction_diff_change < 0:
+                #     reward += 0.1
+        
         # if STATE.prev_direction_diff is not None:
         #     delta_direction_diff = direction_diff - STATE.prev_direction_diff
         #     # Punish based off degree of change from racing line heading. No punishment for small changes.
@@ -624,6 +646,7 @@ class Reward:
         STATE.prev_steering = params['steering_angle']
         STATE.prev_normalized_distance_from_route = normalized_dist
         STATE.prev_direction_diff = direction_diff
+        STATE.prev_speed_diff = speed_diff
 
         ####################### VERBOSE #######################
 
