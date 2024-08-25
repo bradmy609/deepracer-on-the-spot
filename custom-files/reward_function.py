@@ -443,9 +443,9 @@ class Reward:
         reward += speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 1.5
-        STANDARD_TIME = 22
-        FASTEST_TIME = 18
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 1
+        STANDARD_TIME = 20
+        FASTEST_TIME = 17
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -481,6 +481,7 @@ class Reward:
                 reward += distance_reward
             else:
                 reward *= 0.5
+                
         # Second half of right turn punishment.
         if next_waypoint_index > 72 and next_waypoint_index < 77:
             # Harsh punishment for steering left during right turn.
@@ -488,8 +489,10 @@ class Reward:
                 reward *= 0.1
             else:
                 reward += distance_reward
+                
         if next_waypoint_index > 76 and next_waypoint_index < 81:
             reward += distance_reward
+            
         # Sharp left turn punishments and bonuses
         if (next_waypoint_index > 90 and next_waypoint_index < 103) or (next_waypoint_index > 36 and next_waypoint_index < 49):
             # Punish for steering right during sharp left turn.
@@ -591,7 +594,7 @@ class Reward:
 
         ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 1500 # should be adapted to track length and other rewards
-        STANDARD_TIME = 22  # seconds (time that is easily done by model)
+        STANDARD_TIME = 20  # seconds (time that is easily done by model)
         FASTEST_TIME = 18  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
