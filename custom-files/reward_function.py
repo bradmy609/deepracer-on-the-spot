@@ -154,8 +154,9 @@ class Reward:
             track_width = params['track_width']
             
             next_waypoint_index = closest_waypoints[1]
+            prev_waypoint_index = closest_waypoints[0]
             next_waypoint = waypoints[next_waypoint_index]
-            prev_waypoint = waypoints[closest_waypoints[0]]
+            prev_waypoint = waypoints[prev_waypoint_index]
             
             # Calculate the direction vector from prev_waypoint to next_waypoint
             direction_vector = np.array([next_waypoint[0] - prev_waypoint[0], next_waypoint[1] - prev_waypoint[1]])
@@ -490,8 +491,8 @@ class Reward:
         
         # Steering limiter. If car isn't in range of triangle formed between car and next border 
         # waypoints, set reward to zero.
-        if not is_within_range:
-            reward = 1e-3
+        # if not is_within_range:
+        #     reward = 1e-3
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.5:
