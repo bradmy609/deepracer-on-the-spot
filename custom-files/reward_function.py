@@ -1,13 +1,7 @@
-# Import package (needed for heading)
-import math
-import numpy as np
-
 class STATE:
+    prev_turn_angle = None
     prev_speed_diff = None
-    prev_steering = None
-    prev_direction_diff = None
-    prev_normalized_distance_from_route = None
-    intermediate_progress = {i: 0 for i in range(1, 11)}
+    prev_turn_angle = None
 
 class Reward:
     def __init__(self, verbose=False):
@@ -15,6 +9,9 @@ class Reward:
         self.verbose = verbose
 
     def reward_function(self, params):
+
+        # Import package (needed for heading)
+        import math
 
         ################## HELPER FUNCTIONS ###################
 
@@ -98,29 +95,26 @@ class Reward:
             return [next_point_coords, prev_point_coords]
 
         def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
+
             # Calculate the direction of the center line based on the closest waypoints
-            next_point, prev_point = next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading)
+            next_point, prev_point = next_prev_racing_point(closest_coords,
+                                                            second_closest_coords,
+                                                            car_coords,
+                                                            heading)
 
-            # Calculate the direction in radians, the result is (-pi, pi) in radians
-            track_direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0])
+            # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
+            track_direction = math.atan2(
+                next_point[1] - prev_point[1], next_point[0] - prev_point[0])
 
-            # Convert to degrees
+            # Convert to degree
             track_direction = math.degrees(track_direction)
 
-            # Normalize angles to be within -180 to 180 degrees
-            track_direction = (track_direction + 360) % 360
-            heading = (heading + 360) % 360
-
             # Calculate the difference between the track direction and the heading direction of the car
-            direction_diff = track_direction - heading
-            
-            # Account for cyclical difference
+            direction_diff = abs(track_direction - heading)
             if direction_diff > 180:
-                direction_diff -= 360
-            elif direction_diff < -180:
-                direction_diff += 360
+                direction_diff = 360 - direction_diff
 
-            return abs(direction_diff)
+            return direction_diff
 
         # Gives back indexes that lie between start and end index of a cyclical list 
         # (start index is included, end index is not)
@@ -156,232 +150,165 @@ class Reward:
                 projected_time = 9999
 
             return projected_time
-        
-        def find_border_points(params):
-            waypoints = params['waypoints']
-            closest_waypoints = params['closest_waypoints']
-            track_width = params['track_width']
-            
-            next_waypoint = waypoints[closest_waypoints[1]]
-            prev_waypoint = waypoints[closest_waypoints[0]]
-            
-            # Calculate the direction vector from prev_waypoint to next_waypoint
-            direction_vector = np.array([next_waypoint[0] - prev_waypoint[0], next_waypoint[1] - prev_waypoint[1]])
-            
-            # Calculate the perpendicular vector
-            perpendicular_vector = np.array([-direction_vector[1], direction_vector[0]])
-            
-            # Normalize the perpendicular vector
-            perpendicular_vector = perpendicular_vector / np.linalg.norm(perpendicular_vector)
-            
-            # Calculate the half-width of the track
-            half_width = track_width / 2.0
-            
-            # Calculate the border points
-            inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
-            outer_border1 = np.array(prev_waypoint) + perpendicular_vector * half_width
-            inner_border2 = np.array(next_waypoint) - perpendicular_vector * half_width
-            outer_border2 = np.array(next_waypoint) + perpendicular_vector * half_width
-            
-            return inner_border1, outer_border1, inner_border2, outer_border2
-        
-        def find_min_max_heading(params, inner_border2, outer_border2):
-            car_x = params['x']
-            car_y = params['y']
-            car_heading = params['heading']
-
-            # Calculate the vector from the car to the inner border
-            inner_vector_x = inner_border2[0] - car_x
-            inner_vector_y = inner_border2[1] - car_y
-
-            # Calculate the vector from the car to the outer border
-            outer_vector_x = outer_border2[0] - car_x
-            outer_vector_y = outer_border2[1] - car_y
-
-            # Compute the angles in degrees
-            inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
-            outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
-
-            # Normalize angles to be within 0 to 360 degrees
-            inner_heading = (inner_heading + 360) % 360
-            outer_heading = (outer_heading + 360) % 360
-
-            # Normalize car heading to be within 0 to 360 degrees
-            car_heading = (car_heading + 360) % 360
-            print(f'car_heading: {car_heading}')
-
-            # Get the min and max headings
-            min_heading = min(inner_heading, outer_heading)
-            max_heading = max(inner_heading, outer_heading)
-
-            # Check if the car's heading is within the range considering circular nature
-            if max_heading - min_heading <= 180:
-                # Normal case where min_heading is less than max_heading and the angle difference is <= 180
-                is_within_range = min_heading <= car_heading <= max_heading
-            else:
-                # Case where angles wrap around, e.g., min_heading=60, max_heading=270, car_heading=350
-                is_within_range = car_heading >= max_heading or car_heading <= min_heading
-
-            return min_heading, max_heading, is_within_range
 
         #################### RACING LINE ######################
 
         # Optimal racing line
         # Each row: [x,y,speed,timeFromPreviousPoint]
-        racing_track = [[5.03288, 0.85564, 4.0, 0.07447],
-        [5.01964, 1.15157, 4.0, 0.07406],
-        [5.00165, 1.44532, 3.89081, 0.07564],
-        [4.97821, 1.73646, 3.49189, 0.08365],
-        [4.94839, 2.02446, 3.10891, 0.09313],
-        [4.91133, 2.30879, 2.76219, 0.10381],
-        [4.8662, 2.58891, 2.44627, 0.11598],
-        [4.81083, 2.86348, 2.11927, 0.13217],
-        [4.74332, 3.13117, 1.78729, 0.15447],
-        [4.66127, 3.3902, 1.78729, 0.15203],
-        [4.56186, 3.63823, 1.78729, 0.14951],
-        [4.44172, 3.87211, 1.78729, 0.14711],
-        [4.29589, 4.08657, 1.78729, 0.14511],
-        [4.11713, 4.27175, 1.9785, 0.13009],
-        [3.91375, 4.43096, 2.18048, 0.11845],
-        [3.69114, 4.56714, 2.4216, 0.10776],
-        [3.45361, 4.68323, 2.66825, 0.09909],
-        [3.20445, 4.78155, 2.9155, 0.09187],
-        [2.94644, 4.86393, 3.15659, 0.0858],
-        [2.68196, 4.93189, 3.38808, 0.0806],
-        [2.41303, 4.98677, 3.60874, 0.07606],
-        [2.1413, 5.02973, 3.87285, 0.07103],
-        [1.86809, 5.06217, 4.0, 0.06878],
-        [1.59434, 5.08494, 4.0, 0.06868],
-        [1.32073, 5.09885, 4.0, 0.06849],
-        [1.0478, 5.10463, 4.0, 0.06825],
-        [0.7759, 5.10297, 4.0, 0.06798],
-        [0.50528, 5.09444, 4.0, 0.06769],
-        [0.23615, 5.07944, 4.0, 0.06739],
-        [-0.03132, 5.05831, 4.0, 0.06708],
-        [-0.29698, 5.03132, 3.94484, 0.06769],
-        [-0.56064, 4.99852, 3.57697, 0.07428],
-        [-0.82202, 4.95969, 3.20575, 0.08243],
-        [-1.08074, 4.91449, 2.79358, 0.09402],
-        [-1.33614, 4.86193, 2.79358, 0.09334],
-        [-1.5874, 4.80095, 2.58942, 0.09985],
-        [-1.83337, 4.7301, 2.56795, 0.09968],
-        [-2.0725, 4.64748, 2.52532, 0.10019],
-        [-2.30227, 4.5502, 2.32256, 0.10743],
-        [-2.52296, 4.43988, 2.08647, 0.11825],
-        [-2.73205, 4.31436, 1.82337, 0.13375],
-        [-2.92881, 4.17442, 1.59605, 0.15128],
-        [-3.11226, 4.02063, 1.53, 0.15646],
-        [-3.27926, 3.85181, 1.53, 0.15521],
-        [-3.42475, 3.66642, 1.53, 0.15402],
-        [-3.54018, 3.4632, 1.53, 0.15276],
-        [-3.61372, 3.24425, 1.41519, 0.1632],
-        [-3.64036, 3.01838, 1.41519, 0.16071],
-        [-3.6356, 2.79287, 1.41519, 0.15939],
-        [-3.59681, 2.57108, 1.41519, 0.1591],
-        [-3.51544, 2.35905, 1.41519, 0.16047],
-        [-3.38247, 2.16829, 1.6794, 0.13846],
-        [-3.21362, 1.99934, 1.87227, 0.12758],
-        [-3.01589, 1.85221, 2.13512, 0.11544],
-        [-2.79561, 1.72494, 2.41825, 0.1052],
-        [-2.5574, 1.61545, 2.76846, 0.0947],
-        [-2.30524, 1.52119, 3.25436, 0.08272],
-        [-2.04281, 1.43897, 4.0, 0.06875],
-        [-1.77359, 1.36512, 3.73031, 0.07484],
-        [-1.50051, 1.2962, 3.24749, 0.08673],
-        [-1.22853, 1.22987, 2.90404, 0.0964],
-        [-0.96011, 1.15948, 2.53395, 0.10951],
-        [-0.69762, 1.08244, 2.25186, 0.12148],
-        [-0.44338, 0.99635, 1.95523, 0.13728],
-        [-0.19968, 0.89914, 1.71069, 0.15338],
-        [0.03129, 0.78919, 1.71069, 0.14953],
-        [0.24606, 0.66421, 1.63682, 0.15181],
-        [0.4409, 0.52251, 1.45884, 0.16515],
-        [0.60998, 0.36196, 1.3, 0.17935],
-        [0.7458, 0.18179, 1.3, 0.17357],
-        [0.85168, -0.01206, 1.3, 0.16991],
-        [0.92163, -0.2181, 1.3, 0.16738],
-        [0.94582, -0.43295, 1.3, 0.16631],
-        [0.9117, -0.64659, 1.44815, 0.14939],
-        [0.83152, -0.84917, 1.57766, 0.1381],
-        [0.71328, -1.03646, 1.71728, 0.12898],
-        [0.56302, -1.20656, 1.8737, 0.12113],
-        [0.38557, -1.35875, 2.02013, 0.11572],
-        [0.18422, -1.49243, 2.18851, 0.11044],
-        [-0.03799, -1.6075, 2.38894, 0.10475],
-        [-0.27806, -1.70445, 2.63312, 0.09833],
-        [-0.53299, -1.78439, 2.90818, 0.09187],
-        [-0.8001, -1.84872, 3.29096, 0.08348],
-        [-1.07658, -1.89968, 3.57147, 0.07872],
-        [-1.3608, -1.93838, 3.39598, 0.08447],
-        [-1.65117, -1.96628, 3.1271, 0.09328],
-        [-1.94681, -1.9837, 2.87889, 0.10287],
-        [-2.23701, -2.01239, 2.64084, 0.11043],
-        [-2.5204, -2.05315, 2.41219, 0.11869],
-        [-2.79541, -2.10737, 2.20927, 0.12688],
-        [-3.06036, -2.17625, 1.96054, 0.13963],
-        [-3.31335, -2.26095, 1.7453, 0.15286],
-        [-3.55207, -2.36261, 1.7453, 0.14867],
-        [-3.77374, -2.48233, 1.7453, 0.14435],
-        [-3.97516, -2.62084, 1.64376, 0.14871],
-        [-4.1509, -2.77951, 1.5193, 0.15585],
-        [-4.29409, -2.95835, 1.5193, 0.15079],
-        [-4.40657, -3.15159, 1.5193, 0.14717],
-        [-4.48759, -3.35581, 1.5193, 0.14461],
-        [-4.53224, -3.56819, 1.5193, 0.14284],
-        [-4.53429, -3.78363, 1.56721, 0.13748],
-        [-4.50057, -3.99652, 1.56721, 0.13753],
-        [-4.4311, -4.20249, 1.56721, 0.1387],
-        [-4.32517, -4.39661, 1.56721, 0.14111],
-        [-4.18003, -4.57168, 1.73242, 0.13127],
-        [-4.00297, -4.72578, 1.91855, 0.12234],
-        [-3.79974, -4.85875, 2.11931, 0.1146],
-        [-3.57476, -4.97116, 2.32964, 0.10796],
-        [-3.33153, -5.06381, 2.57991, 0.10088],
-        [-3.07334, -5.13812, 2.84665, 0.09438],
-        [-2.8029, -5.19557, 3.20329, 0.08631],
-        [-2.52298, -5.23841, 3.63931, 0.07781],
-        [-2.23592, -5.26906, 4.0, 0.07217],
-        [-1.94366, -5.28991, 4.0, 0.07325],
-        [-1.64769, -5.30314, 4.0, 0.07407],
-        [-1.34916, -5.31066, 4.0, 0.07465],
-        [-1.049, -5.31424, 4.0, 0.07505],
-        [-0.74784, -5.31525, 4.0, 0.07529],
-        [-0.44644, -5.31426, 4.0, 0.07535],
-        [-0.14587, -5.31101, 4.0, 0.07515],
-        [0.15356, -5.30511, 4.0, 0.07487],
-        [0.45157, -5.29604, 4.0, 0.07454],
-        [0.74786, -5.28326, 4.0, 0.07414],
-        [1.0421, -5.26623, 4.0, 0.07368],
-        [1.334, -5.24442, 4.0, 0.07318],
-        [1.62322, -5.21729, 3.62696, 0.08009],
-        [1.90935, -5.1842, 3.24731, 0.0887],
-        [2.19188, -5.14438, 2.89788, 0.09846],
-        [2.47004, -5.09662, 2.62753, 0.10741],
-        [2.74282, -5.03943, 2.28948, 0.12173],
-        [3.009, -4.97118, 1.97688, 0.13901],
-        [3.26699, -4.88982, 1.75856, 0.15383],
-        [3.5147, -4.79295, 1.75856, 0.15125],
-        [3.7499, -4.67837, 1.75856, 0.14877],
-        [3.96844, -4.54204, 1.75856, 0.14647],
-        [4.16397, -4.3787, 1.75856, 0.14488],
-        [4.32832, -4.18397, 2.09863, 0.12142],
-        [4.46896, -3.96859, 2.33544, 0.11014],
-        [4.58908, -3.73693, 2.54375, 0.10259],
-        [4.69065, -3.49163, 2.7691, 0.09588],
-        [4.77545, -3.23484, 3.01727, 0.08963],
-        [4.84513, -2.96835, 3.29217, 0.08367],
-        [4.9013, -2.69372, 3.60466, 0.07776],
-        [4.94553, -2.41234, 3.98163, 0.07154],
-        [4.97947, -2.1255, 4.0, 0.07221],
-        [5.00464, -1.8343, 4.0, 0.07307],
-        [5.02265, -1.53976, 4.0, 0.07377],
-        [5.03499, -1.24275, 4.0, 0.07432],
-        [5.04297, -0.94395, 4.0, 0.07473],
-        [5.04773, -0.64389, 4.0, 0.07502],
-        [5.0502, -0.343, 4.0, 0.07523],
-        [5.05029, -0.04181, 4.0, 0.0753],
-        [5.04772, 0.25863, 4.0, 0.07511],
-        [5.04206, 0.55788, 4.0, 0.07483]]
+        racing_track = [[5.03377, 0.85599, 4.0, 0.07449],
+        [5.02067, 1.15196, 4.0, 0.07406],
+        [5.00262, 1.44563, 4.0, 0.07356],
+        [4.97882, 1.73654, 3.63497, 0.0803],
+        [4.94841, 2.02418, 3.25921, 0.08875],
+        [4.91038, 2.30792, 2.84746, 0.10054],
+        [4.86378, 2.58712, 2.51696, 0.11246],
+        [4.80672, 2.86056, 2.10918, 0.13244],
+        [4.7373, 3.1269, 2.10918, 0.13049],
+        [4.65336, 3.38444, 2.10918, 0.12842],
+        [4.55238, 3.63101, 2.10918, 0.12633],
+        [4.43051, 3.86306, 2.10918, 0.12427],
+        [4.28379, 4.07603, 2.10918, 0.12262],
+        [4.10475, 4.25995, 2.3161, 0.11082],
+        [3.90112, 4.41773, 2.55926, 0.10066],
+        [3.67841, 4.55248, 2.84555, 0.09148],
+        [3.44099, 4.66714, 3.13618, 0.08407],
+        [3.19227, 4.76401, 3.42534, 0.07792],
+        [2.93509, 4.84494, 3.70772, 0.07272],
+        [2.67185, 4.91148, 4.0, 0.06788],
+        [2.40459, 4.96539, 4.0, 0.06816],
+        [2.13475, 5.00783, 4.0, 0.06829],
+        [1.86347, 5.03985, 4.0, 0.06829],
+        [1.59163, 5.0624, 4.0, 0.06819],
+        [1.31988, 5.07626, 4.0, 0.06803],
+        [1.0487, 5.08214, 4.0, 0.06781],
+        [0.77843, 5.08072, 4.0, 0.06757],
+        [0.5093, 5.0726, 4.0, 0.06731],
+        [0.24151, 5.05819, 4.0, 0.06704],
+        [-0.02477, 5.03779, 4.0, 0.06677],
+        [-0.28941, 5.01169, 4.0, 0.06648],
+        [-0.55223, 4.97997, 3.68525, 0.07183],
+        [-0.81288, 4.94222, 3.28175, 0.08025],
+        [-1.07096, 4.898, 3.28175, 0.07979],
+        [-1.32583, 4.84646, 3.02368, 0.086],
+        [-1.57668, 4.78649, 3.02368, 0.0853],
+        [-1.82232, 4.71661, 3.02368, 0.08446],
+        [-2.06087, 4.63449, 2.70606, 0.09323],
+        [-2.29004, 4.5378, 2.41093, 0.10317],
+        [-2.51014, 4.42824, 2.13569, 0.11512],
+        [-2.71843, 4.30348, 1.87748, 0.12932],
+        [-2.91446, 4.16465, 1.7671, 0.13593],
+        [-3.09784, 4.01282, 1.7671, 0.13473],
+        [-3.26462, 3.84591, 1.7671, 0.13353],
+        [-3.40938, 3.66218, 1.7671, 0.13236],
+        [-3.52429, 3.46085, 1.6606, 0.1396],
+        [-3.59812, 3.24395, 1.6606, 0.13797],
+        [-3.62419, 3.01991, 1.6606, 0.13583],
+        [-3.61922, 2.79626, 1.6606, 0.13471],
+        [-3.58043, 2.57634, 1.6606, 0.13448],
+        [-3.50089, 2.36557, 1.6606, 0.13566],
+        [-3.37012, 2.17529, 1.96677, 0.1174],
+        [-3.20342, 2.00627, 2.19606, 0.1081],
+        [-3.00776, 1.85857, 2.5009, 0.09802],
+        [-2.78938, 1.73044, 2.82619, 0.08959],
+        [-2.55279, 1.61995, 3.22274, 0.08102],
+        [-2.30191, 1.52474, 3.78598, 0.07088],
+        [-2.04047, 1.44168, 4.0, 0.06858],
+        [-1.77193, 1.36725, 3.81253, 0.07309],
+        [-1.4998, 1.29729, 3.32072, 0.08461],
+        [-1.23019, 1.22832, 2.92893, 0.09502],
+        [-0.96337, 1.15627, 2.59752, 0.1064],
+        [-0.70187, 1.07838, 2.30821, 0.11821],
+        [-0.44834, 0.99196, 2.04732, 0.13083],
+        [-0.20544, 0.89453, 2.04732, 0.12783],
+        [0.02392, 0.78383, 1.91554, 0.13295],
+        [0.23648, 0.65792, 1.72156, 0.1435],
+        [0.42833, 0.51518, 1.5, 0.15942],
+        [0.59466, 0.35447, 1.5, 0.15419],
+        [0.72909, 0.17559, 1.5, 0.14918],
+        [0.83464, -0.0162, 1.5, 0.14594],
+        [0.90457, -0.21992, 1.5, 0.14359],
+        [0.93007, -0.43233, 1.5, 0.14263],
+        [0.89631, -0.64388, 1.69371, 0.12648],
+        [0.81686, -0.84463, 1.8522, 0.11657],
+        [0.69981, -1.03056, 2.04181, 0.1076],
+        [0.55177, -1.20027, 2.21936, 0.10147],
+        [0.37707, -1.35298, 2.37326, 0.09777],
+        [0.17843, -1.4878, 2.55541, 0.09395],
+        [-0.04144, -1.60433, 2.77244, 0.08975],
+        [-0.27977, -1.70268, 3.04757, 0.0846],
+        [-0.53357, -1.78376, 3.37647, 0.07891],
+        [-0.79995, -1.84901, 3.7393, 0.07334],
+        [-1.0764, -1.9, 3.95217, 0.07113],
+        [-1.36087, -1.93828, 3.5226, 0.08148],
+        [-1.65151, -1.9656, 3.19706, 0.09131],
+        [-1.94715, -1.98298, 2.92092, 0.10139],
+        [-2.23857, -2.00957, 2.70171, 0.10831],
+        [-2.52369, -2.04781, 2.52011, 0.11415],
+        [-2.80043, -2.09999, 2.34514, 0.12009],
+        [-3.06634, -2.16834, 2.19918, 0.12484],
+        [-3.3188, -2.25444, 2.13648, 0.12485],
+        [-3.55497, -2.3594, 2.07585, 0.1245],
+        [-3.77202, -2.48358, 1.90152, 0.1315],
+        [-3.96716, -2.62658, 1.75049, 0.13821],
+        [-4.13718, -2.78769, 1.75049, 0.13381],
+        [-4.27892, -2.96536, 1.75049, 0.12984],
+        [-4.39106, -3.1567, 1.75049, 0.12669],
+        [-4.47215, -3.35881, 1.75049, 0.12441],
+        [-4.51636, -3.56911, 1.75049, 0.12277],
+        [-4.51714, -3.7823, 1.81232, 0.11763],
+        [-4.48257, -3.9927, 1.81232, 0.11765],
+        [-4.41372, -4.19643, 1.81232, 0.11866],
+        [-4.31, -4.38916, 1.81232, 0.12077],
+        [-4.16626, -4.56301, 2.03495, 0.11085],
+        [-3.99082, -4.71645, 2.25517, 0.10335],
+        [-3.78929, -4.84927, 2.49122, 0.09689],
+        [-3.56601, -4.96198, 2.73684, 0.09139],
+        [-3.32441, -5.05528, 3.02802, 0.08553],
+        [-3.06769, -5.13048, 3.34205, 0.08004],
+        [-2.79858, -5.18903, 3.77578, 0.07294],
+        [-2.51989, -5.23324, 4.0, 0.07054],
+        [-2.23384, -5.26522, 4.0, 0.07196],
+        [-1.9424, -5.28737, 4.0, 0.07307],
+        [-1.64708, -5.3018, 4.0, 0.07392],
+        [-1.34893, -5.31011, 4.0, 0.07456],
+        [-1.04894, -5.31407, 4.0, 0.07501],
+        [-0.74784, -5.31525, 4.0, 0.07528],
+        [-0.4466, -5.31385, 4.0, 0.07531],
+        [-0.14641, -5.30981, 4.0, 0.07505],
+        [0.1525, -5.30287, 4.0, 0.07475],
+        [0.44996, -5.29277, 4.0, 0.07441],
+        [0.74573, -5.27911, 4.0, 0.07402],
+        [1.03955, -5.26144, 4.0, 0.07359],
+        [1.33109, -5.2392, 4.0, 0.0731],
+        [1.61996, -5.21174, 3.80919, 0.07618],
+        [1.90568, -5.17827, 3.41005, 0.08436],
+        [2.18766, -5.13786, 3.03204, 0.09395],
+        [2.46518, -5.08946, 2.72876, 0.10324],
+        [2.73719, -5.03154, 2.33207, 0.11926],
+        [3.0025, -4.96247, 2.07797, 0.13193],
+        [3.25954, -4.88035, 2.07797, 0.12986],
+        [3.50631, -4.78288, 2.07797, 0.12768],
+        [3.74006, -4.66721, 2.07797, 0.12551],
+        [3.95762, -4.53061, 2.07797, 0.12363],
+        [4.15238, -4.3674, 2.07797, 0.12229],
+        [4.31646, -4.17332, 2.47868, 0.10253],
+        [4.45723, -3.95885, 2.75566, 0.09309],
+        [4.5778, -3.72824, 2.99774, 0.08681],
+        [4.6801, -3.48408, 3.25884, 0.08123],
+        [4.76582, -3.22842, 3.54579, 0.07605],
+        [4.83657, -2.96303, 3.86215, 0.07112],
+        [4.89387, -2.68942, 4.0, 0.06989],
+        [4.93924, -2.40894, 4.0, 0.07103],
+        [4.97426, -2.12287, 4.0, 0.07205],
+        [5.00041, -1.8323, 4.0, 0.07294],
+        [5.0193, -1.53828, 4.0, 0.07366],
+        [5.03241, -1.24167, 4.0, 0.07422],
+        [5.04118, -0.94324, 4.0, 0.07464],
+        [5.0466, -0.64347, 4.0, 0.07495],
+        [5.04965, -0.3428, 4.0, 0.07517],
+        [5.05019, -0.04169, 4.0, 0.07528],
+        [5.048, 0.25881, 4.0, 0.07513],
+        [5.04269, 0.55815, 4.0, 0.07485]]
 
         ################## INPUT PARAMETERS ###################
 
@@ -389,18 +316,19 @@ class Reward:
         all_wheels_on_track = params['all_wheels_on_track']
         x = params['x']
         y = params['y']
+        distance_from_center = params['distance_from_center']
+        is_left_of_center = params['is_left_of_center']
         heading = params['heading']
         progress = params['progress']
         steps = params['steps']
         speed = params['speed']
+        steering_angle = params['steering_angle']
         track_width = params['track_width']
-        is_crashed = params['is_crashed']
-        track_width = params['track_width']
-        distance_from_center = params['distance_from_center']
+        waypoints = params['waypoints']
         closest_waypoints = params['closest_waypoints']
-        is_left_of_center = params['is_left_of_center']
         prev_waypoint_index = closest_waypoints[0]
         next_waypoint_index = closest_waypoints[1]
+        is_offtrack = params['is_offtrack']
 
         ############### OPTIMAL X,Y,SPEED,TIME ################
 
@@ -426,8 +354,7 @@ class Reward:
         ## Reward if car goes close to optimal racing line ##
         DISTANCE_MULTIPLE = 1
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-        normalized_dist = dist/(track_width*0.5)
-        distance_reward = max(1e-3, 1 - normalized_dist)
+        distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
         reward += distance_reward * DISTANCE_MULTIPLE
 
         ## Reward if speed is close to optimal speed ##
@@ -443,8 +370,8 @@ class Reward:
         reward += speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.5
-        STANDARD_TIME = 21
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 1.75
+        STANDARD_TIME = 22
         FASTEST_TIME = 15
         times_list = [row[3] for row in racing_track]
 
@@ -457,169 +384,53 @@ class Reward:
         except:
             steps_reward = 0
         reward += steps_reward
-
+        
+        if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None:
+            delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
+            delta_speed_diff = abs(speed_diff - STATE.prev_speed_diff)
+            delta_distance = abs(dist - STATE.prev_distance)
+            if STATE.prev_turn_angle > 10 and steering_angle < -10:
+                reward = min(reward, 0.001)
+            elif STATE.prev_turn_angle < -10 and steering_angle > 10:
+                reward = min(reward, 0.001)
+            elif delta_turn_angle > 30:
+                reward = min(reward, 0.001)
+            if steering_angle == STATE.prev_turn_angle and delta_speed_diff < 0.1 and delta_distance < 0.1 and speed_diff < 0.25 and dist < 0.25:
+                reward += 0.1
+                
+        # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
-        # Harshly punish if direction is obviously wrong
-        heading_reward = 0
         if direction_diff > 30:
-            reward == 1e-3
-        
-        # Heading reward calculated 2 different ways based on how close the agent is. Heading reward only given during turns.
-        heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
-        if abs(direction_diff) <= 20:
-            heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
-            
-        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
-        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
-        
-        # if (next_waypoint_index > 9 and next_waypoint_index < 20) or (next_waypoint_index > 129 and next_waypoint_index < 140) or (next_waypoint_index > 35 and next_waypoint_index < 56):
-        #     if is_left_of_center:
-        #         # Double heading reward if in the inside lane.
-        #         reward += heading_reward * 1.5
-        #     else:
-        #         reward += heading_reward
-        
-        # # Sharp right turn punishments and bonus.
-        # if next_waypoint_index > 62 and next_waypoint_index < 80:
-        #     # Punishment for not steering right during sharp right turn.
-        #     if params['steering_angle'] > 0:
-        #         reward *= 0.5
-        #     # Reward slightly for being in correct lane during first half of turn.
-        #     if not is_left_of_center:
-        #         reward += heading_reward * 1.5
-        #     else:
-        #         reward += heading_reward
-                
-        # # Difficult section of track following sharp right turn. Bonus reward distance and heading.
-        # if next_waypoint_index > 80 and next_waypoint_index < 90:
-        #     reward += distance_reward
-        #     reward += heading_reward
-            
-        # # Sharp left turn punishments and bonuses
-        # if (next_waypoint_index > 90 and next_waypoint_index < 103) or (next_waypoint_index > 36 and next_waypoint_index < 49):
-        #     # Punish for steering right during sharp left turn.
-        #     if params['steering_angle'] < 0:
-        #         reward *= 0.1
-        #     # Bonus reward for being in left lane during sharp left turn.
-        #     if is_left_of_center:
-        #         reward += heading_reward * 1.5
-        #     else:
-        #         reward += heading_reward
-                
-        # # Straight sections punishments and bonuses.
-        # if (next_waypoint_index > 112 and next_waypoint_index < 124) or (next_waypoint_index > 143):
-        #     # Harshly punish sharp steering on straight section.
-        #     if params['steering_angle'] > 3 or params['steering_angle'] < -3:
-        #         reward *= 0.1
-        #     # Harshly punish being far off-center during straight seciton (Must be in 90% of track width).
-        #     if params['distance_from_center'] > (track_width/2) * 0.9:
-        #         reward *= 0.1
-        #     else:
-        #         reward += speed_reward
-            
-        # if (next_waypoint_index > 56 and next_waypoint_index < 62):
-        #     reward += heading_reward
-        #     reward += distance_reward
-        
-        ################ React to State Changes ################
-        
-        if STATE.prev_direction_diff != None and STATE.prev_normalized_distance_from_route != None and STATE.prev_speed_diff != None and STATE.prev_steering != None:
-            steering_angle_change =  params['steering_angle'] != STATE.prev_steering
-        
-            steering_angle_maintain_bonus = 0
-            # Not changing the steering angle is a good thing if heading in the right direction
-            # This makes staying in the same steering angle better if it is close enough to optimal.
-            if direction_diff < 10 and not steering_angle_change:
-                if abs(direction_diff) < 10:
-                    steering_angle_maintain_bonus += 0.1
-                if abs(direction_diff) < 5:
-                    steering_angle_maintain_bonus += 0.2
-                if STATE.prev_direction_diff is not None and abs(STATE.prev_direction_diff) > abs(direction_diff):
-                    steering_angle_maintain_bonus += 0.1
-                    
-            reward += steering_angle_maintain_bonus
-        
-        # Punish harshly for 30+ degree turn angle change, punish moderately for 20+ degree angle change.
-        if STATE.prev_steering is not None:
-            delta_turn_angle = abs(params['steering_angle'] - STATE.prev_steering)
-            if delta_turn_angle > 30:
-                reward *= 0.5
-            elif delta_turn_angle > 20:
-                reward *= 0.8
-        
-        ################ END React to State Changes ################
-        
-        ###################### PROGRESS REWARD ######################
-        
-        # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
-        
-        # progress_multiplier = 120 # This determines how much the car prioritizes lap completion.
-        
-        # pi = int(progress // 10)  # Calculate which 10% segment we're in
-        
-        # # # Initialize intermediate_progress_bonus to 0 for safety
-        # intermediate_progress_bonus = 0
-
-        # # Check if this segment has been completed before
-        # if pi != 0 and STATE.intermediate_progress[pi] == 0:
-        #     cubed_progress_per_step = progress/steps**4
-        #     # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
-        #     intermediate_progress_bonus = pi * cubed_progress_per_step * progress_multiplier
-        #     # Mark this segment as rewarded
-        #     STATE.intermediate_progress[pi] = intermediate_progress_bonus
-
-        # reward += intermediate_progress_bonus
-        
-        ###################### END PROGRESS REWARD ######################
-        
-        # This gives a harsh penalty if the car is not steering in range.
-        if not is_within_range:
-            print('Penalizing the car for heading off track.')
-            print('heading: ', heading)
-            print('min_heading: ', min_heading)
-            print('max_heading: ', max_heading )
             reward = 1e-3
 
-        # Zero reward of obviously too slow. Exception made for sharp right turn waypoints.
-        
+        # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.5:
-            reward = 1e-3
-            
-        speed_diff_zero = optimals[2]-speed
-        speed_threshold = 0.5
-        if speed_diff_zero > speed_threshold:
-            reward = 1e-3
+            reward *= 0.05
 
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 1500 # should be adapted to track length and other rewards
-        STANDARD_TIME = 21  # seconds (time that is easily done by model)
-        FASTEST_TIME = 17.5  # seconds (best time of 1st place on the track)
+        REWARD_FOR_FASTEST_TIME = 1750 # should be adapted to track length and other rewards
+        STANDARD_TIME = 22  # seconds (time that is easily done by model)
+        FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
         else:
             finish_reward = 0
         reward += finish_reward
-        
-                
+
+        ## Zero reward if off track ##
+        is_crashed = params['is_crashed']
+        track_width = params['track_width']
+        distance_from_center = params['distance_from_center']
+
         # Zero reward if the center of the car is off the track.
-        # This will add a margin of 
 
         if is_crashed:
             reward = min(reward, 0.001)
-        # Cut reward in half if one wheel is off the track
-        if not all_wheels_on_track:
-            if distance_from_center >= 0.5 * track_width:
-                reward = min(reward, 0.001)
-                
-        ##################### UPDATE STATE #####################
-        
-        STATE.prev_steering = params['steering_angle']
-        STATE.prev_normalized_distance_from_route = normalized_dist
-        STATE.prev_direction_diff = direction_diff
-        STATE.prev_speed_diff = speed_diff
+        elif not all_wheels_on_track and distance_from_center >= (track_width/2):
+            reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
 
@@ -636,6 +447,10 @@ class Reward:
             print("=== Finish reward: %f ===" % finish_reward)
 
         #################### RETURN REWARD ####################
+        
+        STATE.prev_turn_angle = steering_angle
+        STATE.prev_speed_diff = speed_diff
+        STATE.prev_distance = dist
 
         # Always return a float value
         return float(reward)
@@ -646,3 +461,4 @@ reward_object = Reward() # add parameter verbose=True to get noisy output for te
 
 def reward_function(params):
     return reward_object.reward_function(params)
+
