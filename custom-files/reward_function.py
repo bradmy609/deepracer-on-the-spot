@@ -481,7 +481,7 @@ class Reward:
             if STATE.prev_speed == speed and delta_speed_diff < 0.1 and speed_diff < 0.25:
                 reward += 0.1
                 
-        if speed > 3 and (steering_angle > 20 or steering_angle < -20):
+        if speed > 3 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.1
         if not is_within_range:
             reward *= 0.02
