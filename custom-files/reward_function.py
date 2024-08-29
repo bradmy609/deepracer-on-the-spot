@@ -176,7 +176,7 @@ class Reward:
             
             # Calculate the half-width of the track
             half_width = track_width / 2.0
-            half_width += 0.05
+            half_width += 0.1
             
             # Calculate the border points
             inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
@@ -444,7 +444,7 @@ class Reward:
         reward += speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 1.75
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.50
         STANDARD_TIME = 22
         FASTEST_TIME = 15
         times_list = [row[3] for row in racing_track]
@@ -503,7 +503,7 @@ class Reward:
             reward *= 0.05
 
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 1750 # should be adapted to track length and other rewards
+        REWARD_FOR_FASTEST_TIME = 2500 # should be adapted to track length and other rewards
         STANDARD_TIME = 22  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
