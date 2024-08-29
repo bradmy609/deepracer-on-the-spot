@@ -491,6 +491,12 @@ class Reward:
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         if direction_diff > 30:
             reward = 1e-3
+        if direction_diff > 25:
+            reward *= 0.7
+        if direction_diff > 20:
+            reward *= 0.8
+        if direction_diff > 15:
+            reward *= 0.9
 
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
