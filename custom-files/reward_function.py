@@ -473,6 +473,7 @@ class Reward:
                 reward = min(reward, 0.001)
             elif delta_turn_angle > 30:
                 reward = min(reward, 0.001)
+                
             # Steering maintain reward
             if steering_angle == STATE.prev_turn_angle and delta_distance < 0.1 and dist < 0.25:
                 reward += 0.1
@@ -483,7 +484,7 @@ class Reward:
         if speed > 3 and (steering_angle > 20 or steering_angle < -20):
             reward *= 0.1
         if not is_within_range:
-            reward *= 0.05
+            reward *= 0.02
             
                 
         # Zero reward if obviously wrong direction (e.g. spin)
@@ -491,6 +492,10 @@ class Reward:
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         if direction_diff > 30:
             reward = 1e-3
+        if direction_diff > 25:
+            reward *= 0.8
+        if direction_diff > 20:
+            reward *= 0.9
 
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
