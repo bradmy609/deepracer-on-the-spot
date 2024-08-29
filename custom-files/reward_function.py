@@ -1,7 +1,11 @@
+import numpy as np
+
 class STATE:
     prev_turn_angle = None
     prev_speed_diff = None
     prev_turn_angle = None
+    prev_distance = None
+    prev_speed = None
 
 class Reward:
     def __init__(self, verbose=False):
@@ -150,6 +154,76 @@ class Reward:
                 projected_time = 9999
 
             return projected_time
+        
+        def find_border_points(params):
+            waypoints = params['waypoints']
+            closest_waypoints = params['closest_waypoints']
+            track_width = params['track_width']
+            
+            next_waypoint_index = closest_waypoints[1]
+            prev_waypoint_index = closest_waypoints[0]
+            next_waypoint = waypoints[next_waypoint_index]
+            prev_waypoint = waypoints[prev_waypoint_index]
+            
+            # Calculate the direction vector from prev_waypoint to next_waypoint
+            direction_vector = np.array([next_waypoint[0] - prev_waypoint[0], next_waypoint[1] - prev_waypoint[1]])
+            
+            # Calculate the perpendicular vector
+            perpendicular_vector = np.array([-direction_vector[1], direction_vector[0]])
+            
+            # Normalize the perpendicular vector
+            perpendicular_vector = perpendicular_vector / np.linalg.norm(perpendicular_vector)
+            
+            # Calculate the half-width of the track
+            half_width = track_width / 2.0
+            half_width += 0.05
+            
+            # Calculate the border points
+            inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
+            outer_border1 = np.array(prev_waypoint) + perpendicular_vector * half_width
+            inner_border2 = np.array(next_waypoint) - perpendicular_vector * half_width
+            outer_border2 = np.array(next_waypoint) + perpendicular_vector * half_width
+            
+            return inner_border1, outer_border1, inner_border2, outer_border2
+        
+        def find_min_max_heading(params, inner_border2, outer_border2):
+            car_x = params['x']
+            car_y = params['y']
+            car_heading = params['heading']
+
+            # Calculate the vector from the car to the inner border
+            inner_vector_x = inner_border2[0] - car_x
+            inner_vector_y = inner_border2[1] - car_y
+
+            # Calculate the vector from the car to the outer border
+            outer_vector_x = outer_border2[0] - car_x
+            outer_vector_y = outer_border2[1] - car_y
+
+            # Compute the angles in degrees
+            inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
+            outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
+
+            # Normalize angles to be within 0 to 360 degrees
+            inner_heading = (inner_heading + 360) % 360
+            outer_heading = (outer_heading + 360) % 360
+
+            # Normalize car heading to be within 0 to 360 degrees
+            car_heading = (car_heading + 360) % 360
+            print(f'car_heading: {car_heading}')
+
+            # Get the min and max headings
+            min_heading = min(inner_heading, outer_heading)
+            max_heading = max(inner_heading, outer_heading)
+
+            # Check if the car's heading is within the range considering circular nature
+            if max_heading - min_heading <= 180:
+                # Normal case where min_heading is less than max_heading and the angle difference is <= 180
+                is_within_range = min_heading <= car_heading <= max_heading
+            else:
+                # Case where angles wrap around, e.g., min_heading=60, max_heading=270, car_heading=350
+                is_within_range = car_heading >= max_heading or car_heading <= min_heading
+
+            return min_heading, max_heading, is_within_range
 
         #################### RACING LINE ######################
 
@@ -385,18 +459,32 @@ class Reward:
             steps_reward = 0
         reward += steps_reward
         
-        if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None:
+        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
+        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        
+        if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
-            delta_speed_diff = abs(speed_diff - STATE.prev_speed_diff)
-            delta_distance = abs(dist - STATE.prev_distance)
+            delta_speed_diff = speed_diff - STATE.prev_speed_diff
+            delta_distance = dist - STATE.prev_distance
+            # Bad steering punishments
             if STATE.prev_turn_angle > 10 and steering_angle < -10:
                 reward = min(reward, 0.001)
             elif STATE.prev_turn_angle < -10 and steering_angle > 10:
                 reward = min(reward, 0.001)
             elif delta_turn_angle > 30:
                 reward = min(reward, 0.001)
-            if steering_angle == STATE.prev_turn_angle and delta_speed_diff < 0.1 and delta_distance < 0.1 and speed_diff < 0.25 and dist < 0.25:
+            # Steering maintain reward
+            if steering_angle == STATE.prev_turn_angle and delta_distance < 0.1 and dist < 0.25:
                 reward += 0.1
+            # Speed maintain reward
+            if STATE.prev_speed == speed and delta_speed_diff < 0.1 and speed_diff < 0.25:
+                reward += 0.1
+                
+        if speed > 3 and (steering_angle > 20 or steering_angle < -20):
+            reward *= 0.1
+        if not is_within_range:
+            reward *= 0.05
+            
                 
         # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
@@ -451,6 +539,7 @@ class Reward:
         STATE.prev_turn_angle = steering_angle
         STATE.prev_speed_diff = speed_diff
         STATE.prev_distance = dist
+        STATE.prev_speed = speed
 
         # Always return a float value
         return float(reward)
