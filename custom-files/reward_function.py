@@ -523,7 +523,7 @@ class Reward:
 
         if is_crashed:
             reward = min(reward, 0.001)
-        elif not all_wheels_on_track and distance_from_center >= (track_width/2):
+        elif not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
