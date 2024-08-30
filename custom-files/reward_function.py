@@ -176,7 +176,7 @@ class Reward:
             
             # Calculate the half-width of the track
             half_width = track_width / 2.0
-            half_width += 0.05
+            half_width += 0.2
             
             # Calculate the border points
             inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
@@ -483,7 +483,7 @@ class Reward:
         if speed > 3 and (steering_angle > 20 or steering_angle < -20):
             reward *= 0.1
         if not is_within_range:
-            reward *= 0.05
+            reward *= 0.9
             
                 
         # Zero reward if obviously wrong direction (e.g. spin)
