@@ -176,7 +176,7 @@ class Reward:
             
             # Calculate the half-width of the track
             half_width = track_width / 2.0
-            half_width += 0.1
+            half_width += 0.2
             
             # Calculate the border points
             inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
@@ -444,8 +444,8 @@ class Reward:
         reward += speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.50
-        STANDARD_TIME = 22
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 1.75
+        STANDARD_TIME = 19.5
         FASTEST_TIME = 15
         times_list = [row[3] for row in racing_track]
 
@@ -459,8 +459,20 @@ class Reward:
             steps_reward = 0
         reward += steps_reward
         
-        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
-        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+        half_track_width = track_width/2
+        norm_dist_from_center = (distance_from_center / half_track_width)
+        if 39 <= closest_waypoints[1] <= 54 or 93 <= closest_waypoints[1] <= 105:
+            if is_left_of_center:
+                if distance_from_center > half_track_width:
+                    scaling_factor = max(0.1, 1 + norm_dist_from_center)
+                    reward *= scaling_factor
+                reward += 1
+        elif 65 <= closest_waypoints[1] <= 78:  # Right-hand 180 degree turn
+            if not is_left_of_center:  # Car should be on the right side of the center line
+                if distance_from_center > half_track_width:
+                    scaling_factor = max(0.1, 1 + norm_dist_from_center)
+                    reward *= scaling_factor
+                reward += 1
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -480,12 +492,14 @@ class Reward:
             # Speed maintain reward
             if STATE.prev_speed == speed and delta_speed_diff < 0.1 and speed_diff < 0.25:
                 reward += 0.1
+        
+        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
+        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
                 
         if speed > 3 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.1
         if not is_within_range:
-            reward *= 0.02
-            
+            reward *= 0.05
                 
         # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
@@ -503,8 +517,8 @@ class Reward:
             reward *= 0.05
 
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 2500 # should be adapted to track length and other rewards
-        STANDARD_TIME = 22  # seconds (time that is easily done by model)
+        REWARD_FOR_FASTEST_TIME = 1750 # should be adapted to track length and other rewards
+        STANDARD_TIME = 19.5  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
@@ -522,7 +536,7 @@ class Reward:
 
         if is_crashed:
             reward = min(reward, 0.001)
-        elif not all_wheels_on_track and distance_from_center >= (track_width/2):
+        elif not all_wheels_on_track and distance_from_center >= ((track_width/2)+0.05):
             reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
