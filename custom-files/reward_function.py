@@ -176,7 +176,7 @@ class Reward:
             
             # Calculate the half-width of the track
             half_width = track_width / 2.0
-            half_width += 0.2
+            half_width += 0.3
             
             # Calculate the border points
             inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
@@ -426,14 +426,14 @@ class Reward:
         reward = 1
 
         ## Reward if car goes close to optimal racing line ##
-        DISTANCE_MULTIPLE = 1
+        DISTANCE_MULTIPLE = 2
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
         distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
         reward += distance_reward * DISTANCE_MULTIPLE
 
         ## Reward if speed is close to optimal speed ##
         SPEED_DIFF_NO_REWARD = 1
-        SPEED_MULTIPLE = 2
+        SPEED_MULTIPLE = 1
         speed_diff = abs(optimals[2]-speed)
         if speed_diff <= SPEED_DIFF_NO_REWARD:
             # we use quadratic punishment (not linear) bc we're not as confident with the optimal speed
@@ -444,8 +444,8 @@ class Reward:
         reward += speed_reward * SPEED_MULTIPLE
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 1.75
-        STANDARD_TIME = 22
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.00
+        STANDARD_TIME = 20
         FASTEST_TIME = 15
         times_list = [row[3] for row in racing_track]
 
@@ -480,10 +480,10 @@ class Reward:
             if STATE.prev_speed == speed and delta_speed_diff < 0.1 and speed_diff < 0.25:
                 reward += 0.1
                 
-        if speed > 3 and (steering_angle > 20 or steering_angle < -20):
+        if speed > 3 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.1
         if not is_within_range:
-            reward *= 0.9
+            reward *= 0.5
             
                 
         # Zero reward if obviously wrong direction (e.g. spin)
@@ -501,11 +501,11 @@ class Reward:
         # Zero reward of obviously too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.5:
-            reward *= 0.05
+            reward *= 0.5
 
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 1750 # should be adapted to track length and other rewards
-        STANDARD_TIME = 22  # seconds (time that is easily done by model)
+        REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
+        STANDARD_TIME = 20  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
