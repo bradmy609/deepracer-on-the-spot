@@ -471,6 +471,8 @@ class Reward:
         # reward += heading_reward
         
         # 90 degree left turns (half speed, half distance reward to tighten turns)
+        SPEED_THRESHOLD = 0.5
+        SPEED_PUNISHMENT = 0.01
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index < 140):
             DISTANCE_MULTIPLE = 1.5
             SPEED_MULTIPLE = 1.5
@@ -490,18 +492,19 @@ class Reward:
             SPEED_MULTIPLE = 1.5
             SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.5
-        if (20 <= next_waypoint_index <= 30) or \
-            (111 <= next_waypoint_index <= 124) or \
-            (next_waypoint_index > 139) or \
-            (next_waypoint_index <= 1):
-        # Check if speed is greater than 4
-            if speed >= 4:
-                speed_reward += 0.5
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             DISTANCE_MULTIPLE = 1
             SPEED_MULTIPLE = 2
             SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.1
+            SPEED_PUNISHMENT = 0.01
+            
+        if (20 <= next_waypoint_index < 30) or \
+            (111 <= next_waypoint_index <= 124) or \
+            (next_waypoint_index >= 139) or \
+            (next_waypoint_index <= 1):
+            # Bonus reward if going 4 m/s or faster during optimal spots
+            if speed >= 4:
+                reward += 1
             
         DC = (distance_reward**2) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
