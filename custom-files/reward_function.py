@@ -516,20 +516,14 @@ class Reward:
             delta_speed_diff = speed_diff - STATE.prev_speed_diff
             delta_distance = dist - STATE.prev_distance
             # If close to racing line and not moving away.
-            if delta_distance < 0.1 and dist < 0.25:
-                # give additional reward for smaller steering changes.
-                if delta_turn_angle < 5:
-                    reward += 0.1
-                    if dist < 0.1:
-                        reward += 0.1
-                elif delta_turn_angle < 3:
-                    reward += 0.2
-                    if dist < 0.1:
-                        reward += 0.1
-                elif delta_turn_angle < 1:
-                    reward += 0.3
-                    if dist < 0.1:
-                        reward += 0.1
+            # if delta_distance < 0.1 and dist < 0.1:
+            #     # give additional reward for smaller steering changes.
+            #     if delta_turn_angle < 1:
+            #         reward += 0.3
+            #     elif delta_turn_angle < 3:
+            #         reward += 0.2
+            #     elif delta_turn_angle < 5:
+            #         reward += 0.1
 
             # Erratic steering punishments
             if STATE.prev_turn_angle > 10 and steering_angle < -10:
