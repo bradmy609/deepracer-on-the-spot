@@ -442,7 +442,7 @@ class Reward:
             speed_reward = 0
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 3.5
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.67
         STANDARD_TIME = 20
         FASTEST_TIME = 15
         times_list = [row[3] for row in racing_track]
@@ -464,66 +464,73 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         
-        # Heading reward calculated, different formula given for being less than 20 degrees off optimal.
-        # heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
-        # if abs(direction_diff) <= 20:
-        #     heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
+        HEADING_MULTIPLIER = 1
+        heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
+        if abs(direction_diff) <= 20:
+            heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
         # reward += heading_reward
         
         # 90 degree left turns (half speed, half distance reward to tighten turns)
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.01
+        DISTANCE_EXPONENT = 1
+        SPEED_CAP = None
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index < 140):
             DISTANCE_MULTIPLE = 1.5
+            DISTANCE_EXPONENT = 2
             SPEED_MULTIPLE = 1.5
             SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.2
+            SPEED_PUNISHMENT = 0.1
+            SPEED_CAP = None
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
         elif next_waypoint_index >= 63 and next_waypoint_index <= 78:
             # Focus on distance from racing line during this sharp right turn.
             DISTANCE_MULTIPLE = 1.5
+            DISTANCE_EXPONENT = 2
             SPEED_MULTIPLE = 1.5
             # Allows you to be farther from optimal speed and doesn't punish as hard for being off.
             SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.5
+            SPEED_CAP = 2
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
         elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index > 36 and next_waypoint_index <= 54):
             DISTANCE_MULTIPLE = 1.5
+            DISTANCE_EXPONENT = 2
             SPEED_MULTIPLE = 1.5
-            SPEED_THRESHOLD = 0.75
+            SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
+            SPEED_CAP = 2.5
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             DISTANCE_MULTIPLE = 1
+            DISTANCE_EXPONENT = 1
             SPEED_MULTIPLE = 2
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.01
-            
+            SPEED_CAP = None
         if (20 <= next_waypoint_index < 30) or \
             (111 <= next_waypoint_index <= 124) or \
             (next_waypoint_index >= 139) or \
             (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
-            if speed >= 4:
+            if speed >= 3.95:
                 reward += 1
             
-        DC = (distance_reward**2) * DISTANCE_MULTIPLE
+        DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        reward += DC + SC + (DC * SC)
+        HC = heading_reward * HEADING_MULTIPLIER
+        reward += DC + SC + HC
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
             delta_speed = abs(speed - STATE.prev_speed)
             delta_speed_diff = speed_diff - STATE.prev_speed_diff
             delta_distance = dist - STATE.prev_distance
-            # If close to racing line and not moving away.
-            # if delta_distance < 0.1 and dist < 0.1:
-            #     # give additional reward for smaller steering changes.
-            #     if delta_turn_angle < 1:
-            #         reward += 0.3
-            #     elif delta_turn_angle < 3:
-            #         reward += 0.2
-            #     elif delta_turn_angle < 5:
-            #         reward += 0.1
+            # Speed maintain bonus if speed is close to optimal
+            if delta_speed <= 0.1 and speed_diff <= 0.1:
+                reward += 0.1
+            # Bonus for small steering changes when close to racing line.
+            if delta_turn_angle <= 3 and dist <= 0.1:
+                reward += 0.1
 
             # Erratic steering punishments
             if STATE.prev_turn_angle > 10 and steering_angle < -10:
@@ -533,7 +540,7 @@ class Reward:
             elif delta_turn_angle >= 30:
                 reward = min(reward, 0.001)
                 
-        if speed > 2 and (steering_angle >= 20 or steering_angle <= -20):
+        if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.1
         if not is_within_range:
             reward *= 0.1
@@ -543,9 +550,10 @@ class Reward:
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > SPEED_THRESHOLD:
             reward *= SPEED_PUNISHMENT
-
+        if SPEED_CAP is not None and speed > SPEED_CAP:
+            reward *= 0.01
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 3500 # should be adapted to track length and other rewards
+        REWARD_FOR_FASTEST_TIME = 2667 # should be adapted to track length and other rewards
         STANDARD_TIME = 20  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
