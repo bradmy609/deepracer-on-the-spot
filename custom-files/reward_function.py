@@ -532,7 +532,7 @@ class Reward:
             DISTANCE_EXPONENT = 1
             DISTANCE_MULTIPLE = 1.25
             SPEED_MULTIPLE = 1.75
-            SPEED_THRESHOLD = 1.00
+            SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
