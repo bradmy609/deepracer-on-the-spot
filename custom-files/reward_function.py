@@ -487,43 +487,43 @@ class Reward:
         # 90 degree left turns
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index >= 129 and next_waypoint_index <= 140):
             DISTANCE_EXPONENT = 1.5
-            DISTANCE_MULTIPLE = 1.25
-            SPEED_MULTIPLE = 1.75
+            DISTANCE_MULTIPLE = 1.00
+            SPEED_MULTIPLE = 2.00
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.1
         # 180 degree right turn
-        elif next_waypoint_index >= 62 and next_waypoint_index <= 76:
+        elif (next_waypoint_index >= 62 and next_waypoint_index <= 76) or (next_waypoint_index >= 38 and next_waypoint_index <= 54):
             DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 1.25
+            DISTANCE_MULTIPLE = 1.00
+            SPEED_MULTIPLE = 2.00
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
-            SPEED_MULTIPLE = 1.75
-            SPEED_CAP = 2.5
+            SPEED_CAP = 3.00
             if next_waypoint_index >= 65 and next_waypoint_index <= 74:
-                SPEED_CAP = 2
+                SPEED_CAP = 2.25
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.1
         # 180 degree left turns
-        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 38 and next_waypoint_index <= 53):
+        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106):
             DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 1.25
+            DISTANCE_MULTIPLE = 1.00
+            SPEED_MULTIPLE = 2.00
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
-            SPEED_MULTIPLE = 1.75
-            SPEED_CAP = 2.5
+            SPEED_CAP = 2.75
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.1
         # Short straight sections going into turns. Slightly increased linear distance reward. Reduced speed punishments.
         elif (next_waypoint_index >= 77 and next_waypoint_index <= 90) or (next_waypoint_index >= 54 and next_waypoint_index <= 61):
-            DISTANCE_EXPONENT = 1
-            DISTANCE_MULTIPLE = 1.25
+            DISTANCE_EXPONENT = 1.5
+            DISTANCE_MULTIPLE = 1.50
+            SPEED_MULTIPLE = 1.50
             SPEED_THRESHOLD = 1
             SPEED_PUNISHMENT = 1
-            SPEED_MULTIPLE = 1.75
-            SPEED_CAP = 3.0
+            SPEED_CAP = None
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             DISTANCE_EXPONENT = 1
             DISTANCE_MULTIPLE = 1
@@ -532,6 +532,7 @@ class Reward:
             SPEED_MULTIPLE = 2
             DISTANCE_PUNISHMENT = 1
             SPEED_CAP = None
+            
         if (20 <= next_waypoint_index < 30) or (110 <= next_waypoint_index <= 127) or (next_waypoint_index >= 139) or (next_waypoint_index <= 1):
             if steering_angle > 5 or steering_angle < -5:
                 reward *= 0.1
