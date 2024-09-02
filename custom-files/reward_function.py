@@ -426,13 +426,16 @@ class Reward:
         reward = 1
 
         ## Reward if car goes close to optimal racing line ##
-        DISTANCE_MULTIPLE = 1.5
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
         distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-
+        
+        DISTANCE_PUNISHMENT = 1
+        if dist > (track_width * 0.5):
+            DISTANCE_PUNISHMENT = 0.1
+            
         ## Reward if speed is close to optimal speed ##
         SPEED_DIFF_NO_REWARD = 1
-        SPEED_MULTIPLE = 1.5
+        SPEED_MULTIPLE = 2
         speed_diff = abs(optimals[2]-speed)
         if speed_diff <= SPEED_DIFF_NO_REWARD:
             # we use quadratic punishment (not linear) bc we're not as confident with the optimal speed
@@ -442,7 +445,7 @@ class Reward:
             speed_reward = 0
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 3.00
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.0
         STANDARD_TIME = 20
         FASTEST_TIME = 15
         times_list = [row[3] for row in racing_track]
@@ -464,63 +467,66 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         
-        HEADING_MULTIPLIER = 1
-        heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
-        if abs(direction_diff) <= 20:
-            heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
+        # HEADING_MULTIPLIER = 1
+        # heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
+        # if abs(direction_diff) <= 20:
+        #     heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
         # reward += heading_reward
         
-        # 90 degree left turns (half speed, half distance reward to tighten turns)
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.01
+        SPEED_MULTIPLE = 2
+        DISTANCE_MULTIPLE = 1
         DISTANCE_EXPONENT = 1
         SPEED_CAP = None
+        SUPER_FAST_BONUS = 0
+        STEERING_PUNISHMENT = 1
+        # 90 degree left turns (half speed, half distance reward to tighten turns)
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index < 140):
-            DISTANCE_MULTIPLE = 2
             DISTANCE_EXPONENT = 2
-            SPEED_MULTIPLE = 2
+            DISTANCE_MULTIPLE = 1.5
+            SPEED_MULTIPLE = 1.5
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
         elif next_waypoint_index >= 55 and next_waypoint_index <= 78:
-            # Focus on distance from racing line during this sharp right turn.
-            DISTANCE_MULTIPLE = 2
             DISTANCE_EXPONENT = 2
-            SPEED_MULTIPLE = 2
-            # Allows you to be farther from optimal speed and doesn't punish as hard for being off.
+            DISTANCE_MULTIPLE = 2
             SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.5
+            SPEED_MULTIPLE = 1
             SPEED_CAP = 3
-            if next_waypoint_index > 63 and next_waypoint_index < 78:
+            if next_waypoint_index > 63 and next_waypoint_index < 76:
                 SPEED_CAP = 2
+            if steering_angle > 5:
+                STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
         elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index > 36 and next_waypoint_index <= 54):
-            DISTANCE_MULTIPLE = 2
             DISTANCE_EXPONENT = 2
-            SPEED_MULTIPLE = 2
-            SPEED_THRESHOLD = 0.5
+            DISTANCE_MULTIPLE = 2
+            SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.5
+            SPEED_MULTIPLE = 1
             SPEED_CAP = 2.5
+            if steering_angle < -5:
+                STEERING_PUNISHMENT = 0.1
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
-            DISTANCE_MULTIPLE = 1.5
             DISTANCE_EXPONENT = 1
-            SPEED_MULTIPLE = 3.0
+            DISTANCE_MULTIPLE = 1
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.01
+            SPEED_MULTIPLE = 2
+            DISTANCE_PUNISHMENT = 1
             SPEED_CAP = None
-        if (20 <= next_waypoint_index < 30) or \
-            (111 <= next_waypoint_index <= 124) or \
-            (next_waypoint_index >= 139) or \
-            (next_waypoint_index <= 1):
+        if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 139) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
-                reward += 1
-            
+                SUPER_FAST_BONUS = 1
+        
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        HC = heading_reward * HEADING_MULTIPLIER
-        reward += DC + SC + HC
+        reward += DC + SC + SUPER_FAST_BONUS
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -555,9 +561,12 @@ class Reward:
             reward *= SPEED_PUNISHMENT
         if SPEED_CAP is not None and speed > SPEED_CAP:
             reward *= 0.01
+        
+        reward *= DISTANCE_PUNISHMENT
+        reward *= STEERING_PUNISHMENT
             
         ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 3000 # should be adapted to track length and other rewards
+        REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
         STANDARD_TIME = 20  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
