@@ -523,8 +523,6 @@ class Reward:
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
-            if steering_angle > 5 or steering_angle < -5:
-                STEERING_PUNISHMENT = 0.1
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
