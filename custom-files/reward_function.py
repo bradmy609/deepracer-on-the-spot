@@ -526,7 +526,7 @@ class Reward:
             DISTANCE_EXPONENT = 2
             SPEED_MULTIPLE = 1
             DISTANCE_MULTIPLE = 2
-            SPEED_THRESHOLD = 0.75
+            SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.01
             DISTANCE_PUNISHMENT = 0.1
             SPEED_CAP = None
