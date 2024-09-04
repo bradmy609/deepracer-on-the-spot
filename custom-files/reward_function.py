@@ -467,6 +467,7 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         
+        heading_reward = 0
         if direction_diff <= 5:
             heading_reward = 0.5
         elif direction_diff <= 10:
