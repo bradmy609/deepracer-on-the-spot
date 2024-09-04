@@ -176,7 +176,7 @@ class Reward:
             
             # Calculate the half-width of the track
             half_width = track_width / 2.0
-            half_width += 0.3
+            half_width += 0.2
             
             # Calculate the border points
             inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
@@ -475,18 +475,18 @@ class Reward:
         
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.01
-        SPEED_MULTIPLE = 2
-        DISTANCE_MULTIPLE = 1
-        DISTANCE_EXPONENT = 1
+        SPEED_MULTIPLE = 1.5
+        DISTANCE_MULTIPLE = 1.5
+        DISTANCE_EXPONENT = 2
         SPEED_CAP = None
         SUPER_FAST_BONUS = 0
         STEERING_PUNISHMENT = 1
         # 90 degree left turns (half speed, half distance reward to tighten turns)
-        if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index < 140):
+        if (next_waypoint_index >= 7 and next_waypoint_index <= 18) or (next_waypoint_index > 129 and next_waypoint_index < 140):
             DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 1.5
-            SPEED_MULTIPLE = 1.5
-            SPEED_THRESHOLD = 0.5
+            DISTANCE_MULTIPLE = 2
+            SPEED_MULTIPLE = 1.0
+            SPEED_THRESHOLD = 0.6
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
@@ -502,7 +502,7 @@ class Reward:
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
-        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index > 36 and next_waypoint_index <= 54):
+        elif (next_waypoint_index >= 79 and next_waypoint_index <= 106) or (next_waypoint_index > 36 and next_waypoint_index <= 54):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
             SPEED_THRESHOLD = 0.75
@@ -511,18 +511,18 @@ class Reward:
             SPEED_CAP = 2.5
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.1
-        else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
-            DISTANCE_EXPONENT = 1
-            DISTANCE_MULTIPLE = 1
-            SPEED_THRESHOLD = 0.5
+        else: # Values for non-turning sections. Punish speed off by 0.75 harshly, reduce dist reward.
+            DISTANCE_EXPONENT = 2
+            SPEED_MULTIPLE = 1.5
+            DISTANCE_MULTIPLE = 1.5
+            SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.01
-            SPEED_MULTIPLE = 2
-            DISTANCE_PUNISHMENT = 1
+            DISTANCE_PUNISHMENT = 0.1
             SPEED_CAP = None
         if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 139) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
-                SUPER_FAST_BONUS = 1
+                SUPER_FAST_BONUS = 0.5
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
@@ -534,12 +534,11 @@ class Reward:
             delta_speed_diff = speed_diff - STATE.prev_speed_diff
             delta_distance = dist - STATE.prev_distance
             # Speed maintain bonus if speed is close to optimal
-            if delta_speed <= 0.1 and speed_diff <= 0.1:
+            if delta_speed <= 0.1:
                 reward += 0.1
             # Bonus for small steering changes when close to racing line.
-            if delta_turn_angle <= 3 and dist <= 0.1:
-                reward += 0.1
-            # Erratic steering punishments
+            smooth_steering_bonus = max(.001, 0.2 - (delta_turn_angle/150))
+            reward += smooth_steering_bonus
             if STATE.prev_turn_angle > 10 and steering_angle < -10:
                 reward *= 0.1
             elif STATE.prev_turn_angle < -10 and steering_angle > 10:
@@ -550,8 +549,10 @@ class Reward:
         # Punishing erratic steering or steering out of range of valid directions.
         if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.1
+        if speed > 3 and (steering_angle >= 15 or steering_angle <= -15):
+            reward *= 0.1
         if not is_within_range:
-            reward *= 0.01
+            reward *= 1e-3
         if direction_diff > 30:
             reward = 1e-3
         
