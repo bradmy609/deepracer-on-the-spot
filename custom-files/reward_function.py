@@ -458,7 +458,6 @@ class Reward:
             steps_reward = min(REWARD_PER_STEP_FOR_FASTEST_TIME, reward_prediction / steps_prediction)
         except:
             steps_reward = 0
-        steps_reward = steps_reward ** 2
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
