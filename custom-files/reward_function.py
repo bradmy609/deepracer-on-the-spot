@@ -468,15 +468,7 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         
-        if direction_diff <= 10:
-            if dist <= 0.1:
-                reward += steps_reward
-            elif dist <= 0.2:
-                reward += steps_reward * 0.8
-            elif dist <= 0.3:
-                reward += steps_reward * 0.5
-            else:
-                reward += steps_reward * 0.1
+        reward += steps_reward
                 
         # HEADING_MULTIPLIER = 1
         # heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
