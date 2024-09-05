@@ -248,7 +248,7 @@ class Reward:
             return a, b
         
         # Define the reward function based on the calculated a and b
-        def progress_reward(progress_per_step, step_number):
+        def calc_progress_reward(progress_per_step, step_number):
             a, b = calculate_a_b()
             
             # Flat reward for the first 5 steps
@@ -488,7 +488,7 @@ class Reward:
         times_list = [row[3] for row in racing_track]
 
         try:
-            steps_reward = progress_reward(progress/steps, steps)
+            steps_reward = calc_progress_reward(progress/steps, steps)
         except:
             steps_reward = 0
             
@@ -563,7 +563,7 @@ class Reward:
                 STEERING_PUNISHMENT = 0.5
             else:
                 STEERING_PUNISHMENT = 1
-            if distance_from_center > (track_width/2) * 0.8:
+            if distance_from_center > (track_width/2) * 0.8 and DISTANCE_PUNISHMENT > 0.5:
                 DISTANCE_PUNISHMENT = 0.5
             DISTANCE_EXPONENT = 1
             DISTANCE_MULTIPLE = 1.65
@@ -577,29 +577,26 @@ class Reward:
                 SUPER_FAST_BONUS = 1
                 
         # Reward every 10% progress to make lap completion more reliable. The goal of this model is to never crash.
-        
-        progress_multiplier = 45 # This determines how much the car prioritizes lap completion.
-        
-        pi = int(progress // 10)  # Calculate which 10% segment we're in
-        
-        # Initialize intermediate_progress_bonus to 0 for safety
+        progress_reward = 20 * progress / steps
+        if steps <= 5:
+            progress_reward = 1 #ignore progress in the first 5 steps
+            
         intermediate_progress_bonus = 0
-
-        # Check if this segment has been completed before
-        if pi != 0 and STATE.intermediate_progress[pi] == 0:
-            cubed_progress_per_step = progress/steps**3
-            # Reward is equal to the segment's progress (e.g., 10 points for 10%, 20 for 20%)
-            intermediate_progress_bonus = pi * cubed_progress_per_step * progress_multiplier
-            # Mark this segment as rewarded
-            STATE.intermediate_progress[pi] = intermediate_progress_bonus
-
-        reward += intermediate_progress_bonus
+        pi = int(progress//10)
+    #     print(pi)
+        if pi != 0 and STATE.intermediate_progress[ pi ] == 0:
+            if pi <= 5:
+                intermediate_progress_bonus = progress_reward ** (0.25 * pi) * 1.5
+                STATE.intermediate_progress[ pi ] = intermediate_progress_bonus
+            elif pi > 5:
+                intermediate_progress_bonus = progress_reward ** (0.25*pi)
+                STATE.intermediate_progress[ pi ] = intermediate_progress_bonus
 
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
         HC = (heading_reward) * HEADING_MULTIPLE
-        reward += (DC + SC + HC + SUPER_FAST_BONUS)
+        reward += (DC + SC + HC + SUPER_FAST_BONUS + intermediate_progress_bonus)
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
