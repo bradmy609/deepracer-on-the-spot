@@ -512,7 +512,7 @@ class Reward:
             SPEED_MULTIPLE = 2.0
             SPEED_THRESHOLD = 1
             SPEED_PUNISHMENT = 0.5
-            DISTANCE_PUNISHMENT = 0.5
+            DISTANCE_PUNISHMENT = 1
             STEERING_PUNISHMENT = 1
             SPEED_CAP = None
         if (21 <= next_waypoint_index < 29) or (111 <= next_waypoint_index <= 120) or (next_waypoint_index >= 140) or (next_waypoint_index <= 1):
