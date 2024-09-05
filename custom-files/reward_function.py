@@ -485,7 +485,7 @@ class Reward:
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
-        elif next_waypoint_index >= 55 and next_waypoint_index <= 78:
+        elif next_waypoint_index >= 63 and next_waypoint_index <= 78:
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
             SPEED_THRESHOLD = 0.75
@@ -555,6 +555,7 @@ class Reward:
         if not is_within_range:
             reward *= 0.001
             
+        direction_diff = abs(direction_diff)
         if direction_diff > 30:
             reward = 1e-3
         elif direction_diff > 25:
