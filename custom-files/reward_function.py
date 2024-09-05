@@ -466,6 +466,7 @@ class Reward:
         # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
+        direction_diff = abs(direction_diff)
         
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.01
@@ -506,21 +507,22 @@ class Reward:
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.1
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
-            DISTANCE_EXPONENT = 1.1
-            DISTANCE_MULTIPLE = 1
-            SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.01
-            SPEED_MULTIPLE = 2
+            DISTANCE_EXPONENT = 1
+            DISTANCE_MULTIPLE = 1.0
+            SPEED_MULTIPLE = 2.0
+            SPEED_THRESHOLD = 1
+            SPEED_PUNISHMENT = 0.5
             DISTANCE_PUNISHMENT = 0.5
+            STEERING_PUNISHMENT = 1
             SPEED_CAP = None
-        if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 139) or (next_waypoint_index <= 1):
+        if (21 <= next_waypoint_index < 29) or (111 <= next_waypoint_index <= 120) or (next_waypoint_index >= 140) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        reward += DC + SC + SUPER_FAST_BONUS
+        reward += (DC + SC + SUPER_FAST_BONUS)
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -556,9 +558,9 @@ class Reward:
         if direction_diff > 30:
             reward = 1e-3
         elif direction_diff > 25:
-            reward *= 0.2
-        elif direction_diff > 20:
             reward *= 0.5
+        elif direction_diff > 20:
+            reward *= 0.65
         elif direction_diff > 15:
             reward *= 0.8
         elif direction_diff > 10:
@@ -571,6 +573,10 @@ class Reward:
         if SPEED_CAP is not None and speed > SPEED_CAP:
             reward *= 0.01
         
+        if next_waypoint_index == 115:
+            print('Printing punishments...', DISTANCE_PUNISHMENT, SPEED_PUNISHMENT, STEERING_PUNISHMENT)
+            print('Speed punishment was...', speed_diff_zero > SPEED_THRESHOLD)
+            print('Speed cap was... ', SPEED_CAP)
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
             
