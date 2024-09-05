@@ -514,11 +514,17 @@ class Reward:
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             DISTANCE_EXPONENT = 1
             DISTANCE_MULTIPLE = 1
+            SPEED_THRESHOLD = 0.75
+            SPEED_PUNISHMENT = 0.1
+            SPEED_MULTIPLE = 2
+            SPEED_CAP = None
+        if (20 <= next_waypoint_index <= 29) or (112 <= next_waypoint_index <= 123) or (next_waypoint_index >= 143):
+            DISTANCE_EXPONENT = 1
+            DISTANCE_MULTIPLE = 1
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.01
             SPEED_MULTIPLE = 2
             SPEED_CAP = None
-        if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 139) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
