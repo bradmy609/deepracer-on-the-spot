@@ -496,6 +496,7 @@ class Reward:
         SPEED_CAP = None
         SUPER_FAST_BONUS = 0
         STEERING_PUNISHMENT = 1
+        straight_steering_bonus = 0
         # 90 degree left turns (half speed, half distance reward to tighten turns)
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index < 140):
             DISTANCE_EXPONENT = 2
