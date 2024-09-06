@@ -228,18 +228,18 @@ class Reward:
 
             return min_heading, max_heading, is_within_range
         
-        def calculate_a_b():
+        def calculate_a_b(range1, range2, minimum, maximum):
             # Setting boundary conditions for exponential scaling
             # At progress_per_step = 0.25, reward = 1
             # At progress_per_step = 0.5, reward = 10
             
             # Let b be the scaling factor
             # Solving for a and b
-            progress_1 = 0.2
-            reward_1 = 1
+            progress_1 = range1
+            reward_1 = minimum
             
-            progress_2 = 0.5
-            reward_2 = 6
+            progress_2 = range2
+            reward_2 = maximum
             
             # Solving for b first
             b = math.log(reward_2 / reward_1) / (progress_2 - progress_1)
