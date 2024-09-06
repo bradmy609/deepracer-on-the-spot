@@ -610,7 +610,7 @@ class Reward:
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
         else:
             finish_reward = 0
-        # reward += finish_reward
+        reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
 
