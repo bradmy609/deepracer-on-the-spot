@@ -445,9 +445,9 @@ class Reward:
             speed_reward = 0
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.0
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.4
         STANDARD_TIME = 20
-        FASTEST_TIME = 15
+        FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
@@ -578,7 +578,7 @@ class Reward:
                       (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
         else:
             finish_reward = 0
-        reward += finish_reward
+        # reward += finish_reward
 
         ## Zero reward if off track ##
         track_width = params['track_width']
