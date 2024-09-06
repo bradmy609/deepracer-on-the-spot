@@ -6,6 +6,7 @@ class STATE:
     prev_turn_angle = None
     prev_distance = None
     prev_speed = None
+    turn_peaks = {71: 0, 13: 0, 46: 0, 99: 0, 135: 0}
 
 class Reward:
     def __init__(self, verbose=False):
@@ -18,6 +19,20 @@ class Reward:
         import math
 
         ################## HELPER FUNCTIONS ###################
+        
+        def add_bonus_reward(next_waypoint_index, distance_reward, reward):
+            # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
+            if next_waypoint_index in STATE.turn_peaks and STATE.turn_peaks[next_waypoint_index] == 0:
+                # Calculate the bonus_dist_reward
+                bonus_dist_reward = distance_reward**2 * 20
+                
+                # Update the value in STATE.turn_peaks for the current waypoint
+                STATE.turn_peaks[next_waypoint_index] = bonus_dist_reward
+                
+                # Increment the reward
+                reward += bonus_dist_reward
+            
+            return reward
 
         def dist_2_points(x1, x2, y1, y2):
             return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
@@ -423,7 +438,7 @@ class Reward:
         ################ REWARD AND PUNISHMENT ################
 
         ## Define the default reward ##
-        reward = 1
+        reward = 0.1
 
         ## Reward if car goes close to optimal racing line ##
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
@@ -445,7 +460,7 @@ class Reward:
             speed_reward = 0
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 3.0
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.5
         STANDARD_TIME = 18
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
@@ -509,14 +524,16 @@ class Reward:
             SPEED_PUNISHMENT = 0.1
             SPEED_MULTIPLE = 1
             SPEED_CAP = 2.5
+            if next_waypoint_index == 72:
+                reward += 10 - ((dist/track_width) * 10)
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
         elif next_waypoint_index >= 0 and next_waypoint_index <= 8:
             DISTANCE_EXPONENT = 1.5
             DISTANCE_MULTIPLE = 1.5
-            SPEED_THRESHOLD = 0.75
-            SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1.5
+            SPEED_THRESHOLD = 0.5
+            SPEED_PUNISHMENT = 0.5
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
@@ -524,6 +541,7 @@ class Reward:
                 STEERING_PUNISHMENT = 0.5
             else:
                 STEERING_PUNISHMENT = 1
+            straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
             DISTANCE_EXPONENT = 1.5
             DISTANCE_MULTIPLE = 1.0
             SPEED_THRESHOLD = 0.5
@@ -534,10 +552,12 @@ class Reward:
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
+                
+        reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        reward += DC + SC + SUPER_FAST_BONUS
+        reward += DC + SC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -579,6 +599,17 @@ class Reward:
         ## Zero reward if off track ##
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
+        
+                ## Incentive for finishing the lap in less steps ##
+        REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
+        STANDARD_TIME = 17.5  # seconds (time that is easily done by model)
+        FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
+        if progress == 100:
+            finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
+                      (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
+        else:
+            finish_reward = 0
+        # reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
 
