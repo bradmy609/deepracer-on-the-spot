@@ -514,8 +514,7 @@ class Reward:
         
         progress_per_step = progress / steps
         steps_reward = calc_progress_reward(progress_per_step, steps)
-        
-        
+        reward += steps_reward
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -663,4 +662,3 @@ reward_object = Reward() # add parameter verbose=True to get noisy output for te
 
 def reward_function(params):
     return reward_object.reward_function(params)
-
