@@ -511,16 +511,24 @@ class Reward:
             SPEED_CAP = 2.5
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
+        elif next_waypoint_index >= 0 and next_waypoint_index <= 8:
+            DISTANCE_EXPONENT = 1.5
+            DISTANCE_MULTIPLE = 1.5
+            SPEED_THRESHOLD = 0.75
+            SPEED_PUNISHMENT = 0.5
+            SPEED_MULTIPLE = 1.5
+            if steering_angle < -5:
+                STEERING_PUNISHMENT = 0.5
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             if steering_angle > 5 or steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
-            else: 
+            else:
                 STEERING_PUNISHMENT = 1
             DISTANCE_EXPONENT = 1.5
-            DISTANCE_MULTIPLE = 1.5
+            DISTANCE_MULTIPLE = 1.0
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
-            SPEED_MULTIPLE = 2.5
+            SPEED_MULTIPLE = 2.0
             SPEED_CAP = None
         if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 140) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
