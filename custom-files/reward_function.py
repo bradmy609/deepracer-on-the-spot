@@ -445,7 +445,7 @@ class Reward:
             speed_reward = 0
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.4
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.5
         STANDARD_TIME = 20
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
@@ -568,17 +568,6 @@ class Reward:
         
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
-            
-        ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
-        STANDARD_TIME = 20  # seconds (time that is easily done by model)
-        FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
-        if progress == 100:
-            finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
-                      (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
-        else:
-            finish_reward = 0
-        # reward += finish_reward
 
         ## Zero reward if off track ##
         track_width = params['track_width']
