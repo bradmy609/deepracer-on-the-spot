@@ -245,24 +245,10 @@ class Reward:
             speed = params['speed']
 
             # Start with the squared speed reward
-            speed_reward = (speed ** 1.6)/3
-
-            # Define distance thresholds and corresponding multipliers
-            if dist <= 0.05:  # Ideal case: on the racing line (within 0.05m)
-                distance_multiplier = 1.2  # Maximum reward
-            elif dist <= 0.1:  # Within 0.1m of the racing line
-                distance_multiplier = 1.0  # Very good reward
-            elif dist <= 0.2:  # Within 0.2m
-                distance_multiplier = 0.8  # Decent reward
-            elif dist <= 0.3:  # Within 0.3m
-                distance_multiplier = 0.5  # Lower reward
-            elif dist <= 0.4:  # Too far from the racing line
-                distance_multiplier = 0.2  # Minimal reward
-            else:
-                distance_multiplier = 0.05
+            speed_reward = (speed ** 1.5)/4
 
             # Calculate the final reward by combining speed reward and distance multiplier
-            speed_reward = speed_reward * distance_multiplier
+            speed_reward = speed_reward
 
             return speed_reward
 
@@ -482,8 +468,8 @@ class Reward:
         
 
         # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 4.2
-        STANDARD_TIME = 18.2
+        REWARD_PER_STEP_FOR_FASTEST_TIME = 12
+        STANDARD_TIME = 18.5
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
 
@@ -536,11 +522,11 @@ class Reward:
             SPEED_MULTIPLE = 1
             SPEED_CAP = 3
             if next_waypoint_index > 63 and next_waypoint_index < 76:
-                SPEED_CAP = 2
+                SPEED_CAP = 2.5
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
-        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 34 and next_waypoint_index <= 54):
+        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 38 and next_waypoint_index <= 54):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
             SPEED_THRESHOLD = 0.5
@@ -553,7 +539,8 @@ class Reward:
         elif (next_waypoint_index >= 0 and next_waypoint_index <= 8) or (next_waypoint_index >= 107 and next_waypoint_index <= 111)\
         or (next_waypoint_index >= 54 and next_waypoint_index <= 56) or (next_waypoint_index >= 79 and next_waypoint_index <= 82)\
         or (next_waypoint_index >= 17 and next_waypoint_index <= 21) or (next_waypoint_index >= 140 and next_waypoint_index <= 143)\
-        or (next_waypoint_index >= 127 and next_waypoint_index <= 129) or (next_waypoint_index >= 88 and next_waypoint_index <= 90):
+        or (next_waypoint_index >= 127 and next_waypoint_index <= 129) or (next_waypoint_index >= 88 and next_waypoint_index <= 90)\
+        or (next_waypoint_index >= 30 and next_waypoint_index <= 37):
             DISTANCE_EXPONENT = 1.25
             DISTANCE_MULTIPLE = 1.25
             SPEED_MULTIPLE = 1.75
@@ -581,7 +568,8 @@ class Reward:
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward
-        reward += DC + SC + SUPER_FAST_BONUS + straight_steering_bonus
+        combine_reward = DC * SC
+        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -596,9 +584,9 @@ class Reward:
                 reward += 0.1
             # Erratic steering punishments
             if STATE.prev_turn_angle > 10 and steering_angle < -10:
-                reward *= 0.1
+                reward *= 0.5
             elif STATE.prev_turn_angle < -10 and steering_angle > 10:
-                reward *= 0.1
+                reward *= 0.5
             elif delta_turn_angle >= 30:
                 reward = min(reward, 0.001)
         
@@ -611,7 +599,7 @@ class Reward:
             reward = 1e-3
         
         if SPEED_CAP is not None and speed > SPEED_CAP:
-            reward *= 0.01
+            reward *= 0.5
         
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
