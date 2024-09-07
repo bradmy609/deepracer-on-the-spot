@@ -498,7 +498,7 @@ class Reward:
         STEERING_PUNISHMENT = 1
         straight_steering_bonus = 0
         # 90 degree left turns (half speed, half distance reward to tighten turns)
-        if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index < 140):
+        if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index >= 130 and next_waypoint_index <= 139):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 1.5
             SPEED_MULTIPLE = 1.5
@@ -518,38 +518,40 @@ class Reward:
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
-        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index > 36 and next_waypoint_index <= 54):
+        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 34 and next_waypoint_index <= 54):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
             SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.1
+            SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1
             SPEED_CAP = 2.5
             if next_waypoint_index == 72:
                 reward += 10 - ((dist/track_width) * 10)
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
-        elif next_waypoint_index >= 0 and next_waypoint_index <= 8:
+        # For sections going into turns or coming out of turns to allow the car to go unpunished while getting up to speed.
+        elif (next_waypoint_index >= 4 and next_waypoint_index <= 8) or (next_waypoint_index >= 107 and next_waypoint_index <= 111)\
+        or (next_waypoint_index >= 54 and next_waypoint_index <= 56) or (next_waypoint_index >= 79 and next_waypoint_index <= 82)\
+        or (next_waypoint_index >= 17 and next_waypoint_index <= 21) or (next_waypoint_index >= 140 and next_waypoint_index <= 143)\
+        or (next_waypoint_index >= 127 and next_waypoint_index <= 129) or (next_waypoint_index >= 88 and next_waypoint_index <= 90):
             DISTANCE_EXPONENT = 1.5
-            DISTANCE_MULTIPLE = 1.5
-            SPEED_MULTIPLE = 1.5
-            SPEED_THRESHOLD = 0.5
+            DISTANCE_MULTIPLE = 1.25
+            SPEED_MULTIPLE = 1.75
+            SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.5
-            if steering_angle < -5:
-                STEERING_PUNISHMENT = 0.5
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             if steering_angle > 5 or steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
             else:
                 STEERING_PUNISHMENT = 1
             straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
-            DISTANCE_EXPONENT = 1.5
+            DISTANCE_EXPONENT = 1.0
             DISTANCE_MULTIPLE = 1.0
             SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.1
+            SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 2.0
             SPEED_CAP = None
-        if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 140) or (next_waypoint_index <= 1):
+        if (21 <= next_waypoint_index < 30) or (112 <= next_waypoint_index <= 124) or (next_waypoint_index >= 140) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
