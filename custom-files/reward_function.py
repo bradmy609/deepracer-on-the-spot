@@ -645,6 +645,12 @@ class Reward:
         STATE.prev_distance = dist
         STATE.prev_speed = speed
 
+        if steps//100 == 0:
+            print(f"Step reward: {steps_reward}")
+            print(f"Progress per step: {progress/steps}")
+            print(f"Progress: {progress}")
+            print(f"Steps: {steps}")
+            print(f"Estimated time... {steps/15}.")
         # Always return a float value
         return float(reward)
 
