@@ -559,7 +559,7 @@ class Reward:
             SPEED_MULTIPLE = 1.75
             SPEED_THRESHOLD = 1.00
             SPEED_PUNISHMENT = 0.5
-            SPEED_CAP = 0
+            SPEED_CAP = None
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             if steering_angle > 5 or steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
@@ -610,10 +610,6 @@ class Reward:
         if direction_diff > 30:
             reward = 1e-3
         
-        # Punishing too fast or too slow
-        # speed_diff_zero = optimals[2]-speed
-        # if speed_diff_zero > SPEED_THRESHOLD:
-        #     reward *= SPEED_PUNISHMENT
         if SPEED_CAP is not None and speed > SPEED_CAP:
             reward *= 0.01
         
