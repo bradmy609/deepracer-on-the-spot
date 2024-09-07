@@ -626,7 +626,7 @@ class Reward:
         
                 ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
-        STANDARD_TIME = 17.5  # seconds (time that is easily done by model)
+        STANDARD_TIME = 17.8  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
