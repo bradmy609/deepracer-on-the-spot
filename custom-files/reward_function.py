@@ -461,7 +461,7 @@ class Reward:
 
         # Reward if less steps
         REWARD_PER_STEP_FOR_FASTEST_TIME = 2.5
-        STANDARD_TIME = 17.5
+        STANDARD_TIME = 18.0
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
 
@@ -525,8 +525,6 @@ class Reward:
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1
             SPEED_CAP = 2.5
-            if next_waypoint_index == 72:
-                reward += 10 - ((dist/track_width) * 10)
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
         # For sections going into turns or coming out of turns to allow the car to go unpunished while getting up to speed.
@@ -534,10 +532,10 @@ class Reward:
         or (next_waypoint_index >= 54 and next_waypoint_index <= 56) or (next_waypoint_index >= 79 and next_waypoint_index <= 82)\
         or (next_waypoint_index >= 17 and next_waypoint_index <= 21) or (next_waypoint_index >= 140 and next_waypoint_index <= 143)\
         or (next_waypoint_index >= 127 and next_waypoint_index <= 129) or (next_waypoint_index >= 88 and next_waypoint_index <= 90):
-            DISTANCE_EXPONENT = 1.5
+            DISTANCE_EXPONENT = 1.25
             DISTANCE_MULTIPLE = 1.25
             SPEED_MULTIPLE = 1.75
-            SPEED_THRESHOLD = 0.75
+            SPEED_THRESHOLD = 1.00
             SPEED_PUNISHMENT = 0.5
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             if steering_angle > 5 or steering_angle < -5:
