@@ -489,10 +489,8 @@ class Reward:
 
         projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
         try:
-            steps_prediction = projected_time * 15 + 1
-            reward_prediction = max(1e-3, (-REWARD_PER_STEP_FOR_FASTEST_TIME*(FASTEST_TIME) /
-                                           (STANDARD_TIME-FASTEST_TIME))*(steps_prediction-(STANDARD_TIME*15+1)))
-            steps_reward = min(REWARD_PER_STEP_FOR_FASTEST_TIME, reward_prediction / steps_prediction)
+            if steps > 5:
+                steps_reward = (progress/steps **2) * 20
         except:
             steps_reward = 0
         reward += steps_reward
@@ -546,7 +544,7 @@ class Reward:
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1
-            SPEED_CAP = 2.5
+            SPEED_CAP = 3.0
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
         # For sections going into turns or coming out of turns to allow the car to go unpunished while getting up to speed.
