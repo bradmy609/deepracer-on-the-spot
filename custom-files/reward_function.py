@@ -473,7 +473,7 @@ class Reward:
         
         DISTANCE_PUNISHMENT = 1
         if dist > (track_width * 0.5):
-            DISTANCE_PUNISHMENT = 0.8
+            DISTANCE_PUNISHMENT = 0.5
             
         ## Reward if speed is close to optimal speed ##
         SPEED_MULTIPLE = 2
@@ -487,10 +487,11 @@ class Reward:
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
 
-        projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
         try:
             if steps > 5:
-                steps_reward = (progress/steps **2) * 20
+                steps_reward = (progress/steps ** 2) * 20
+            else:
+                steps_reward = 0
         except:
             steps_reward = 0
         reward += steps_reward
@@ -534,7 +535,7 @@ class Reward:
             SPEED_MULTIPLE = 1
             SPEED_CAP = 3
             if next_waypoint_index > 63 and next_waypoint_index < 76:
-                SPEED_CAP = 2
+                SPEED_CAP = 2.5
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
@@ -620,7 +621,7 @@ class Reward:
         
                 ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
-        STANDARD_TIME = 17.8  # seconds (time that is easily done by model)
+        STANDARD_TIME = 17.5  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
             finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
