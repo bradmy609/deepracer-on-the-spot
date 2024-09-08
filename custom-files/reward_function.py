@@ -513,7 +513,7 @@ class Reward:
             SPEED_MULTIPLE = 1
             SPEED_CAP = 3
             if next_waypoint_index > 63 and next_waypoint_index < 76:
-                SPEED_CAP = 2
+                SPEED_CAP = 2.5
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
@@ -523,7 +523,7 @@ class Reward:
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1
-            SPEED_CAP = 2.5
+            SPEED_CAP = 3.0
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
         # For sections going into turns or coming out of turns to allow the car to go unpunished while getting up to speed.
