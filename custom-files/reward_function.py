@@ -6,7 +6,9 @@ class STATE:
     prev_turn_angle = None
     prev_distance = None
     prev_speed = None
-    turn_peaks = {71: 0, 13: 0, 46: 0, 99: 0, 135: 0}
+    intermediate_progress = {key: 0 for key in range(1, 11)}
+    # turns_completed = 0
+    # turn_indices = {16: False, 139: False, 78: False, 106: False, 54: False}
 
 class Reward:
     def __init__(self, verbose=False):
@@ -19,20 +21,6 @@ class Reward:
         import math
 
         ################## HELPER FUNCTIONS ###################
-        
-        def add_bonus_reward(next_waypoint_index, distance_reward, reward):
-            # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
-            if next_waypoint_index in STATE.turn_peaks and STATE.turn_peaks[next_waypoint_index] == 0:
-                # Calculate the bonus_dist_reward
-                bonus_dist_reward = distance_reward**2 * 20
-                
-                # Update the value in STATE.turn_peaks for the current waypoint
-                STATE.turn_peaks[next_waypoint_index] = bonus_dist_reward
-                
-                # Increment the reward
-                reward += bonus_dist_reward
-            
-            return reward
 
         def dist_2_points(x1, x2, y1, y2):
             return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
@@ -239,6 +227,39 @@ class Reward:
                 is_within_range = car_heading >= max_heading or car_heading <= min_heading
 
             return min_heading, max_heading, is_within_range
+        
+        def calculate_a_b(range1, range2, minimum, maximum):
+            # Setting boundary conditions for exponential scaling
+            # At progress_per_step = 0.25, reward = 1
+            # At progress_per_step = 0.5, reward = 10
+            
+            # Let b be the scaling factor
+            # Solving for a and b
+            progress_1 = range1
+            reward_1 = minimum
+            
+            progress_2 = range2
+            reward_2 = maximum
+            
+            # Solving for b first
+            b = math.log(reward_2 / reward_1) / (progress_2 - progress_1)
+            
+            # Solving for a
+            a = reward_1 / math.exp(b * progress_1)
+            
+            return a, b
+        
+        # Define the reward function based on the calculated a and b
+        def calc_progress_reward(progress, steps):
+            if steps > 5:
+                progress_per_step = progress/steps
+                progress_reward = (progress_per_step ** 3) * 60
+
+            # Flat reward for the first 5 steps
+            if steps <= 5:
+                return 0
+            else:
+                return progress_reward
 
         #################### RACING LINE ######################
 
@@ -438,7 +459,7 @@ class Reward:
         ################ REWARD AND PUNISHMENT ################
 
         ## Define the default reward ##
-        reward = 0.1
+        reward = 1
 
         ## Reward if car goes close to optimal racing line ##
         dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
@@ -458,21 +479,8 @@ class Reward:
             speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
         else:
             speed_reward = 0
-
-        # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.5
-        STANDARD_TIME = 17.5
-        FASTEST_TIME = 14
-        times_list = [row[3] for row in racing_track]
-
-        projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
-        try:
-            steps_prediction = projected_time * 15 + 1
-            reward_prediction = max(1e-3, (-REWARD_PER_STEP_FOR_FASTEST_TIME*(FASTEST_TIME) /
-                                           (STANDARD_TIME-FASTEST_TIME))*(steps_prediction-(STANDARD_TIME*15+1)))
-            steps_reward = min(REWARD_PER_STEP_FOR_FASTEST_TIME, reward_prediction / steps_prediction)
-        except:
-            steps_reward = 0
+        
+        steps_reward = calc_progress_reward(progress, steps)
         reward += steps_reward
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
@@ -482,83 +490,50 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         
-        # HEADING_MULTIPLIER = 1
-        # heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
-        # if abs(direction_diff) <= 20:
-        #     heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
-        # reward += heading_reward
-        
-        SPEED_THRESHOLD = 0.5
-        SPEED_PUNISHMENT = 0.1
         SPEED_MULTIPLE = 2
         DISTANCE_MULTIPLE = 1
         DISTANCE_EXPONENT = 1
         SPEED_CAP = None
         SUPER_FAST_BONUS = 0
         STEERING_PUNISHMENT = 1
-        straight_steering_bonus = 0
         # 90 degree left turns (half speed, half distance reward to tighten turns)
-        if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index < 140):
-            DISTANCE_EXPONENT = 2
+        if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index > 129 and next_waypoint_index <= 139):
+            DISTANCE_EXPONENT = 1.5
             DISTANCE_MULTIPLE = 1.5
             SPEED_MULTIPLE = 1.5
-            SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
         elif next_waypoint_index >= 62 and next_waypoint_index <= 78:
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
-            SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.1
             SPEED_MULTIPLE = 1
             SPEED_CAP = 3
             if next_waypoint_index > 63 and next_waypoint_index < 76:
                 SPEED_CAP = 2
             if steering_angle > 5:
-                STEERING_PUNISHMENT = 0.1
+                STEERING_PUNISHMENT = 0.5
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
         elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index > 36 and next_waypoint_index <= 54):
             DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 2
-            SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.1
-            SPEED_MULTIPLE = 1
+            DISTANCE_MULTIPLE = 2.0
+            SPEED_MULTIPLE = 1.0
             SPEED_CAP = 2.5
-            if next_waypoint_index == 72:
-                reward += 10 - ((dist/track_width) * 10)
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
-        elif next_waypoint_index >= 0 and next_waypoint_index <= 8:
-            DISTANCE_EXPONENT = 1.5
-            DISTANCE_MULTIPLE = 1.5
-            SPEED_MULTIPLE = 1.5
-            SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.5
-            if steering_angle < -5:
-                STEERING_PUNISHMENT = 0.5
-        else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
-            if steering_angle > 5 or steering_angle < -5:
-                STEERING_PUNISHMENT = 0.5
-            else:
-                STEERING_PUNISHMENT = 1
-            straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
-            DISTANCE_EXPONENT = 1.5
-            DISTANCE_MULTIPLE = 1.0
-            SPEED_THRESHOLD = 0.5
-            SPEED_PUNISHMENT = 0.1
-            SPEED_MULTIPLE = 2.0
+        else:
+            DISTANCE_EXPONENT = 1
+            DISTANCE_MULTIPLE = 1
+            SPEED_MULTIPLE = 2
+            DISTANCE_PUNISHMENT = 1
             SPEED_CAP = None
-        if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 140) or (next_waypoint_index <= 1):
+        if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 139) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
-                
-        reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        reward += DC + SC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + SC + SUPER_FAST_BONUS
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -580,28 +555,21 @@ class Reward:
                 reward = min(reward, 0.001)
         
         # Punishing erratic steering or steering out of range of valid directions.
-        if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
-            reward *= 0.1
+        if (steering_angle >= 20 or steering_angle <= -20):
+            SPEED_CAP = 2.5
         if not is_within_range:
             reward *= 0.01
         if direction_diff > 30:
             reward = 1e-3
         
         # Punishing too fast or too slow
-        speed_diff_zero = optimals[2]-speed
-        if speed_diff_zero > SPEED_THRESHOLD:
-            reward *= SPEED_PUNISHMENT
         if SPEED_CAP is not None and speed > SPEED_CAP:
             reward *= 0.01
         
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
-
-        ## Zero reward if off track ##
-        track_width = params['track_width']
-        distance_from_center = params['distance_from_center']
-        
-                ## Incentive for finishing the lap in less steps ##
+            
+        ## Incentive for finishing the lap in less steps ##
         REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
         STANDARD_TIME = 17.5  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
@@ -611,6 +579,10 @@ class Reward:
         else:
             finish_reward = 0
         reward += finish_reward
+
+        ## Zero reward if off track ##
+        track_width = params['track_width']
+        distance_from_center = params['distance_from_center']
 
         # Zero reward if the center of the car is off the track.
 
@@ -629,7 +601,7 @@ class Reward:
             print("Direction difference: %f" % direction_diff)
             print("Predicted time: %f" % projected_time)
             print("=== Steps reward: %f ===" % steps_reward)
-            # print("=== Finish reward: %f ===" % finish_reward)
+            print("=== Finish reward: %f ===" % finish_reward)
 
         #################### RETURN REWARD ####################
         
