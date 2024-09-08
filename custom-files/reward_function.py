@@ -492,11 +492,11 @@ class Reward:
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
         
-        # HEADING_MULTIPLIER = 1
-        # heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
-        # if abs(direction_diff) <= 20:
-        #     heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
-        # reward += heading_reward
+        HEADING_MULTIPLIER = 1
+        heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
+        if abs(direction_diff) <= 20:
+            heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
+        reward += heading_reward
         
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.1
@@ -506,12 +506,14 @@ class Reward:
         SPEED_CAP = None
         SUPER_FAST_BONUS = 0
         STEERING_PUNISHMENT = 1
+        HEADING_MULTIPLIER = 1 
         straight_steering_bonus = 0
         # 90 degree left turns (half speed, half distance reward to tighten turns)
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index >= 130 and next_waypoint_index <= 139):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 1.5
             SPEED_MULTIPLE = 0.75
+            HEADING_MULTIPLIER = 1
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
@@ -519,6 +521,7 @@ class Reward:
         elif next_waypoint_index >= 62 and next_waypoint_index <= 78:
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
+            HEADING_MULTIPLIER = 1
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_MULTIPLE = 0.5
@@ -531,6 +534,7 @@ class Reward:
         elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 36 and next_waypoint_index <= 54):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
+            HEADING_MULTIPLIER = 1
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 0.5
@@ -545,6 +549,7 @@ class Reward:
         or (next_waypoint_index >= 30 and next_waypoint_index <= 37):
             DISTANCE_EXPONENT = 1.50
             DISTANCE_MULTIPLE = 1.50
+            HEADING_MULTIPLIER = 0.75
             SPEED_MULTIPLE = 0.75
             SPEED_THRESHOLD = 1.00
             SPEED_PUNISHMENT = 0.5
@@ -557,6 +562,7 @@ class Reward:
             straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
             DISTANCE_EXPONENT = 1.0
             DISTANCE_MULTIPLE = 1.0
+            HEADING_MULTIPLIER = 0.5
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1.0
@@ -570,8 +576,12 @@ class Reward:
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        combine_reward = DC * SC
-        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus
+        HC = heading_reward * HEADING_MULTIPLIER
+        combine_reward = DC * SC * HC
+        combine_reward2 = DC * SC
+        combine_reward3 = DC * HC
+        combine_reward4 = SC * HC
+        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus + combine_reward2 + combine_reward3 + combine_reward4
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
