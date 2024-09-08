@@ -476,14 +476,14 @@ class Reward:
         
 
         # Reward if less steps
-        try:
-            if steps > 5:
-                steps_reward = ((progress/steps) ** 3) * 60
-            else:
-                steps_reward = 0
-        except:
-            steps_reward = 0
-        reward += steps_reward
+        # try:
+        #     if steps > 5:
+        #         steps_reward = ((progress/steps) ** 3) * 60
+        #     else:
+        #         steps_reward = 0
+        # except:
+        #     steps_reward = 0
+        # reward += steps_reward
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -611,14 +611,7 @@ class Reward:
         distance_from_center = params['distance_from_center']
         
                 ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
-        STANDARD_TIME = 17.5  # seconds (time that is easily done by model)
-        FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
-        if progress == 100:
-            finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
-                      (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
-        else:
-            finish_reward = 0
+        finish_reward  = 1 - ((steps/300) * 1000)
         reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
