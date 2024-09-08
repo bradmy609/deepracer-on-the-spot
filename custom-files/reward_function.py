@@ -6,7 +6,7 @@ class STATE:
     prev_turn_angle = None
     prev_distance = None
     prev_speed = None
-    turn_peaks = {71: 0, 13: 0, 46: 0, 99: 0, 135: 0}
+    turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
 
 class Reward:
     def __init__(self, verbose=False):
