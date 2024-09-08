@@ -464,13 +464,12 @@ class Reward:
         STANDARD_TIME = 18.0
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
-
-        projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
+        
         try:
-            steps_prediction = projected_time * 15 + 1
-            reward_prediction = max(1e-3, (-REWARD_PER_STEP_FOR_FASTEST_TIME*(FASTEST_TIME) /
-                                           (STANDARD_TIME-FASTEST_TIME))*(steps_prediction-(STANDARD_TIME*15+1)))
-            steps_reward = min(REWARD_PER_STEP_FOR_FASTEST_TIME, reward_prediction / steps_prediction)
+            if steps > 5:
+                steps_reward = (progress/steps ** 3) * 60
+            else:
+                steps_reward = 0
         except:
             steps_reward = 0
         reward += steps_reward
