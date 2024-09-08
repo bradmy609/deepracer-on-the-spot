@@ -6,7 +6,7 @@ class STATE:
     prev_turn_angle = None
     prev_distance = None
     prev_speed = None
-    intermediate_progress = {key: 0 for key in range(1, 11)}
+    # intermediate_progress = {key: 0 for key in range(1, 11)}
     # turns_completed = 0
     # turn_indices = {16: False, 139: False, 78: False, 106: False, 54: False}
 
@@ -227,27 +227,6 @@ class Reward:
                 is_within_range = car_heading >= max_heading or car_heading <= min_heading
 
             return min_heading, max_heading, is_within_range
-        
-        def calculate_a_b(range1, range2, minimum, maximum):
-            # Setting boundary conditions for exponential scaling
-            # At progress_per_step = 0.25, reward = 1
-            # At progress_per_step = 0.5, reward = 10
-            
-            # Let b be the scaling factor
-            # Solving for a and b
-            progress_1 = range1
-            reward_1 = minimum
-            
-            progress_2 = range2
-            reward_2 = maximum
-            
-            # Solving for b first
-            b = math.log(reward_2 / reward_1) / (progress_2 - progress_1)
-            
-            # Solving for a
-            a = reward_1 / math.exp(b * progress_1)
-            
-            return a, b
         
         # Define the reward function based on the calculated a and b
         def calc_progress_reward(progress, steps):
@@ -501,15 +480,19 @@ class Reward:
             DISTANCE_EXPONENT = 1.5
             DISTANCE_MULTIPLE = 1.5
             SPEED_MULTIPLE = 1.5
+            SPEED_THRESHOLD = 0.5
+            SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
         elif next_waypoint_index >= 62 and next_waypoint_index <= 78:
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
             SPEED_MULTIPLE = 1
+            SPEED_THRESHOLD = 0.5
+            SPEED_PUNISHMENT = 0.1
             SPEED_CAP = 3
             if next_waypoint_index > 63 and next_waypoint_index < 76:
-                SPEED_CAP = 2
+                SPEED_CAP = 2.5
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.5
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
@@ -517,7 +500,9 @@ class Reward:
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2.0
             SPEED_MULTIPLE = 1.0
-            SPEED_CAP = 2.5
+            SPEED_CAP = 3.0
+            SPEED_THRESHOLD = 0.5
+            SPEED_PUNISHMENT = 0.1
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
         else:
@@ -525,6 +510,8 @@ class Reward:
             DISTANCE_MULTIPLE = 1
             SPEED_MULTIPLE = 2
             DISTANCE_PUNISHMENT = 1
+            SPEED_THRESHOLD = 0.5
+            SPEED_PUNISHMENT = 0.5
             SPEED_CAP = None
         if (20 <= next_waypoint_index < 30) or (111 <= next_waypoint_index <= 124) or (next_waypoint_index >= 139) or (next_waypoint_index <= 1):
             # Bonus reward if going 4 m/s or faster during optimal spots
@@ -565,6 +552,10 @@ class Reward:
         # Punishing too fast or too slow
         if SPEED_CAP is not None and speed > SPEED_CAP:
             reward *= 0.01
+        
+        speed_diff_zero = optimals[2]-speed
+        if speed_diff_zero > SPEED_THRESHOLD:
+            reward *= SPEED_PUNISHMENT
         
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
