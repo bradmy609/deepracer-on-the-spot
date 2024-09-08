@@ -7,7 +7,7 @@ class STATE:
     prev_distance = None
     prev_speed = None
     turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
-
+    
 class Reward:
     def __init__(self, verbose=False):
         self.first_racingpoint_index = None
@@ -480,14 +480,14 @@ class Reward:
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
 
-        projected_time = projected_time(self.first_racingpoint_index, closest_index, steps, times_list)
         try:
-            steps_prediction = projected_time * 15 + 1
-            reward_prediction = max(1e-3, (-REWARD_PER_STEP_FOR_FASTEST_TIME*(FASTEST_TIME) /
-                                           (STANDARD_TIME-FASTEST_TIME))*(steps_prediction-(STANDARD_TIME*15+1)))
-            steps_reward = min(REWARD_PER_STEP_FOR_FASTEST_TIME, reward_prediction / steps_prediction)
+            if steps > 5:
+                steps_reward = ((progress/steps) ** 2) * 15
+            else:
+                steps_reward = 0
         except:
             steps_reward = 0
+            
         reward += steps_reward
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
@@ -540,14 +540,14 @@ class Reward:
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
         # For sections going into turns or coming out of turns to allow the car to go unpunished while getting up to speed.
-        elif (next_waypoint_index >= 0 and next_waypoint_index <= 8) or (next_waypoint_index >= 107 and next_waypoint_index <= 111)\
+        elif (next_waypoint_index >= 4 and next_waypoint_index <= 8) or (next_waypoint_index >= 107 and next_waypoint_index <= 111)\
         or (next_waypoint_index >= 54 and next_waypoint_index <= 56) or (next_waypoint_index >= 79 and next_waypoint_index <= 82)\
         or (next_waypoint_index >= 17 and next_waypoint_index <= 21) or (next_waypoint_index >= 140 and next_waypoint_index <= 143)\
         or (next_waypoint_index >= 127 and next_waypoint_index <= 129) or (next_waypoint_index >= 88 and next_waypoint_index <= 90)\
         or (next_waypoint_index >= 30 and next_waypoint_index <= 37):
-            DISTANCE_EXPONENT = 1.0
-            DISTANCE_MULTIPLE = 1.0
-            SPEED_MULTIPLE = 2.0
+            DISTANCE_EXPONENT = 1.25
+            DISTANCE_MULTIPLE = 1.25
+            SPEED_MULTIPLE = 1.75
             SPEED_THRESHOLD = 1.00
             SPEED_PUNISHMENT = 0.5
             SPEED_CAP = None
