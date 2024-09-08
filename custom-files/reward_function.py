@@ -24,7 +24,7 @@ class Reward:
             # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
             if next_waypoint_index in STATE.turn_peaks and STATE.turn_peaks[next_waypoint_index] == 0:
                 # Calculate the bonus_dist_reward
-                bonus_dist_reward = distance_reward**2 * 8
+                bonus_dist_reward = distance_reward**2 * 5
                 
                 # Update the value in STATE.turn_peaks for the current waypoint
                 STATE.turn_peaks[next_waypoint_index] = bonus_dist_reward
