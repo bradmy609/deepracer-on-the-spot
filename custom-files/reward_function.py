@@ -24,7 +24,7 @@ class Reward:
             # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
             if next_waypoint_index in STATE.turn_peaks and STATE.turn_peaks[next_waypoint_index] == 0:
                 # Calculate the bonus_dist_reward
-                bonus_dist_reward = distance_reward**2 * 5
+                bonus_dist_reward = distance_reward**2 * 10
                 
                 # Update the value in STATE.turn_peaks for the current waypoint
                 STATE.turn_peaks[next_waypoint_index] = bonus_dist_reward
@@ -240,7 +240,7 @@ class Reward:
 
             return min_heading, max_heading, is_within_range
         
-        def calculate_speed_reward(params, dist):
+        def calculate_speed_reward(params):
             # Extract speed and distance from parameters
             speed = params['speed']
 
@@ -464,7 +464,7 @@ class Reward:
         ## Reward if speed is close to optimal speed ##
         SPEED_MULTIPLE = 2
         speed_diff = abs(optimals[2]-speed)
-        speed_reward = calculate_speed_reward(params, dist)
+        speed_reward = calculate_speed_reward(params)
         
 
         # Reward if less steps
@@ -503,7 +503,7 @@ class Reward:
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index >= 130 and next_waypoint_index <= 139):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 1.5
-            SPEED_MULTIPLE = 1.5
+            SPEED_MULTIPLE = 0.75
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
@@ -513,19 +513,19 @@ class Reward:
             DISTANCE_MULTIPLE = 2
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
-            SPEED_MULTIPLE = 1
+            SPEED_MULTIPLE = 0.5
             SPEED_CAP = 3
             if next_waypoint_index > 63 and next_waypoint_index < 76:
                 SPEED_CAP = 2.5
             if steering_angle > 5:
                 STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
-        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 38 and next_waypoint_index <= 54):
+        elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 36 and next_waypoint_index <= 54):
             DISTANCE_EXPONENT = 2
             DISTANCE_MULTIPLE = 2
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
-            SPEED_MULTIPLE = 1
+            SPEED_MULTIPLE = 0.5
             SPEED_CAP = 3.0
             if steering_angle < -5:
                 STEERING_PUNISHMENT = 0.5
@@ -535,9 +535,9 @@ class Reward:
         or (next_waypoint_index >= 17 and next_waypoint_index <= 21) or (next_waypoint_index >= 140 and next_waypoint_index <= 143)\
         or (next_waypoint_index >= 127 and next_waypoint_index <= 129) or (next_waypoint_index >= 88 and next_waypoint_index <= 90)\
         or (next_waypoint_index >= 30 and next_waypoint_index <= 37):
-            DISTANCE_EXPONENT = 1.25
-            DISTANCE_MULTIPLE = 1.25
-            SPEED_MULTIPLE = 1.75
+            DISTANCE_EXPONENT = 1.50
+            DISTANCE_MULTIPLE = 1.50
+            SPEED_MULTIPLE = 0.75
             SPEED_THRESHOLD = 1.00
             SPEED_PUNISHMENT = 0.5
             SPEED_CAP = None
@@ -551,7 +551,7 @@ class Reward:
             DISTANCE_MULTIPLE = 1.0
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
-            SPEED_MULTIPLE = 2.0
+            SPEED_MULTIPLE = 1.0
             SPEED_CAP = None
         if (21 <= next_waypoint_index < 30) or (112 <= next_waypoint_index <= 124) or (next_waypoint_index >= 140) or (next_waypoint_index <= 2):
             # Bonus reward if going 4 m/s or faster during optimal spots
@@ -561,7 +561,7 @@ class Reward:
         reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
-        SC = speed_reward
+        SC = speed_reward * SPEED_MULTIPLE
         combine_reward = DC * SC
         reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus
         
