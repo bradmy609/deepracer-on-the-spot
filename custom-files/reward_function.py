@@ -458,14 +458,16 @@ class Reward:
         distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
         
         DISTANCE_PUNISHMENT = 1
-        if dist > (track_width * 0.25):
-            DISTANCE_PUNISHMENT = 0.75
-        elif dist > (track_width * 0.35):
-            DISTANCE_PUNISHMENT = 0.5
+        if dist > (track_width * 0.75):
+            DISTANCE_PUNISHMENT = 0.01
         elif dist > (track_width * 0.5):
             DISTANCE_PUNISHMENT = 0.25
-        elif dist > (track_width * 0.75):
-            DISTANCE_PUNISHMENT = 0.1
+        elif dist > (track_width * 0.35):
+            DISTANCE_PUNISHMENT = 0.5
+        elif dist > (track_width * 0.25):
+            DISTANCE_PUNISHMENT = 0.8
+        elif dist > (track_width * 0.9):
+            DISTANCE_PUNISHMENT = 0.9
             
         ## Reward if speed is close to optimal speed ##
         SPEED_MULTIPLE = 2
