@@ -622,12 +622,6 @@ class Reward:
         ## Zero reward if off track ##
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
-        
-        if progress == 100:
-            finish_reward = (1 - (steps/275)) * 4000
-        else:
-            finish_reward = 0
-        reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
 
