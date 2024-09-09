@@ -571,7 +571,7 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         combine_reward = DC * SC
         steps_reward = steps_reward * distance_reward
-        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus + steps_reward
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
