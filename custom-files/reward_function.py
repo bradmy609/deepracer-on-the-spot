@@ -466,7 +466,7 @@ class Reward:
             DISTANCE_PUNISHMENT = 0.5
         elif dist > (track_width * 0.25):
             DISTANCE_PUNISHMENT = 0.8
-        elif dist > (track_width * 0.9):
+        elif dist > (track_width * 0.1):
             DISTANCE_PUNISHMENT = 0.9
             
         ## Reward if speed is close to optimal speed ##
@@ -571,7 +571,7 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         combine_reward = DC * SC
         steps_reward = steps_reward * distance_reward
-        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus + steps_reward
+        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -609,17 +609,6 @@ class Reward:
         ## Zero reward if off track ##
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
-        
-                ## Incentive for finishing the lap in less steps ##
-        REWARD_FOR_FASTEST_TIME = 2000 # should be adapted to track length and other rewards
-        STANDARD_TIME = 17.5  # seconds (time that is easily done by model)
-        FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
-        if progress == 100:
-            finish_reward = (1 - (steps/300)) * 1000
-        else:
-            finish_reward = 0
-            
-        reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
 
