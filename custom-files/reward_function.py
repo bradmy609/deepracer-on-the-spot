@@ -509,7 +509,7 @@ class Reward:
         # 90 degree left turns (half speed, half distance reward to tighten turns)
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index >= 130 and next_waypoint_index <= 139):
             DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 1.5
+            DISTANCE_MULTIPLE = 2
             SPEED_MULTIPLE = 0.75
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
@@ -517,7 +517,7 @@ class Reward:
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
         elif next_waypoint_index >= 62 and next_waypoint_index <= 78:
             DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 2
+            DISTANCE_MULTIPLE = 2.5
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_MULTIPLE = 0.5
@@ -554,8 +554,8 @@ class Reward:
             else:
                 STEERING_PUNISHMENT = 1
             straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
-            DISTANCE_EXPONENT = 1.0
-            DISTANCE_MULTIPLE = 1.0
+            DISTANCE_EXPONENT = 1.25
+            DISTANCE_MULTIPLE = 1.25
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1.0
