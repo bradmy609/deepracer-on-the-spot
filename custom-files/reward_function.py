@@ -617,7 +617,6 @@ class Reward:
             print("Direction difference: %f" % direction_diff)
             print("Predicted time: %f" % projected_time)
             print("=== Steps reward: %f ===" % steps_reward)
-            # print("=== Finish reward: %f ===" % finish_reward)
 
         #################### RETURN REWARD ####################
         
