@@ -479,13 +479,6 @@ class Reward:
         SPEED_MULTIPLE = 2
         speed_diff = abs(optimals[2]-speed)
         speed_reward = calculate_speed_reward(params, dist)
-        
-
-        # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 4.2
-        STANDARD_TIME = 18.2
-        FASTEST_TIME = 14
-        times_list = [row[3] for row in racing_track]
 
         try:
             if steps > 5:
@@ -494,7 +487,6 @@ class Reward:
                 steps_reward = 0
         except:
             steps_reward = 0
-        reward += steps_reward
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -580,7 +572,9 @@ class Reward:
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward
-        reward += DC + SC + SUPER_FAST_BONUS + straight_steering_bonus
+        steps_reward = steps_reward * distance_reward
+        print(f"DC: {DC}, SC: {SC}, steps_reward: {steps_reward}, straight_steering_bonus: {straight_steering_bonus}")
+        reward += DC + SC + steps_reward + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -624,8 +618,7 @@ class Reward:
         STANDARD_TIME = 17.5  # seconds (time that is easily done by model)
         FASTEST_TIME = 15  # seconds (best time of 1st place on the track)
         if progress == 100:
-            finish_reward = max(1e-3, (-REWARD_FOR_FASTEST_TIME /
-                      (15*(STANDARD_TIME-FASTEST_TIME)))*(steps-STANDARD_TIME*15))
+            finish_reward = (1 - (steps/300)) * 1000
         else:
             finish_reward = 0
         reward += finish_reward
