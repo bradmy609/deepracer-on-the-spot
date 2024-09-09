@@ -499,7 +499,7 @@ class Reward:
         
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.1
-        SPEED_MULTIPLE = 2
+        SPEED_MULTIPLE = 1
         DISTANCE_MULTIPLE = 1
         DISTANCE_EXPONENT = 1
         SPEED_CAP = None
@@ -508,16 +508,16 @@ class Reward:
         straight_steering_bonus = 0
         # 90 degree left turns (half speed, half distance reward to tighten turns)
         if (next_waypoint_index >= 9 and next_waypoint_index <= 16) or (next_waypoint_index >= 130 and next_waypoint_index <= 139):
-            DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 2
+            DISTANCE_EXPONENT = 2.5
+            DISTANCE_MULTIPLE = 3.0
             SPEED_MULTIPLE = 0.75
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_CAP = None
         # Set dist multiplier to 2 and speed threshold to 1 for sharp turns.
         elif next_waypoint_index >= 62 and next_waypoint_index <= 78:
-            DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 2.5
+            DISTANCE_EXPONENT = 3
+            DISTANCE_MULTIPLE = 4.0
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.1
             SPEED_MULTIPLE = 0.5
@@ -528,8 +528,8 @@ class Reward:
                 STEERING_PUNISHMENT = 0.1
         # Set distance multiplier to 2 and speed threshold to 1 for sharp turns.
         elif (next_waypoint_index >= 91 and next_waypoint_index <= 106) or (next_waypoint_index >= 36 and next_waypoint_index <= 54):
-            DISTANCE_EXPONENT = 2
-            DISTANCE_MULTIPLE = 2
+            DISTANCE_EXPONENT = 3
+            DISTANCE_MULTIPLE = 4
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 0.5
@@ -542,8 +542,8 @@ class Reward:
         or (next_waypoint_index >= 17 and next_waypoint_index <= 21) or (next_waypoint_index >= 140 and next_waypoint_index <= 143)\
         or (next_waypoint_index >= 127 and next_waypoint_index <= 129) or (next_waypoint_index >= 88 and next_waypoint_index <= 90)\
         or (next_waypoint_index >= 30 and next_waypoint_index <= 37):
-            DISTANCE_EXPONENT = 1.50
-            DISTANCE_MULTIPLE = 1.50
+            DISTANCE_EXPONENT = 2.0
+            DISTANCE_MULTIPLE = 3.0
             SPEED_MULTIPLE = 0.75
             SPEED_THRESHOLD = 1.00
             SPEED_PUNISHMENT = 0.5
@@ -554,8 +554,8 @@ class Reward:
             else:
                 STEERING_PUNISHMENT = 1
             straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
-            DISTANCE_EXPONENT = 1.25
-            DISTANCE_MULTIPLE = 1.25
+            DISTANCE_EXPONENT = 2.0
+            DISTANCE_MULTIPLE = 2.50
             SPEED_THRESHOLD = 0.5
             SPEED_PUNISHMENT = 0.5
             SPEED_MULTIPLE = 1.0
@@ -568,10 +568,16 @@ class Reward:
         reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
-        SC = speed_reward * SPEED_MULTIPLE
+        SC = speed_reward
         combine_reward = DC * SC
         steps_reward = steps_reward * distance_reward
-        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus
+        print(f"DC: {DC}")
+        print(f"SC: {SC}")
+        print(f"combine_reward: {combine_reward}")
+        print(f"SUPER_FAST_BONUS: {SUPER_FAST_BONUS}")
+        print(f"straight_steering_bonus: {straight_steering_bonus}")
+        print('Reward Total.')
+        reward += DC + SC + combine_reward + SUPER_FAST_BONUS + straight_steering_bonus + steps_reward
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -643,6 +649,7 @@ class Reward:
             print(f"Steps: {steps}")
             print(f"Estimated time... {steps/15}.")
         # Always return a float value
+        print(f"Post-punishment Reward: {reward}")
         return float(reward)
 
 
