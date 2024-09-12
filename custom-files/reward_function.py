@@ -6,7 +6,7 @@ class STATE:
     prev_turn_angle = None
     prev_distance = None
     prev_speed = None
-    turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+    turn_peaks = {6: 0, 11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0, 151: 0, 26: 0, 60: 0, 85: 0, 120: 0}
 
 class Reward:
     def __init__(self, verbose=False):
@@ -24,7 +24,7 @@ class Reward:
             # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
             if next_waypoint_index in STATE.turn_peaks and STATE.turn_peaks[next_waypoint_index] == 0:
                 # Calculate the bonus_dist_reward
-                bonus_dist_reward = distance_reward**2 * 8
+                bonus_dist_reward = distance_reward**2 * 5
                 
                 # Update the value in STATE.turn_peaks for the current waypoint
                 STATE.turn_peaks[next_waypoint_index] = bonus_dist_reward
