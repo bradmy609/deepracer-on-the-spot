@@ -244,27 +244,30 @@ class Reward:
             # Extract speed and distance from parameters
             speed = params['speed']
 
-            # Start with the squared speed reward
-            speed_reward = (speed ** 1.6)/3
+            # Start with the squared speed reward, adjusted for stricter rewards
+            speed_reward = (speed ** 1.6) / 4  # Slightly reduced base reward for speed
 
             # Define distance thresholds and corresponding multipliers
             if dist <= 0.05:  # Ideal case: on the racing line (within 0.05m)
-                distance_multiplier = 1.2  # Maximum reward
+                distance_multiplier = 1.5  # Maximum reward for being perfectly on the line
             elif dist <= 0.1:  # Within 0.1m of the racing line
-                distance_multiplier = 1.0  # Very good reward
+                distance_multiplier = 1.0  # Still good reward but less ideal
             elif dist <= 0.2:  # Within 0.2m
-                distance_multiplier = 0.8  # Decent reward
+                distance_multiplier = 0.6  # Significantly lower reward
             elif dist <= 0.3:  # Within 0.3m
-                distance_multiplier = 0.5  # Lower reward
-            elif dist <= 0.4:  # Too far from the racing line
-                distance_multiplier = 0.2  # Minimal reward
-            else:
-                distance_multiplier = 0.05
+                distance_multiplier = 0.3  # Very low reward for being far from the line
+            else:  # Farther than 0.3m from the line
+                distance_multiplier = 0.1  # Minimal reward for being off the line
 
             # Calculate the final reward by combining speed reward and distance multiplier
-            speed_reward = speed_reward * distance_multiplier
+            final_reward = speed_reward * distance_multiplier
 
-            return speed_reward
+            # Additional harsh penalty for being far from the racing line
+            if dist > 0.4:
+                final_reward = 0.0  # No reward if the agent is too far from the line
+
+            return final_reward
+
 
 
         #################### RACING LINE ######################
