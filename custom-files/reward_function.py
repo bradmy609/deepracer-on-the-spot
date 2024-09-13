@@ -461,7 +461,7 @@ class Reward:
         
         progress_multiplier = 2
         delta_progress = progress - STATE.prev_progress
-        progress_reward = (delta_progress/0.5)
+        progress_reward = min(0.001, (delta_progress/0.5))
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
