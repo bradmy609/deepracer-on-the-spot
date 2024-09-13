@@ -7,6 +7,7 @@ class STATE:
     prev_distance = None
     prev_speed = None
     turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+    prev_progress = None
 
 class Reward:
     def __init__(self, verbose=False):
@@ -465,13 +466,13 @@ class Reward:
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
         
-        try:
-            if steps > 5:
-                steps_reward = (progress/steps ** 3) * 60
-            else:
-                steps_reward = 0
-        except:
-            steps_reward = 0
+        delta_progress = progress - STATE.prev_progress
+        progress_reward = (delta_progress/0.5)
+        progress_multiplier = 2
+        print(f'progress: {progress}')
+        print(f'prev_progress: {STATE.prev_progress}')
+        print(f'delta_progress: {delta_progress}')
+        reward += ((progress_reward ** 2) * progress_multiplier)
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -631,6 +632,7 @@ class Reward:
         STATE.prev_speed_diff = speed_diff
         STATE.prev_distance = dist
         STATE.prev_speed = speed
+        STATE.prev_progress = progress
 
         # Always return a float value
         return float(reward)
