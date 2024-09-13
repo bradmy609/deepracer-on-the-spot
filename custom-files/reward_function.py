@@ -458,12 +458,6 @@ class Reward:
             speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
         else:
             speed_reward = 0
-
-        # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.5
-        STANDARD_TIME = 18.0
-        FASTEST_TIME = 14
-        times_list = [row[3] for row in racing_track]
         
         progress_multiplier = 2
         delta_progress = progress - STATE.prev_progress
@@ -475,12 +469,6 @@ class Reward:
         # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
-        
-        # HEADING_MULTIPLIER = 1
-        # heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
-        # if abs(direction_diff) <= 20:
-        #     heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
-        # reward += heading_reward
         
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.1
@@ -556,8 +544,8 @@ class Reward:
         # distance component, speed component, and progress_component
         if steps // 50 == 0:
             print(f'delta_progress: {progress-STATE.prev_progress}')
-            print(f'DC: {DC}\nSC: {SC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + PC + SC + SUPER_FAST_BONUS + straight_steering_bonus
+            print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
+        reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
