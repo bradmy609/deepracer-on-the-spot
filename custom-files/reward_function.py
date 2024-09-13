@@ -556,7 +556,7 @@ class Reward:
         # distance component, speed component, and progress_component
         if steps // 50 == 0:
             print(f'delta_progress: {progress-STATE.prev_progress}')
-            print(f'DC: {DC}\nSC: {SC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
+            print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
         reward += DC + PC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
