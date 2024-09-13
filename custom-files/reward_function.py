@@ -6,8 +6,8 @@ class STATE:
     prev_turn_angle = None
     prev_distance = None
     prev_speed = None
+    prev_progress = 0
     turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
-    prev_progress = None
 
 class Reward:
     def __init__(self, verbose=False):
@@ -139,7 +139,6 @@ class Reward:
         # Gives back indexes that lie between start and end index of a cyclical list 
         # (start index is included, end index is not)
         def indexes_cyclical(start, end, array_len):
-            print(start, end, array_len)
             if end < start:
                 end += array_len
 
@@ -466,13 +465,17 @@ class Reward:
         FASTEST_TIME = 14
         times_list = [row[3] for row in racing_track]
         
-        delta_progress = progress - STATE.prev_progress
-        progress_reward = (delta_progress/0.5)
         progress_multiplier = 2
-        print(f'progress: {progress}')
-        print(f'prev_progress: {STATE.prev_progress}')
-        print(f'delta_progress: {delta_progress}')
-        reward += ((progress_reward ** 2) * progress_multiplier)
+        if STATE.prev_progress is not None:
+            delta_progress = progress - STATE.prev_progress
+            progress_reward = (delta_progress/0.5)
+        else:
+            progress_reward = 0
+            
+        if steps // 50 == 0 and delta_progress:
+            print(f'progress: {progress}')
+            print(f'prev_progress: {STATE.prev_progress}')
+            print(f'delta_progress: {delta_progress}')
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -557,8 +560,9 @@ class Reward:
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        steps_reward = steps_reward * distance_reward
-        reward += DC + SC + steps_reward + SUPER_FAST_BONUS + straight_steering_bonus
+        PC = progress_reward * progress_multiplier
+        # distance component, speed component, and progress_component
+        reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -602,10 +606,12 @@ class Reward:
         distance_from_center = params['distance_from_center']
         
         if progress == 100:
-            finish_reward = (1 - (steps/300)) * 1000
+            finish_reward = ((1 - (steps/300)) * 1000) + 10
         else:
-            finish_reward = 0
-        reward += finish_reward
+            finish_reward = 10
+        
+        if finish_reward > 1:
+            reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
 
@@ -623,7 +629,6 @@ class Reward:
             print("=== Speed reward (w/out multiple): %f ===" % speed_reward)
             print("Direction difference: %f" % direction_diff)
             print("Predicted time: %f" % projected_time)
-            print("=== Steps reward: %f ===" % steps_reward)
             # print("=== Finish reward: %f ===" % finish_reward)
 
         #################### RETURN REWARD ####################
