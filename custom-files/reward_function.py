@@ -529,7 +529,7 @@ class Reward:
             DISTANCE_EXPONENT = 1.25
             DISTANCE_MULTIPLE = 1.25
             SPEED_MULTIPLE = 1.75
-            SPEED_THRESHOLD = 1.00
+            SPEED_THRESHOLD = 0.75
             SPEED_PUNISHMENT = 0.5
         else: # Values for non-turning sections. Punish speed off by 0.5 harshly, reduce dist reward.
             if steering_angle > 5 or steering_angle < -5:
@@ -601,7 +601,9 @@ class Reward:
         distance_from_center = params['distance_from_center']
         
         if progress == 100:
+            # finish reward starts scaling up when the steps are below 300, or time is below 20s.
             finish_reward = ((1 - (steps/300)) * 1000) + 10
+            # Don't let finish_reward fall below 10.
             if finish_reward < 10:
                 finish_reward = 10
             reward += finish_reward
