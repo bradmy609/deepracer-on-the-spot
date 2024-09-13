@@ -558,7 +558,7 @@ class Reward:
         PC = progress_reward * progress_multiplier
         # distance component, speed component, and progress_component
         
-        reward += DC + PC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + PC + SC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -603,11 +603,12 @@ class Reward:
         
         if progress == 100:
             finish_reward = ((1 - (steps/300)) * 1000) + 10
-            if finish_reward < 0:
+            if finish_reward < 10:
                 finish_reward = 10
         else:
             finish_reward = 0
         
+        reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
 
