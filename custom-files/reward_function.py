@@ -7,7 +7,7 @@ class STATE:
     prev_distance = None
     prev_speed = None
     prev_progress = 0
-    turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+    # turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
 
 class Reward:
     def __init__(self, verbose=False):
@@ -471,11 +471,6 @@ class Reward:
             progress_reward = (delta_progress/0.5)
         else:
             progress_reward = 0
-            
-        if steps // 50 == 0 and delta_progress:
-            print(f'progress: {progress}')
-            print(f'prev_progress: {STATE.prev_progress}')
-            print(f'delta_progress: {delta_progress}')
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -562,7 +557,8 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         PC = progress_reward * progress_multiplier
         # distance component, speed component, and progress_component
-        reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
+        
+        reward += DC + PC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
@@ -607,11 +603,11 @@ class Reward:
         
         if progress == 100:
             finish_reward = ((1 - (steps/300)) * 1000) + 10
+            if finish_reward < 0:
+                finish_reward = 10
         else:
-            finish_reward = 10
+            finish_reward = 0
         
-        if finish_reward > 1:
-            reward += finish_reward
 
         # Zero reward if the center of the car is off the track.
 
