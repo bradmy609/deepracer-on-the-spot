@@ -8,6 +8,16 @@ class STATE:
     prev_speed = None
     prev_progress = 0
     turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+    
+    def reset():
+        # Reset each attribute to its initial value
+        STATE.prev_turn_angle = None
+        STATE.prev_speed_diff = None
+        STATE.prev_turn_angle = None
+        STATE.prev_distance = None
+        STATE.prev_speed = None
+        STATE.prev_progress = 0
+        STATE.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
 
 class Reward:
     def __init__(self, verbose=False):
@@ -20,6 +30,10 @@ class Reward:
         import math
 
         ################## HELPER FUNCTIONS ###################
+        def reset_state(steps):
+            if steps <= 1:
+                print(f'Resetting state...')
+                STATE.reset()
         
         def add_bonus_reward(next_waypoint_index, distance_reward, reward):
             # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
@@ -420,6 +434,8 @@ class Reward:
         is_offtrack = params['is_offtrack']
 
         ############### OPTIMAL X,Y,SPEED,TIME ################
+        
+        reset_state(steps)
 
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
@@ -458,17 +474,20 @@ class Reward:
             speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
         else:
             speed_reward = 0
-
-        # Reward if less steps
-        REWARD_PER_STEP_FOR_FASTEST_TIME = 2.5
-        STANDARD_TIME = 18.0
-        FASTEST_TIME = 14
-        times_list = [row[3] for row in racing_track]
         
         progress_multiplier = 2
         delta_progress = progress - STATE.prev_progress
-        progress_reward = (delta_progress/0.5)
-        progress_reward = max(0.001, progress_reward)
+        if delta_progress < 0:
+            print(f'progress: {progress}')
+            print(f'prev_progress: {STATE.prev_progress}')
+            print(f'steps: {steps}')
+            # I think when resetting an episode on first step we are having issues while prev_progress is being reset.
+            # This will check if we are on the first step and progress is in the expected value range, then it will just
+            # use current progress as delta progress.
+            if steps <= 1 and progress < 1:
+                delta_progress = progress
+        progress_reward = max(0, (delta_progress/0.5))
+        
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -476,12 +495,6 @@ class Reward:
         # Zero reward if obviously wrong direction (e.g. spin)
         direction_diff = racing_direction_diff(
             optimals[0:2], optimals_second[0:2], [x, y], heading)
-        
-        # HEADING_MULTIPLIER = 1
-        # heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 10
-        # if abs(direction_diff) <= 20:
-        #     heading_reward = math.cos( abs(direction_diff ) * ( math.pi / 180 ) ) ** 4
-        # reward += heading_reward
         
         SPEED_THRESHOLD = 0.5
         SPEED_PUNISHMENT = 0.1
@@ -556,6 +569,7 @@ class Reward:
         PC = progress_reward * progress_multiplier
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
+            print(f'steps: {steps}')
             print(f'delta_progress: {progress-STATE.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
         reward += DC + PC + SUPER_FAST_BONUS + straight_steering_bonus
