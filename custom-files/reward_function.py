@@ -8,6 +8,16 @@ class STATE:
     prev_speed = None
     prev_progress = 0
     turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+    
+    def reset():
+        # Reset each attribute to its initial value
+        STATE.prev_turn_angle = None
+        STATE.prev_speed_diff = None
+        STATE.prev_turn_angle = None
+        STATE.prev_distance = None
+        STATE.prev_speed = None
+        STATE.prev_progress = 0
+        STATE.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
 
 class Reward:
     def __init__(self, verbose=False):
@@ -20,6 +30,10 @@ class Reward:
         import math
 
         ################## HELPER FUNCTIONS ###################
+        def reset_state(steps):
+            if steps <= 1:
+                print(f'Resetting state...')
+                STATE.reset()
         
         def add_bonus_reward(next_waypoint_index, distance_reward, reward):
             # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
@@ -420,6 +434,8 @@ class Reward:
         is_offtrack = params['is_offtrack']
 
         ############### OPTIMAL X,Y,SPEED,TIME ################
+        
+        reset_state(steps)
 
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
@@ -470,7 +486,7 @@ class Reward:
             # use current progress as delta progress.
             if steps <= 1 and progress < 1:
                 delta_progress = progress
-        progress_reward = max(0.001, (delta_progress/0.5))
+        progress_reward = max(0, (delta_progress/0.5))
         
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
