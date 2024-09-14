@@ -1,23 +1,25 @@
 import numpy as np
 
 class STATE:
-    prev_turn_angle = None
-    prev_speed_diff = None
-    prev_turn_angle = None
-    prev_distance = None
-    prev_speed = None
-    prev_progress = 0
-    turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
-    
-    def reset():
-        # Reset each attribute to its initial value
-        STATE.prev_turn_angle = None
-        STATE.prev_speed_diff = None
-        STATE.prev_turn_angle = None
-        STATE.prev_distance = None
-        STATE.prev_speed = None
-        STATE.prev_progress = 0
-        STATE.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+    def __init__(self):
+        # Initialize all attributes with their default values
+        self.prev_turn_angle = None
+        self.prev_speed_diff = None
+        self.prev_distance = None
+        self.prev_speed = None
+        self.prev_progress = 0
+        self.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+
+    # Optional: You could also define a reset method to reset all attributes
+    def reset(self):
+        self.prev_turn_angle = None
+        self.prev_speed_diff = None
+        self.prev_distance = None
+        self.prev_speed = None
+        self.prev_progress = 0
+        self.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
+        
+state = STATE()
 
 class Reward:
     def __init__(self, verbose=False):
@@ -33,16 +35,16 @@ class Reward:
         def reset_state(steps):
             if steps <= 1:
                 print(f'Resetting state...')
-                STATE.reset()
+                state.reset()
         
         def add_bonus_reward(next_waypoint_index, distance_reward, reward):
             # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
-            if next_waypoint_index in STATE.turn_peaks and STATE.turn_peaks[next_waypoint_index] == 0:
+            if next_waypoint_index in state.turn_peaks and state.turn_peaks[next_waypoint_index] == 0:
                 # Calculate the bonus_dist_reward
                 bonus_dist_reward = distance_reward**2 * 20
                 
                 # Update the value in STATE.turn_peaks for the current waypoint
-                STATE.turn_peaks[next_waypoint_index] = bonus_dist_reward
+                state.turn_peaks[next_waypoint_index] = bonus_dist_reward
                 
                 # Increment the reward
                 reward += bonus_dist_reward
@@ -476,10 +478,10 @@ class Reward:
             speed_reward = 0
         
         progress_multiplier = 2
-        delta_progress = progress - STATE.prev_progress
+        delta_progress = progress - state.prev_progress
         if delta_progress < 0:
             print(f'progress: {progress}')
-            print(f'prev_progress: {STATE.prev_progress}')
+            print(f'prev_progress: {state.prev_progress}')
             print(f'steps: {steps}')
             # I think when resetting an episode on first step we are having issues while prev_progress is being reset.
             # This will check if we are on the first step and progress is in the expected value range, then it will just
@@ -570,15 +572,15 @@ class Reward:
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'steps: {steps}')
-            print(f'delta_progress: {progress-STATE.prev_progress}')
+            print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
         reward += DC + PC + SUPER_FAST_BONUS + straight_steering_bonus
         
-        if STATE.prev_turn_angle is not None and STATE.prev_speed_diff is not None and STATE.prev_distance is not None and STATE.prev_speed is not None:
-            delta_turn_angle = abs(steering_angle - STATE.prev_turn_angle)
-            delta_speed = abs(speed - STATE.prev_speed)
-            delta_speed_diff = speed_diff - STATE.prev_speed_diff
-            delta_distance = dist - STATE.prev_distance
+        if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+            delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+            delta_speed = abs(speed - state.prev_speed)
+            delta_speed_diff = speed_diff - state.prev_speed_diff
+            delta_distance = dist - state.prev_distance
             # Speed maintain bonus if speed is close to optimal
             if delta_speed <= 0.1 and speed_diff <= 0.1:
                 reward += 0.1
@@ -586,9 +588,9 @@ class Reward:
             if delta_turn_angle <= 3 and dist <= 0.1:
                 reward += 0.1
             # Erratic steering punishments
-            if STATE.prev_turn_angle > 10 and steering_angle < -10:
+            if state.prev_turn_angle > 10 and steering_angle < -10:
                 reward *= 0.1
-            elif STATE.prev_turn_angle < -10 and steering_angle > 10:
+            elif state.prev_turn_angle < -10 and steering_angle > 10:
                 reward *= 0.1
             elif delta_turn_angle >= 30:
                 reward = min(reward, 0.001)
@@ -645,11 +647,11 @@ class Reward:
 
         #################### RETURN REWARD ####################
         
-        STATE.prev_turn_angle = steering_angle
-        STATE.prev_speed_diff = speed_diff
-        STATE.prev_distance = dist
-        STATE.prev_speed = speed
-        STATE.prev_progress = progress
+        state.prev_turn_angle = steering_angle
+        state.prev_speed_diff = speed_diff
+        state.prev_distance = dist
+        state.prev_speed = speed
+        state.prev_progress = progress
 
         # Always return a float value
         return float(reward)
