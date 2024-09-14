@@ -468,6 +468,7 @@ class Reward:
         progress_multiplier = 2
         delta_progress = progress - STATE.prev_progress
         progress_reward = (delta_progress/0.5)
+        progress_reward = max(0.001, progress_reward)
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -554,7 +555,7 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         PC = progress_reward * progress_multiplier
         # distance component, speed component, and progress_component
-        if steps // 50 == 0:
+        if steps // 100 == 0:
             print(f'delta_progress: {progress-STATE.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
         reward += DC + PC + SUPER_FAST_BONUS + straight_steering_bonus
