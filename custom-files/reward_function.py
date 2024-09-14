@@ -542,7 +542,7 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         PC = progress_reward * progress_multiplier
         # distance component, speed component, and progress_component
-        if steps // 50 == 0:
+        if steps // 100 == 0:
             print(f'delta_progress: {progress-STATE.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
         reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
