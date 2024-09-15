@@ -589,10 +589,13 @@ class Reward:
                 
         # reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
         
-        DC = (distance_reward**2 * 2)
+        DC = ((distance_reward**2) * 2)
         SC = speed_reward * SPEED_MULTIPLE
+        # This should give a rough estimation of the turn angle, as optimal speed decreases proportional to the turn angle.
+        optimal_speed = optimals[2]
+        progress_angle_multiplier = 4/optimal_speed
         # Here we factor distance reward into progress reward. This ensures car must be close to racing line to get progress reward.
-        PC = progress_reward
+        PC = progress_reward * progress_angle_multiplier
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
