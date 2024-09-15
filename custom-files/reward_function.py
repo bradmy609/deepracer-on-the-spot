@@ -512,7 +512,6 @@ class Reward:
         else:
             speed_reward = 0
         
-        progress_multiplier = 2
         # Get optimal speed, divide by 4 to get a rough estimation of the current turn angle.
         denominator = optimals[2]
         progress_angle_multiplier = 4/denominator
@@ -597,7 +596,7 @@ class Reward:
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
         # Here we factor distance reward into progress reward. This ensures car must be close to racing line to get progress reward.
-        PC = progress_reward * progress_multiplier * distance_reward
+        PC = progress_reward * (distance_reward ** 2)
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'steps: {steps}')
