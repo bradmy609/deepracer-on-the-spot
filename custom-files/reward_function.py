@@ -9,8 +9,7 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
-
-    # Optional: You could also define a reset method to reset all attributes
+        
     def reset(self):
         self.prev_turn_angle = None
         self.prev_speed_diff = None
@@ -597,13 +596,13 @@ class Reward:
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
         # Here we factor distance reward into progress reward. This ensures car must be close to racing line to get progress reward.
-        PC = progress_reward * distance_reward
+        PC = progress_reward * (distance_reward ** 2)
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + PC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += PC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
