@@ -514,9 +514,9 @@ class Reward:
         progress_multiplier = 2
         # Get optimal speed, divide by 4 to get a rough estimation of the current turn angle.
         denominator = optimals[2]
-        progress_angle_multiplier = 4/denominator
+        # progress_angle_multiplier = 4/denominator
         progress_reward = calculate_progress_reward(params, state)
-        progress_reward = progress_reward * progress_angle_multiplier
+        progress_reward = progress_reward 
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
