@@ -597,7 +597,7 @@ class Reward:
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
         # Here we factor distance reward into progress reward. This ensures car must be close to racing line to get progress reward.
-        PC = progress_reward * progress_multiplier * distance_reward
+        PC = progress_reward * distance_reward
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'steps: {steps}')
