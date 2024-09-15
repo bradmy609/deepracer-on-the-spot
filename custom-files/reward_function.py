@@ -11,7 +11,7 @@ class STATE:
         self.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
 
     # Optional: You could also define a reset method to reset all attributes
-    def reset(self, progress):
+    def reset(self):
         self.prev_turn_angle = None
         self.prev_speed_diff = None
         self.prev_distance = None
