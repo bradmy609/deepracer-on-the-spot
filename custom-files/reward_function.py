@@ -32,7 +32,11 @@ class Reward:
 
         ################## HELPER FUNCTIONS ###################
         
-        def calculate_progress_reward(progress, steps, state):
+        def calculate_progress_reward(params, state):
+            steps = params['steps']
+            progress = params['progress']
+            closest_waypoints = params['closest_waypoints']
+            next_waypoint = closest_waypoints[1]
             progress_multiplier = 5
             delta_progress = progress - state.prev_progress
 
@@ -45,21 +49,17 @@ class Reward:
             if delta_progress > 0.5:
                 print(f'Delta progress is greater than the expected max value of 0.5.')
                 print(f'Delta progress: {delta_progress}')
+                print(f'Next waypoint: {next_waypoint}')
                 print(f'Progress: {progress}')
                 print(f'Steps: {steps}')
                 print(f'State.prev_progress: {state.prev_progress}')
-            progress_reward = (delta_progress ** 2) * progress_multiplier
+            progress_reward = delta_progress * progress_multiplier
 
             # Update state with current progress for future steps
             state.prev_progress = progress
             
             # Return max between 0 and progress_reward to prevent it from being negative.
             if progress_reward < 0:
-                print(f'Progress reward is negative: {progress_reward}')
-                print(f'Progress: {progress}')
-                print(f'Steps: {steps}')
-                print(f'State.prev_progress: {state.prev_progress}')
-                print('Resetting progress reward to 0')
                 progress_reward = max(0, progress_reward)
                 
             return progress_reward
@@ -71,19 +71,19 @@ class Reward:
                 print(f'Progress: {progress}')
                 state.reset()
         
-        def add_bonus_reward(next_waypoint_index, distance_reward, reward):
-            # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
-            if next_waypoint_index in state.turn_peaks and state.turn_peaks[next_waypoint_index] == 0:
-                # Calculate the bonus_dist_reward
-                bonus_dist_reward = distance_reward**2 * 5
+        # def add_bonus_reward(next_waypoint_index, distance_reward, reward):
+        #     # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
+        #     if next_waypoint_index in state.turn_peaks and state.turn_peaks[next_waypoint_index] == 0:
+        #         # Calculate the bonus_dist_reward
+        #         bonus_dist_reward = distance_reward**2 * 5
                 
-                # Update the value in STATE.turn_peaks for the current waypoint
-                state.turn_peaks[next_waypoint_index] = bonus_dist_reward
+        #         # Update the value in STATE.turn_peaks for the current waypoint
+        #         state.turn_peaks[next_waypoint_index] = bonus_dist_reward
                 
-                # Increment the reward
-                reward += bonus_dist_reward
+        #         # Increment the reward
+        #         reward += bonus_dist_reward
             
-            return reward
+        #     return reward
 
         def dist_2_points(x1, x2, y1, y2):
             return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
@@ -591,18 +591,16 @@ class Reward:
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
                 
-        reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
+        # reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
         
-        DC = (distance_reward**DISTANCE_EXPONENT)
+        DC = (distance_reward**DISTANCE_EXPONENT * DISTANCE_MULTIPLE)
         SC = speed_reward * SPEED_MULTIPLE
         # Here we factor distance reward into progress reward. This ensures car must be close to racing line to get progress reward.
-        PC = progress_reward * (DC)
+        PC = progress_reward
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
-            print(f'steps: {steps}')
-            print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += PC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + PC + (DC * PC) + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
