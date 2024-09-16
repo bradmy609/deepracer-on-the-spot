@@ -567,7 +567,7 @@ class Reward:
                 SUPER_FAST_BONUS = 1
                 
         # reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
-        progress_multiplier = 5
+        progress_multiplier = 6
         p_bonus_multiple = round_up_to_nearest_tenth(distance_reward)
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
