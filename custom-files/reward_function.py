@@ -572,7 +572,10 @@ class Reward:
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
         PC = progress_reward * progress_multiplier
-        CC = progress_reward * p_bonus_multiple
+        if distance_reward >= 0.95:
+            CC = progress_reward * DISTANCE_MULTIPLE
+        else:
+            CC = progress_reward * DC
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'steps: {steps}')
