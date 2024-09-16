@@ -598,8 +598,9 @@ class Reward:
         PC = progress_reward * progress_angle_multiplier
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
+            print(f'Next waypoint index: {next_waypoint_index}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += (DC * PC) + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + ((DC * PC) * 2) + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
