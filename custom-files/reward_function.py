@@ -9,7 +9,8 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.turn_peaks = {11: 0, 15: 0, 42: 0, 48: 0, 53: 0, 65: 0, 71: 0, 78: 0, 92: 0, 99: 0, 106: 0, 133: 0, 136: 0}
-        
+
+    # Optional: You could also define a reset method to reset all attributes
     def reset(self):
         self.prev_turn_angle = None
         self.prev_speed_diff = None
@@ -31,51 +32,16 @@ class Reward:
         import math
 
         ################## HELPER FUNCTIONS ###################
-        
-        def calculate_progress_reward(params, state):
-            steps = params['steps']
-            progress = params['progress']
-            closest_waypoints = params['closest_waypoints']
-            next_waypoint = closest_waypoints[1]
-            progress_multiplier = 5
-            delta_progress = progress - state.prev_progress
-
-            # Handle negative progress, especially at the start of an episode
-            if delta_progress < 0:
-                if steps <= 2 and progress <= 2:
-                    delta_progress = progress
-
-            # Calculate progress reward (scaled by the multiplier)
-            if delta_progress > 0.5:
-                print(f'Delta progress is greater than the expected max value of 0.5.')
-                print(f'Delta progress: {delta_progress}')
-                print(f'Next waypoint: {next_waypoint}')
-                print(f'Progress: {progress}')
-                print(f'Steps: {steps}')
-                print(f'State.prev_progress: {state.prev_progress}')
-            progress_reward = (delta_progress ** 2) * progress_multiplier
-
-            # Update state with current progress for future steps
-            state.prev_progress = progress
-            
-            # Return max between 0 and progress_reward to prevent it from being negative.
-            if progress_reward < 0:
-                progress_reward = max(0, progress_reward)
-                
-            return progress_reward
-    
         def reset_state(steps):
-            # First step you can react to is 2. Progress should definitely be under 2 here, but we'll check it anyway
-            if steps <= 2 and progress <= 2:
-                print(f'Resetting state at steps == 2')
-                print(f'Progress: {progress}')
+            if steps <= 2:
+                print(f'Resetting state...')
                 state.reset()
         
         # def add_bonus_reward(next_waypoint_index, distance_reward, reward):
         #     # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
         #     if next_waypoint_index in state.turn_peaks and state.turn_peaks[next_waypoint_index] == 0:
         #         # Calculate the bonus_dist_reward
-        #         bonus_dist_reward = distance_reward**2 * 5
+        #         bonus_dist_reward = distance_reward**2 * 20
                 
         #         # Update the value in STATE.turn_peaks for the current waypoint
         #         state.turn_peaks[next_waypoint_index] = bonus_dist_reward
@@ -289,6 +255,9 @@ class Reward:
                 is_within_range = car_heading >= max_heading or car_heading <= min_heading
 
             return min_heading, max_heading, is_within_range
+        
+        def round_up_to_nearest_tenth(number):
+            return math.ceil(number * 10) / 10
 
         #################### RACING LINE ######################
 
@@ -511,8 +480,18 @@ class Reward:
         else:
             speed_reward = 0
         
-        progress_reward = calculate_progress_reward(params, state)
-        progress_reward = progress_reward 
+        delta_progress = progress - state.prev_progress
+        if delta_progress < 0:
+            print(f'progress: {progress}')
+            print(f'prev_progress: {state.prev_progress}')
+            print(f'steps: {steps}')
+            # I think when resetting an episode on first step we are having issues while prev_progress is being reset.
+            # This will check if we are on the first step and progress is in the expected value range, then it will just
+            # use current progress as delta progress.
+            if steps <= 1 and progress < 1:
+                delta_progress = progress
+        progress_reward = max(0, delta_progress)
+        
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -588,19 +567,18 @@ class Reward:
                 SUPER_FAST_BONUS = 1
                 
         # reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
-        
-        DC = ((distance_reward**2))
+        progress_multiplier = 5
+        p_bonus_multiple = round_up_to_nearest_tenth(distance_reward)
+        DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        # This should give a rough estimation of the turn angle, as optimal speed decreases proportional to the turn angle.
-        optimal_speed = optimals[2]
-        progress_angle_multiplier = 4/optimal_speed
-        # Here we factor distance reward into progress reward. This ensures car must be close to racing line to get progress reward.
-        PC = progress_reward * progress_angle_multiplier
+        PC = progress_reward * progress_multiplier
+        CC = progress_reward * p_bonus_multiple
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
-            print(f'Next waypoint index: {next_waypoint_index}')
+            print(f'steps: {steps}')
+            print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + ((DC * PC) * 2) + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + PC + CC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -677,12 +655,7 @@ class Reward:
         state.prev_speed_diff = speed_diff
         state.prev_distance = dist
         state.prev_speed = speed
-        if state.prev_progress != progress:
-            print('Something went wrong. Previous progress was not equal to current progress.')
-            print(f'steps: {steps}')
-            print(f'progress: {progress}')
-            print(f'prev_progress: {state.prev_progress}')
-            state.prev_progress = progress
+        state.prev_progress = progress
 
         # Always return a float value
         return float(reward)
