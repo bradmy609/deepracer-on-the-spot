@@ -53,7 +53,7 @@ class Reward:
                 print(f'Progress: {progress}')
                 print(f'Steps: {steps}')
                 print(f'State.prev_progress: {state.prev_progress}')
-            progress_reward = delta_progress * progress_multiplier
+            progress_reward = (delta_progress ** 2) * progress_multiplier
 
             # Update state with current progress for future steps
             state.prev_progress = progress
@@ -589,7 +589,7 @@ class Reward:
                 
         # reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
         
-        DC = ((distance_reward**2) * 2)
+        DC = ((distance_reward**2))
         SC = speed_reward * SPEED_MULTIPLE
         # This should give a rough estimation of the turn angle, as optimal speed decreases proportional to the turn angle.
         optimal_speed = optimals[2]
@@ -599,7 +599,7 @@ class Reward:
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + (DC * PC) + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += (DC * PC) + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
