@@ -223,7 +223,6 @@ class Reward:
 
             # Normalize car heading to be within 0 to 360 degrees
             car_heading = (car_heading + 360) % 360
-            print(f'car_heading: {car_heading}')
 
             # Get the min and max headings
             min_heading = min(inner_heading, outer_heading)
@@ -562,7 +561,7 @@ class Reward:
         scaled_multiplier = scale_value(rounded_multiplier, 1, 2.9, 1, 2)
         
         DISTANCE_MULTIPLE = scaled_multiplier
-        DISTANCE_EXPONENT = scaled_multiplier
+        DISTANCE_EXPONENT = 1
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                 
         progress_multiplier = 5
