@@ -238,10 +238,7 @@ class Reward:
 
             return min_heading, max_heading, is_within_range
         
-        def round_up_to_nearest_tenth(number):
-            return math.ceil(number * 10) / 10
-        
-        def scale_value(x, old_min=1, old_max=2.8, new_min=1, new_max=2):
+        def scale_value(x, old_min=1, old_max=2.9, new_min=1, new_max=2):
             # Scale the value from the old range to the new range
             scaled_value = new_min + ((x - old_min) / (old_max - old_min)) * (new_max - new_min)
             return scaled_value
@@ -528,15 +525,18 @@ class Reward:
             speed_reward = 0
         
         delta_progress = progress - state.prev_progress
-        if delta_progress < 0:
-            print(f'progress: {progress}')
-            print(f'prev_progress: {state.prev_progress}')
-            print(f'steps: {steps}')
-            # I think when resetting an episode on first step we are having issues while prev_progress is being reset.
-            # This will check if we are on the first step and progress is in the expected value range, then it will just
-            # use current progress as delta progress.
-            if steps <= 2 and progress < 1:
-                delta_progress = progress
+        try:
+            if delta_progress < 0:
+                print(f'progress: {progress}')
+                print(f'prev_progress: {state.prev_progress}')
+                print(f'steps: {steps}')
+                # I think when resetting an episode on first step we are having issues while prev_progress is being reset.
+                # This will check if we are on the first step and progress is in the expected value range, then it will just
+                # use current progress as delta progress.
+                if steps <= 2 and progress < 1:
+                    delta_progress = progress
+        except:
+            print('Error with steps.')
         progress_reward = max(0, delta_progress)
         
         
@@ -556,9 +556,11 @@ class Reward:
         else:
             SUPER_FAST_BONUS = 0
             STRAIGHT_STEERING_BONUS = 0
-        
-        rounded_multiplier = round_up_to_nearest_tenth(4/optimal_speed)
-        scaled_multiplier = scale_value(rounded_multiplier, 1, 2.9, 1, 2)
+        try:
+            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2)
+        except:
+            print('Error with scaled_multiplier.')
+            scaled_multiplier = 4/optimal_speed
         
         DISTANCE_MULTIPLE = scaled_multiplier
         DISTANCE_EXPONENT = scaled_multiplier
