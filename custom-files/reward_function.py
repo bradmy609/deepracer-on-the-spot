@@ -37,7 +37,7 @@ class Reward:
 
         ################## HELPER FUNCTIONS ###################
         def reset_state(steps):
-            if steps <= 1:
+            if steps <= 2:
                 print(f'Resetting state...')
                 state.reset()
         
@@ -244,7 +244,6 @@ class Reward:
 
             # Normalize car heading to be within 0 to 360 degrees
             car_heading = (car_heading + 360) % 360
-            print(f'car_heading: {car_heading}')
 
             # Get the min and max headings
             min_heading = min(inner_heading, outer_heading)
@@ -617,7 +616,7 @@ class Reward:
         PC = progress_reward * progress_multiplier
         WP = calculate_wp_reward(params, state)
         # distance component, speed component, and progress_component
-        if steps // 100 == 0:
+        if steps % 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
