@@ -561,7 +561,7 @@ class Reward:
         scaled_multiplier = scale_value(rounded_multiplier, 1, 2.9, 1, 2)
         
         DISTANCE_MULTIPLE = scaled_multiplier
-        DISTANCE_EXPONENT = 1
+        DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                 
         progress_multiplier = 5
@@ -573,10 +573,13 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
         PC = progress_reward * progress_multiplier
-        if steps % 100 == 0:
-            print(f'steps: {steps}')
-            print(f'delta_progress: {progress-state.prev_progress}')
-            print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {STRAIGHT_STEERING_BONUS}')
+        try:
+            if steps % 100 == 0:
+                print(f'steps: {steps}')
+                print(f'delta_progress: {progress-state.prev_progress}')
+                print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {STRAIGHT_STEERING_BONUS}')
+        except:
+            print('Error in printing steps and delta_progress')
         reward += DC + SC + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
