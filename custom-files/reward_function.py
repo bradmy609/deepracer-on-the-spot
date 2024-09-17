@@ -480,7 +480,6 @@ class Reward:
         else:
             speed_reward = 0
         
-        progress_multiplier = 2
         delta_progress = progress - state.prev_progress
         if delta_progress < 0:
             print(f'progress: {progress}')
@@ -491,7 +490,9 @@ class Reward:
             # use current progress as delta progress.
             if steps <= 1 and progress < 1:
                 delta_progress = progress
-        progress_reward = max(0, (delta_progress/0.5))
+        if delta_progress > 1:
+            delta_progress == 1
+        progress_reward = max(0, delta_progress)
         
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
@@ -611,16 +612,17 @@ class Reward:
 
             return wp_reward
         
+        progress_multiplier = 20
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        PC = progress_reward * progress_multiplier
+        PC = (progress_reward**2) * progress_multiplier
         WP = calculate_wp_reward(params, state)
         # distance component, speed component, and progress_component
         if steps % 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + SC + PC + WP + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -676,6 +678,9 @@ class Reward:
         # Zero reward if the center of the car is off the track.
 
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
+            if steps % 5 == 0:
+                print(f'state.wp_rewards: {state.wp_rewards}')
+                print(f'WP: {WP}')
             reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
