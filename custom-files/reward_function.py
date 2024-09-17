@@ -588,18 +588,18 @@ class Reward:
                     
                     # Check and reward the current waypoint if not already rewarded
                     if state.wp_rewards[closest_wp_index] is None:
-                        wp_reward += max(0, (4 - state.steps_at_waypoint))
+                        wp_reward += max(0, (3 - state.steps_at_waypoint))
                         state.wp_rewards[state.prev_wp_index] = wp_reward
 
                     # Reward any skipped waypoints if they haven't been rewarded
                     for i in skipped_waypoints:
                         if state.wp_rewards[i] is None:
-                            state.wp_rewards[i] = 4  # Full reward for skipped waypoints
-                            wp_reward += 4
+                            state.wp_rewards[i] = 3  # Full reward for skipped waypoints
+                            wp_reward += 3
 
                     # Handle the case where the car wraps around from the last waypoint (212) to the first (0)
                     if closest_wp_index == 0 and state.prev_wp_index == 212 and state.wp_rewards[closest_wp_index] is None:
-                        wp_reward += max(0, (4 - state.steps_at_waypoint))
+                        wp_reward += max(0, (3 - state.steps_at_waypoint))
                         state.wp_rewards[state.prev_wp_index] = wp_reward
 
                     # Update the previous waypoint index and reset steps for the new waypoint
