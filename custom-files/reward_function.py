@@ -37,19 +37,19 @@ class Reward:
                 print(f'Resetting state...')
                 state.reset()
         
-        def add_bonus_reward(next_waypoint_index, distance_reward, reward):
-            # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
-            if next_waypoint_index in state.turn_peaks and state.turn_peaks[next_waypoint_index] == 0:
-                # Calculate the bonus_dist_reward
-                bonus_dist_reward = distance_reward**2 * 20
+        # def add_bonus_reward(next_waypoint_index, distance_reward, reward):
+        #     # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
+        #     if next_waypoint_index in state.turn_peaks and state.turn_peaks[next_waypoint_index] == 0:
+        #         # Calculate the bonus_dist_reward
+        #         bonus_dist_reward = distance_reward**2 * 20
                 
-                # Update the value in STATE.turn_peaks for the current waypoint
-                state.turn_peaks[next_waypoint_index] = bonus_dist_reward
+        #         # Update the value in STATE.turn_peaks for the current waypoint
+        #         state.turn_peaks[next_waypoint_index] = bonus_dist_reward
                 
-                # Increment the reward
-                reward += bonus_dist_reward
+        #         # Increment the reward
+        #         reward += bonus_dist_reward
             
-            return reward
+        #     return reward
 
         def dist_2_points(x1, x2, y1, y2):
             return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
@@ -564,17 +564,60 @@ class Reward:
             if speed >= 3.95:
                 SUPER_FAST_BONUS = 1
                 
-        reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
+        # reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
+        def calculate_wp_reward(params, state):
+            closest_wp_index = params['closest_waypoints'][1]
+            wp_reward = 0
+
+            # Check if previous waypoint index is set
+            if state.prev_wp_index is not None:
+                if state.prev_wp_index == closest_wp_index:
+                    # Increment steps if still at the same waypoint
+                    state.steps_at_waypoint += 1
+                else:
+                    # If we moved to a new waypoint
+                    skipped_waypoints = []  # Initialize the skipped waypoints list
+
+                    # Handle skipped waypoints (i.e., if we jumped more than 1 waypoint)
+                    if closest_wp_index > state.prev_wp_index + 1:
+                        skipped_waypoints = range(state.prev_wp_index + 1, closest_wp_index)
+                    
+                    # Check and reward the current waypoint if not already rewarded
+                    if state.wp_rewards[closest_wp_index] is None:
+                        wp_reward += max(0, (4 - state.steps_at_waypoint))
+                        state.wp_rewards[state.prev_wp_index] = wp_reward
+
+                    # Reward any skipped waypoints if they haven't been rewarded
+                    for i in skipped_waypoints:
+                        if state.wp_rewards[i] is None:
+                            state.wp_rewards[i] = 4  # Full reward for skipped waypoints
+                            wp_reward += 4
+
+                    # Handle the case where the car wraps around from the last waypoint (212) to the first (0)
+                    if closest_wp_index == 0 and state.prev_wp_index == 212 and state.wp_rewards[closest_wp_index] is None:
+                        wp_reward += max(0, (4 - state.steps_at_waypoint))
+                        state.wp_rewards[state.prev_wp_index] = wp_reward
+
+                    # Update the previous waypoint index and reset steps for the new waypoint
+                    state.prev_wp_index = closest_wp_index
+                    state.steps_at_waypoint = 0  # Start with 0 steps for the new waypoint
+            else:
+                # Initialize steps if it's the first step
+                state.steps_at_waypoint += 1
+                state.prev_wp_index = closest_wp_index
+
+            return wp_reward
         
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
         PC = progress_reward * progress_multiplier
+        WP = calculate_wp_reward(params, state)
         # distance component, speed component, and progress_component
         if steps // 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + SC + PC + WP + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
