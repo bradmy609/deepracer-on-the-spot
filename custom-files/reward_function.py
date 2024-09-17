@@ -568,8 +568,6 @@ class Reward:
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                 
         progress_multiplier = 5
-        # The below multiple can be used for giving progress rewards based on distance from raceline thresholds.
-        p_bonus_multiple = round_up_to_nearest_tenth(distance_reward)
         # Distance component
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         # Speed component
