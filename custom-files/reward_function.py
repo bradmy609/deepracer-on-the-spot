@@ -556,6 +556,7 @@ class Reward:
         else:
             SUPER_FAST_BONUS = 0
             STRAIGHT_STEERING_BONUS = 0
+            
         try:
             scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2)
         except:
