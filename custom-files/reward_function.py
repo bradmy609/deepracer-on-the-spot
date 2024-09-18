@@ -67,7 +67,7 @@ class Reward:
 
                     if pi != 0 and state.progress_intervals.get(pi * 10) is None:
                         if pi == 10:  # 100% track completion
-                            intermediate_progress_bonus = progress_reward ** 14
+                            intermediate_progress_bonus = progress_reward ** 6
                         else:
                             intermediate_progress_bonus = progress_reward ** (2 + 0.35 * pi)
 
