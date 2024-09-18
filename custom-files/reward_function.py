@@ -619,7 +619,7 @@ class Reward:
         
         wp_reward = calculate_wp_reward(params, state)
                 
-        progress_multiplier = 5
+        progress_multiplier = 4
         # Distance component
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         # Speed component
