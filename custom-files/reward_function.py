@@ -45,6 +45,42 @@ class Reward:
         def reset_state(steps):
             if steps == 2:
                 state.reset()
+                
+        def calculate_progress_reward(params, state):
+            progress = params['progress']  # Get the current progress percentage
+            steps = params['steps']  # Get the number of steps
+
+            progress_interval_reward = 0
+
+            # Iterate through the progress intervals and find the next one that hasn't been rewarded
+            for interval in state.progress_intervals.keys():
+                # Check if the progress is at or above the current interval and if the reward hasn't been given
+                if progress >= interval and state.progress_intervals[interval] is None:
+                    pi = int(progress // 10)
+                    progress_reward = 10 * (progress / steps) if steps != 0 else 0
+                    intermediate_progress_bonus = 0
+
+                    if pi != 0 and state.progress_intervals.get(pi * 10) is None:
+                        if pi == 10:  # 100% track completion
+                            intermediate_progress_bonus = progress_reward ** 6
+                        else:
+                            intermediate_progress_bonus = progress_reward ** (2 + 0.35 * pi)
+
+                        state.progress_intervals[pi * 10] = intermediate_progress_bonus
+                        print(intermediate_progress_bonus)
+
+                    progress_interval_reward = max(0, intermediate_progress_bonus)  # Ensure no negative reward
+
+                    # Mark the interval as rewarded
+                    state.progress_intervals[interval] = progress_interval_reward
+
+                    # Update steps_at_last_interval to track the current step
+                    state.steps_at_last_interval = steps
+
+                    # Break after rewarding one interval to avoid double rewards
+                    break
+
+            return progress_interval_reward
 
         # def calculate_wp_reward(params, state):
         #     closest_wp_index = params['closest_waypoints'][1]
@@ -583,12 +619,6 @@ class Reward:
         delta_progress = progress - state.prev_progress
         try:
             if delta_progress < 0:
-                print(f'progress: {progress}')
-                print(f'prev_progress: {state.prev_progress}')
-                print(f'steps: {steps}')
-                # I think when resetting an episode on first step we are having issues while prev_progress is being reset.
-                # This will check if we are on the first step and progress is in the expected value range, then it will just
-                # use current progress as delta progress.
                 if steps <= 2 and progress < 1:
                     delta_progress = progress
         except:
@@ -630,6 +660,8 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
         PC = progress_reward * progress_multiplier
+        # Progress interval
+        PI = calculate_progress_reward(params, state)
         try:
             if steps % 100 == 0:
                 print(f'steps: {steps}')
@@ -637,7 +669,7 @@ class Reward:
                 print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {STRAIGHT_STEERING_BONUS}')
         except:
             print('Error in printing steps and delta_progress')
-        reward += DC + SC + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
+        reward += DC + SC + PC + PI + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -675,15 +707,15 @@ class Reward:
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
         
-        if progress == 100:
-            # finish reward starts scaling up when the steps are below 300, or time is below 20s.
-            finish_reward = ((1 - (steps/450)) * 1000) + 10
-            # Don't let finish_reward fall below 10.
-            if finish_reward < 10:
-                finish_reward = 10
-            reward += finish_reward
-        else:
-            finish_reward = 0
+        # if progress == 100:
+        #     # finish reward starts scaling up when the steps are below 300, or time is below 20s.
+        #     finish_reward = ((1 - (steps/450)) * 1000) + 10
+        #     # Don't let finish_reward fall below 10.
+        #     if finish_reward < 10:
+        #         finish_reward = 10
+        #     reward += finish_reward
+        # else:
+        #     finish_reward = 0
 
         # Zero reward if the center of the car is off the track.
 
