@@ -58,22 +58,28 @@ class Reward:
             progress_interval_reward = 0
 
             # Iterate through the progress intervals and find the next one that hasn't been rewarded
-            progress_intervals = list(state.progress_intervals.keys())
-            for interval in progress_intervals:
+            for interval in state.progress_intervals.keys():
                 # Check if the progress is at or above the current interval and if the reward hasn't been given
                 if progress >= interval and state.progress_intervals[interval] is None:
-                    # Calculate steps since the last rewarded interval
-                    steps_since_last_interval = steps - state.steps_at_last_interval
+                    pi = int(progress // 10)
+                    progress_reward = 10 * (progress / steps) if steps != 0 else 0
+                    intermediate_progress_bonus = 0
 
-                    # Calculate the reward based on steps to reach the interval
-                    exp = ((10 / steps_since_last_interval) - 0.36) * 100
-                    progress_interval_reward = max(0, 2 ** exp)  # Ensure no negative reward
-                    
+                    if pi != 0 and state.progress_intervals.get(pi * 10) is None:
+                        if pi == 10:  # 100% track completion
+                            intermediate_progress_bonus = progress_reward ** 14
+                        else:
+                            intermediate_progress_bonus = progress_reward ** (2 + 0.35 * pi)
+
+                        state.progress_intervals[pi * 10] = intermediate_progress_bonus
+                        print(intermediate_progress_bonus)
+
+                    progress_interval_reward = max(0, intermediate_progress_bonus)  # Ensure no negative reward
+
                     print(f'Rewarding progress interval: {interval}')
                     print(f'Progress: {progress}')
                     print(f'Steps: {steps}')
                     print(f'Progress per step: {progress / steps}')
-                    print(f'Steps since last interval: {steps_since_last_interval}')
                     print(f'Reward: {progress_interval_reward}')
 
                     # Mark the interval as rewarded
