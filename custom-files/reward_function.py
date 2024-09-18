@@ -10,7 +10,10 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
-        self.wp_rewards = {i: None for i in range(213)}
+        
+        self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
+        self.next_progress_interval = list(self.progress_intervals.keys())[0]  # Start with 10%
+        self.steps_at_last_interval = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -21,7 +24,10 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
-        self.wp_rewards = {i: None for i in range(213)}
+        
+        self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
+        self.next_progress_interval = list(self.progress_intervals.keys())[0]  # Start with 10%
+        self.steps_at_last_interval = 0
         
 state = STATE()
 
@@ -40,48 +46,48 @@ class Reward:
             if steps == 2:
                 state.reset()
 
-        def calculate_wp_reward(params, state):
-            closest_wp_index = params['closest_waypoints'][1]
-            wp_reward = 0
+        # def calculate_wp_reward(params, state):
+        #     closest_wp_index = params['closest_waypoints'][1]
+        #     wp_reward = 0
 
-            # Check if previous waypoint index is set
-            if state.prev_wp_index is not None:
-                if state.prev_wp_index == closest_wp_index:
-                    # Increment steps if still at the same waypoint
-                    state.steps_at_waypoint += 1
-                else:
-                    # If we moved to a new waypoint
-                    skipped_waypoints = []  # Initialize the skipped waypoints list
+        #     # Check if previous waypoint index is set
+        #     if state.prev_wp_index is not None:
+        #         if state.prev_wp_index == closest_wp_index:
+        #             # Increment steps if still at the same waypoint
+        #             state.steps_at_waypoint += 1
+        #         else:
+        #             # If we moved to a new waypoint
+        #             skipped_waypoints = []  # Initialize the skipped waypoints list
 
-                    # Handle skipped waypoints (i.e., if we jumped more than 1 waypoint)
-                    if closest_wp_index > state.prev_wp_index + 1:
-                        skipped_waypoints = range(state.prev_wp_index + 1, closest_wp_index)
+        #             # Handle skipped waypoints (i.e., if we jumped more than 1 waypoint)
+        #             if closest_wp_index > state.prev_wp_index + 1:
+        #                 skipped_waypoints = range(state.prev_wp_index + 1, closest_wp_index)
                     
-                    # Check and reward the current waypoint if not already rewarded
-                    if state.wp_rewards[closest_wp_index] is None:
-                        wp_reward += max(0, (4 - state.steps_at_waypoint))
-                        state.wp_rewards[state.prev_wp_index] = wp_reward
+        #             # Check and reward the current waypoint if not already rewarded
+        #             if state.wp_rewards[closest_wp_index] is None:
+        #                 wp_reward += max(0, (4 - state.steps_at_waypoint))
+        #                 state.wp_rewards[state.prev_wp_index] = wp_reward
 
-                    # Reward any skipped waypoints if they haven't been rewarded
-                    for i in skipped_waypoints:
-                        if state.wp_rewards[i] is None:
-                            state.wp_rewards[i] = 4  # Full reward for skipped waypoints
-                            wp_reward += 4
+        #             # Reward any skipped waypoints if they haven't been rewarded
+        #             for i in skipped_waypoints:
+        #                 if state.wp_rewards[i] is None:
+        #                     state.wp_rewards[i] = 4  # Full reward for skipped waypoints
+        #                     wp_reward += 4
 
-                    # Handle the case where the car wraps around from the last waypoint (212) to the first (0)
-                    if closest_wp_index == 0 and state.prev_wp_index == 212 and state.wp_rewards[closest_wp_index] is None:
-                        wp_reward += max(0, (4 - state.steps_at_waypoint))
-                        state.wp_rewards[state.prev_wp_index] = wp_reward
+        #             # Handle the case where the car wraps around from the last waypoint (212) to the first (0)
+        #             if closest_wp_index == 0 and state.prev_wp_index == 212 and state.wp_rewards[closest_wp_index] is None:
+        #                 wp_reward += max(0, (4 - state.steps_at_waypoint))
+        #                 state.wp_rewards[state.prev_wp_index] = wp_reward
 
-                    # Update the previous waypoint index and reset steps for the new waypoint
-                    state.prev_wp_index = closest_wp_index
-                    state.steps_at_waypoint = 0  # Start with 0 steps for the new waypoint
-            else:
-                # Initialize steps if it's the first step
-                state.steps_at_waypoint += 1
-                state.prev_wp_index = closest_wp_index
+        #             # Update the previous waypoint index and reset steps for the new waypoint
+        #             state.prev_wp_index = closest_wp_index
+        #             state.steps_at_waypoint = 0  # Start with 0 steps for the new waypoint
+        #     else:
+        #         # Initialize steps if it's the first step
+        #         state.steps_at_waypoint += 1
+        #         state.prev_wp_index = closest_wp_index
 
-            return wp_reward
+        #     return wp_reward
 
 
         def dist_2_points(x1, x2, y1, y2):
@@ -616,8 +622,6 @@ class Reward:
         DISTANCE_MULTIPLE = scaled_multiplier
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
-        
-        wp_reward = calculate_wp_reward(params, state)
                 
         progress_multiplier = 4
         # Distance component
