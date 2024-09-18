@@ -76,12 +76,6 @@ class Reward:
 
                     progress_interval_reward = max(0, intermediate_progress_bonus)  # Ensure no negative reward
 
-                    print(f'Rewarding progress interval: {interval}')
-                    print(f'Progress: {progress}')
-                    print(f'Steps: {steps}')
-                    print(f'Progress per step: {progress / steps}')
-                    print(f'Reward: {progress_interval_reward}')
-
                     # Mark the interval as rewarded
                     state.progress_intervals[interval] = progress_interval_reward
 
@@ -201,32 +195,6 @@ class Reward:
                 end += array_len
 
             return [index % array_len for index in range(start, end)]
-
-        # Calculate how long car would take for entire lap, if it continued like it did until now
-        def projected_time(first_index, closest_index, step_count, times_list):
-
-            # Calculate how much time has passed since start
-            current_actual_time = (step_count-1) / 15
-
-            # Calculate which indexes were already passed
-            indexes_traveled = indexes_cyclical(first_index, closest_index, len(times_list))
-
-            # Calculate how much time should have passed if car would have followed optimals
-            current_expected_time = sum([times_list[i] for i in indexes_traveled])
-
-            # Calculate how long one entire lap takes if car follows optimals
-            total_expected_time = sum(times_list)
-
-            # Calculate how long car would take for entire lap, if it continued like it did until now
-            if current_expected_time is not None and total_expected_time is not None:
-                try:
-                    projected_time = (current_actual_time/current_expected_time) * total_expected_time
-                except ZeroDivisionError:
-                    projected_time = 9999
-            else:
-                projected_time = 9999
-
-            return projected_time
         
         def find_border_points(params):
             waypoints = params['waypoints']
@@ -730,8 +698,6 @@ class Reward:
             print("Speed difference: %f" % speed_diff)
             print("=== Speed reward (w/out multiple): %f ===" % speed_reward)
             print("Direction difference: %f" % direction_diff)
-            print("Predicted time: %f" % projected_time)
-            # print("=== Finish reward: %f ===" % finish_reward)
 
         #################### RETURN REWARD ####################
         
