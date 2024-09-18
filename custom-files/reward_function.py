@@ -10,6 +10,11 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
+        
+        self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
+        self.next_progress_interval = list(self.progress_intervals.keys())[0]  # Start with 10%
+        self.steps_at_last_interval = 0
+        
         self.wp_rewards = {i: None for i in range(213)}
         
     # Optional: You could also define a reset method to reset all attributes
@@ -21,6 +26,11 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
+        
+        self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
+        self.next_progress_interval = list(self.progress_intervals.keys())[0]  # Start with 10%
+        self.steps_at_last_interval = 0
+        
         self.wp_rewards = {i: None for i in range(213)}
         
 state = STATE()
@@ -41,19 +51,41 @@ class Reward:
                 print(f'Resetting state...')
                 state.reset()
         
-        # def add_bonus_reward(next_waypoint_index, distance_reward, reward):
-        #     # Check if next_waypoint_index is a key in STATE.turn_peaks and has a value of 0
-        #     if next_waypoint_index in state.turn_peaks and state.turn_peaks[next_waypoint_index] == 0:
-        #         # Calculate the bonus_dist_reward
-        #         bonus_dist_reward = distance_reward**2 * 20
-                
-        #         # Update the value in STATE.turn_peaks for the current waypoint
-        #         state.turn_peaks[next_waypoint_index] = bonus_dist_reward
-                
-        #         # Increment the reward
-        #         reward += bonus_dist_reward
-            
-        #     return reward
+        def calculate_progress_reward(params, state):
+            progress = params['progress']  # Get the current progress percentage
+            steps = params['steps']  # Get the number of steps
+
+            progress_interval_reward = 0
+
+            # Iterate through the progress intervals and find the next one that hasn't been rewarded
+            progress_intervals = list(state.progress_intervals.keys())
+            for interval in progress_intervals:
+                # Check if the progress is at or above the current interval and if the reward hasn't been given
+                if progress >= interval and state.progress_intervals[interval] is None:
+                    # Calculate steps since the last rewarded interval
+                    steps_since_last_interval = steps - state.steps_at_last_interval
+
+                    # Calculate the reward based on steps to reach the interval
+                    exp = ((10 / steps_since_last_interval) - 0.36) * 100
+                    progress_interval_reward = max(0, 2 ** exp)  # Ensure no negative reward
+                    
+                    print(f'Rewarding progress interval: {interval}')
+                    print(f'Progress: {progress}')
+                    print(f'Steps: {steps}')
+                    print(f'Progress per step: {progress / steps}')
+                    print(f'Steps since last interval: {steps_since_last_interval}')
+                    print(f'Reward: {progress_interval_reward}')
+
+                    # Mark the interval as rewarded
+                    state.progress_intervals[interval] = progress_interval_reward
+
+                    # Update steps_at_last_interval to track the current step
+                    state.steps_at_last_interval = steps
+
+                    # Break after rewarding one interval to avoid double rewards
+                    break
+
+            return progress_interval_reward
 
         def dist_2_points(x1, x2, y1, y2):
             return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
@@ -612,23 +644,23 @@ class Reward:
 
             return wp_reward
         
-        progress_multiplier = 20
+        progress_interval_reward = calculate_progress_reward(params, state)
+        
+        progress_multiplier = 4
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        PC = (progress_reward**2) * progress_multiplier
-        WP = calculate_wp_reward(params, state)
+        PC = (progress_reward) * progress_multiplier
+        PIC = progress_interval_reward
         # distance component, speed component, and progress_component
         if steps % 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + SC + PC + PIC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
             delta_speed = abs(speed - state.prev_speed)
-            delta_speed_diff = speed_diff - state.prev_speed_diff
-            delta_distance = dist - state.prev_distance
             # Speed maintain bonus if speed is close to optimal
             if delta_speed <= 0.1 and speed_diff <= 0.1:
                 reward += 0.1
@@ -667,7 +699,7 @@ class Reward:
         
         if progress == 100:
             # finish reward starts scaling up when the steps are below 300, or time is below 20s.
-            finish_reward = ((1 - (steps/300)) * 1000) + 10
+            finish_reward = ((1 - (steps/285)) * 3000) + 10
             # Don't let finish_reward fall below 10.
             if finish_reward < 10:
                 finish_reward = 10
@@ -680,7 +712,6 @@ class Reward:
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             if steps % 5 == 0:
                 print(f'state.wp_rewards: {state.wp_rewards}')
-                print(f'WP: {WP}')
             reward = min(reward, 0.001)
 
         ####################### VERBOSE #######################
