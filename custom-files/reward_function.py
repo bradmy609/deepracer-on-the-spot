@@ -62,17 +62,15 @@ class Reward:
                 # Check if the progress is at or above the current interval and if the reward hasn't been given
                 if progress >= interval and state.progress_intervals[interval] is None:
                     pi = int(progress // 10)
-                    progress_reward = 10 * (progress / steps) if steps != 0 else 0
                     intermediate_progress_bonus = 0
 
                     if pi != 0 and state.progress_intervals.get(pi * 10) is None:
-                        if pi == 10:  # 100% track completion
-                            intermediate_progress_bonus = progress_reward ** 6
+                        if progress/steps >= 0.37:
+                            intermediate_progress_bonus = (progress/steps - 0.37) * 1000
                         else:
-                            intermediate_progress_bonus = progress_reward ** (2 + 0.35 * pi)
+                            intermediate_progress_bonus = 0
 
                         state.progress_intervals[pi * 10] = intermediate_progress_bonus
-                        print(intermediate_progress_bonus)
 
                     progress_interval_reward = max(0, intermediate_progress_bonus)  # Ensure no negative reward
 
