@@ -485,7 +485,7 @@ class Reward:
             goal_prog_per_step = .37  # Handle the edge case
         
         if progress/steps >= goal_prog_per_step and steps < 270 and steps % 5 == 0:
-            step_interval_reward = ((progress/steps - goal_prog_per_step) * 2500) * (progress/15)
+            step_interval_reward = ((progress/steps - goal_prog_per_step) * 1000) * (progress/25)
         else:
             step_interval_reward = 0
         
@@ -681,7 +681,7 @@ class Reward:
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'SIC: {SIC}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + SC + SIC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + SC + PC + SIC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -724,7 +724,7 @@ class Reward:
         
         if progress == 100:
             # finish reward starts scaling up when the steps are below 300, or time is below 20s.
-            finish_reward = ((1 - (steps/285)) * 5000) + 10
+            finish_reward = ((1 - (steps/285)) * 3000) + 10
             # Don't let finish_reward fall below 10.
             if finish_reward < 10:
                 finish_reward = 10
