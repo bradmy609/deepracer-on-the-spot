@@ -511,7 +511,7 @@ class Reward:
         
         DISTANCE_PUNISHMENT = 1
         if dist > (track_width * 0.5):
-            DISTANCE_PUNISHMENT = 0.5
+            DISTANCE_PUNISHMENT = 0.9
             
         ## Reward if speed is close to optimal speed ##
         SPEED_DIFF_NO_REWARD = 1
@@ -615,7 +615,7 @@ class Reward:
         # Punishing too fast or too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.5:
-            reward *= 0.95
+            reward *= 0.9
         
         reward *= DISTANCE_PUNISHMENT
 
