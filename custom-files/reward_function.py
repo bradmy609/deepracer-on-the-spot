@@ -567,25 +567,21 @@ class Reward:
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                 
-        progress_multiplier = 3
+        progress_multiplier = 5
         # Distance component
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         # Speed component
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
         PC = progress_reward * progress_multiplier
-        progress_reward = ((progress/100) ** 2) * 10
-        
         try:
             if steps % 100 == 0:
                 print(f'steps: {steps}')
                 print(f'delta_progress: {progress-state.prev_progress}')
-                print(f'Progress reward: {progress_reward}')
-                print(f'Distance reward: {distance_reward}')
                 print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {STRAIGHT_STEERING_BONUS}')
         except:
             print('Error in printing steps and delta_progress')
-        reward += DC + SC + PC + progress_reward + (PC*distance_reward) + (progress_reward*distance_reward) + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
+        reward += DC + SC + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -611,11 +607,15 @@ class Reward:
             reward *= 0.01
         if direction_diff > 30:
             reward = 1e-3
+        elif direction_diff > 25:
+            reward *= 0.5
+        elif direction_diff > 20:
+            reward *= 0.8
         
         # Punishing too fast or too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.5:
-            reward *= 0.5
+            reward *= 0.95
         
         reward *= DISTANCE_PUNISHMENT
 
@@ -625,7 +625,7 @@ class Reward:
         
         if progress == 100:
             # finish reward starts scaling up when the steps are below 300, or time is below 20s.
-            finish_reward = ((1 - (steps/450)) * 1000) + 10
+            finish_reward = ((1 - (steps/450)) * 3000) + 10
             # Don't let finish_reward fall below 10.
             if finish_reward < 10:
                 finish_reward = 10
