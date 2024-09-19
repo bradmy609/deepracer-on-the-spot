@@ -10,6 +10,7 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
+        self.first_waypoint_index = None
         
         self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
         self.next_progress_interval = list(self.progress_intervals.keys())[0]  # Start with 10%
@@ -26,12 +27,11 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
+        self.first_waypoint_index = None
         
         self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
         self.next_progress_interval = list(self.progress_intervals.keys())[0]  # Start with 10%
         self.steps_at_last_interval = 0
-        
-        self.wp_rewards = {i: None for i in range(213)}
         
 state = STATE()
 
@@ -46,8 +46,9 @@ class Reward:
         import math
 
         ################## HELPER FUNCTIONS ###################
-        def reset_state(steps):
+        def reset_state(steps, prev_waypoint_index):
             if steps <= 2:
+                state.first_waypoint_index = prev_waypoint_index
                 print(f'Resetting state...')
                 state.reset()
         
@@ -66,7 +67,7 @@ class Reward:
 
                     if pi != 0 and state.progress_intervals.get(pi * 10) is None:
                         if progress/steps >= 0.37:
-                            intermediate_progress_bonus = (progress/steps - 0.37) * 1000
+                            intermediate_progress_bonus = (progress/steps - 0.37) * 200 * pi
                         else:
                             intermediate_progress_bonus = 0
 
@@ -421,6 +422,19 @@ class Reward:
         [5.05019, -0.04169, 4.0, 0.07528],
         [5.048, 0.25881, 4.0, 0.07513],
         [5.04269, 0.55815, 4.0, 0.07485]]
+        
+        def calculate_passed_waypoints(start_index, end_index, waypoint_count):
+            passed_waypoints = []
+            if start_index != None:
+                # If end_index is greater than start_index (no wraparound)
+                if end_index >= start_index:
+                    passed_waypoints = list(range(start_index, end_index + 1))
+                else:
+                    # Handle wraparound (from, e.g., 153 back to 1)
+                    passed_waypoints = list(range(start_index, waypoint_count)) + list(range(0, end_index + 1))
+            else:
+                print('Start index has not been initialized.')
+            return passed_waypoints
 
         ################## INPUT PARAMETERS ###################
 
@@ -444,7 +458,38 @@ class Reward:
 
         ############### OPTIMAL X,Y,SPEED,TIME ################
         
-        reset_state(steps)
+        optimal_times = [racing_track[i][3] for i in range(len(racing_track))]
+        total_time = sum(optimal_times)
+        
+        waypoint_count = len(optimal_times)  # 153 waypoints
+        passed_waypoints = calculate_passed_waypoints(state.first_waypoint_index, prev_waypoint_index, waypoint_count)
+        # Determine waypoints passed in the last 5 steps
+
+        # Sum the times for the waypoints passed
+        passed_time_sum = sum(optimal_times[i] for i in passed_waypoints)
+
+        # Calculate the fraction of total time
+        fraction_of_total_time = passed_time_sum / total_time
+        global_prog_per_step = 0.37
+        waypoints_passed = len(passed_waypoints)  # Number of waypoints passed in this segment
+            
+        global_prog_per_step = 0.37
+
+        # Calculate the goal prog/step for the current segment
+        goal_prog_per_step = 0.37
+        if fraction_of_total_time > 0:  # Avoid division by zero
+            goal_prog_per_step = global_prog_per_step / fraction_of_total_time * waypoints_passed/len(optimal_times)
+        elif progress >= 99:
+            goal_prog_per_step = .37
+        else:
+            goal_prog_per_step = .37  # Handle the edge case
+        
+        if progress/steps >= goal_prog_per_step and steps < 270 and steps % 5 == 0:
+            step_interval_reward = ((progress/steps - goal_prog_per_step) * 2500) * (progress/15)
+        else:
+            step_interval_reward = 0
+        
+        reset_state(steps, prev_waypoint_index)
 
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
@@ -617,18 +662,26 @@ class Reward:
             return wp_reward
         
         progress_interval_reward = calculate_progress_reward(params, state)
+        if distance_reward > 0.9:
+            step_interval_multiple = 1
+        else:
+            step_interval_multiple = distance_reward
         
         progress_multiplier = 4
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
         PC = (progress_reward) * progress_multiplier
         PIC = progress_interval_reward
+        SIC = step_interval_reward * step_interval_multiple
         # distance component, speed component, and progress_component
+        if SIC > 0:
+            print(f'SIC: {SIC}')
         if steps % 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
+            print(f'SIC: {SIC}')
             print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + SC + PC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DC + SC + PC + SIC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -704,6 +757,7 @@ class Reward:
         state.prev_distance = dist
         state.prev_speed = speed
         state.prev_progress = progress
+        state.first_waypoint_index = prev_waypoint_index
 
         # Always return a float value
         return float(reward)
