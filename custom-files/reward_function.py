@@ -567,21 +567,25 @@ class Reward:
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                 
-        progress_multiplier = 5
+        progress_multiplier = 3
         # Distance component
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         # Speed component
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
         PC = progress_reward * progress_multiplier
+        progress_reward = ((progress/100) ** 2) * 10
+        
         try:
             if steps % 100 == 0:
                 print(f'steps: {steps}')
                 print(f'delta_progress: {progress-state.prev_progress}')
+                print(f'Progress reward: {progress_reward}')
+                print(f'Distance reward: {distance_reward}')
                 print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {STRAIGHT_STEERING_BONUS}')
         except:
             print('Error in printing steps and delta_progress')
-        reward += DC + SC + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
+        reward += DC + SC + PC + progress_reward + (PC*distance_reward) + (progress_reward*distance_reward) + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
