@@ -586,7 +586,7 @@ class Reward:
                 print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {STRAIGHT_STEERING_BONUS}')
         except:
             print('Error in printing steps and delta_progress')
-        reward += ((2^total_prog_reward) * distance_reward)
+        reward += ((2**total_prog_reward) * distance_reward)
         
         # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
         #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
