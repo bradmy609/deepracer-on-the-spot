@@ -575,7 +575,7 @@ class Reward:
         # Progress component
         PC = progress_reward * progress_multiplier
         
-        total_prog_reward = (progress/50)
+        total_prog_reward = (progress/20)
         
         try:
             if steps % 100 == 0:
