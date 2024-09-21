@@ -624,15 +624,15 @@ class Reward:
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
         
-        if progress == 100:
-            # finish reward starts scaling up when the steps are below 300, or time is below 20s.
-            finish_reward = ((1 - (steps/450)) * 1000) + 10
-            # Don't let finish_reward fall below 10.
-            if finish_reward < 10:
-                finish_reward = 10
-            reward += finish_reward
-        else:
-            finish_reward = 0
+        # if progress == 100:
+        #     # finish reward starts scaling up when the steps are below 300, or time is below 20s.
+        #     finish_reward = ((1 - (steps/450)) * 1000) + 10
+        #     # Don't let finish_reward fall below 10.
+        #     if finish_reward < 10:
+        #         finish_reward = 10
+        #     reward += finish_reward
+        # else:
+        #     finish_reward = 0
 
         # Zero reward if the center of the car is off the track.
 
