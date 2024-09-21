@@ -31,7 +31,7 @@ class Reward:
 
         ################## HELPER FUNCTIONS ###################
         def reset_state(steps):
-            if steps == 2:
+            if steps <= 2:
                 state.reset()
 
         def dist_2_points(x1, x2, y1, y2):
@@ -538,6 +538,7 @@ class Reward:
         except:
             print('Error with steps.')
         progress_reward = max(0, delta_progress)
+        progress_reward = min(2, progress_reward)
         
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
