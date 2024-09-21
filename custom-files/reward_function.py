@@ -537,7 +537,7 @@ class Reward:
                     delta_progress = progress
         except:
             print('Error with steps.')
-        progress_reward = max(0, delta_progress)
+        delta_p_reward = max(0, delta_progress)
         
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
@@ -551,14 +551,14 @@ class Reward:
         
         # Bonus reward if going 4 m/s or faster during optimal spots. Also small bonus for small steering angles.
         if speed >= 3.95 and optimal_speed >= 3.95:
-            SUPER_FAST_BONUS = 1
+            SUPER_FAST_BONUS = params['speed']/4
             STRAIGHT_STEERING_BONUS = max(0.001, .2 - (abs(steering_angle)/150))
         else:
             SUPER_FAST_BONUS = 0
             STRAIGHT_STEERING_BONUS = 0
             
         try:
-            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2)
+            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
         except:
             print('Error with scaled_multiplier.')
             scaled_multiplier = 4/optimal_speed
@@ -573,36 +573,37 @@ class Reward:
         # Speed component
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
-        PC = progress_reward * progress_multiplier
-        progress_reward = ((progress/100) ** 2) * 10
+        PC = delta_p_reward * progress_multiplier
+        
+        pure_prog_reward = ((progress/100) ** 2) * 10
         
         try:
             if steps % 100 == 0:
                 print(f'steps: {steps}')
                 print(f'delta_progress: {progress-state.prev_progress}')
-                print(f'Progress reward: {progress_reward}')
+                print(f'Progress reward: {delta_p_reward}')
                 print(f'Distance reward: {distance_reward}')
                 print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {STRAIGHT_STEERING_BONUS}')
         except:
             print('Error in printing steps and delta_progress')
-        reward += DC + SC + PC + progress_reward + (PC*distance_reward) + (progress_reward*distance_reward) + SUPER_FAST_BONUS + STRAIGHT_STEERING_BONUS
+        reward += (pure_prog_reward*(distance_reward**DISTANCE_EXPONENT))
         
-        if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-            delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-            delta_speed = abs(speed - state.prev_speed)
-            # Speed maintain bonus if speed is close to optimal
-            if delta_speed <= 0.1 and speed_diff <= 0.1:
-                reward += 0.1
-            # Bonus for small steering changes when close to racing line.
-            if delta_turn_angle <= 3 and dist <= 0.1:
-                reward += 0.1
-            # Erratic steering punishments
-            if state.prev_turn_angle > 10 and steering_angle < -10:
-                reward *= 0.1
-            elif state.prev_turn_angle < -10 and steering_angle > 10:
-                reward *= 0.1
-            elif delta_turn_angle >= 30:
-                reward = min(reward, 0.001)
+        # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+        #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+        #     delta_speed = abs(speed - state.prev_speed)
+        #     # Speed maintain bonus if speed is close to optimal
+        #     if delta_speed <= 0.1 and speed_diff <= 0.1:
+        #         reward += 0.1
+        #     # Bonus for small steering changes when close to racing line.
+        #     if delta_turn_angle <= 3 and dist <= 0.1:
+        #         reward += 0.1
+        #     # Erratic steering punishments
+        #     if state.prev_turn_angle > 10 and steering_angle < -10:
+        #         reward *= 0.1
+        #     elif state.prev_turn_angle < -10 and steering_angle > 10:
+        #         reward *= 0.1
+        #     elif delta_turn_angle >= 30:
+        #         reward = min(reward, 0.001)
         
         # Punishing erratic steering or steering out of range of valid directions.
         if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
