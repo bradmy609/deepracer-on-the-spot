@@ -515,7 +515,7 @@ class Reward:
         # Progress component
         PC = delta_p_reward * progress_multiplier
         
-        pure_prog_reward = ((progress/100) ** 2) * 10
+        pure_prog_reward = ((progress/100) ** 2) * 5
         
         try:
             if steps % 100 == 0:
@@ -566,7 +566,7 @@ class Reward:
         
         if progress == 100:
             # finish reward starts scaling up when the steps are below 300, or time is below 20s.
-            finish_reward = ((1 - (steps/450)) * 1000) + 10
+            finish_reward = ((1 - (steps/300)) * 2000) + 10
             # Don't let finish_reward fall below 10.
             if finish_reward < 10:
                 finish_reward = 10
