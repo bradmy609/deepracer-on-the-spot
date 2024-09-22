@@ -10,6 +10,7 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
+        self.prev_progress2 = 0
         self.first_waypoint_index = None
         
         self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
@@ -27,6 +28,7 @@ class STATE:
         self.prev_wp_index = None
         self.steps_at_waypoint = 0
         self.prev_progress = 0
+        self.prev_progress2 = 0
         self.first_waypoint_index = None
         
         self.progress_intervals = {10: None, 20: None, 30: None, 40: None, 50: None, 60: None, 70: None, 80: None, 90: None, 100: None}
@@ -459,35 +461,6 @@ class Reward:
         ############### OPTIMAL X,Y,SPEED,TIME ################
         
         optimal_times = [racing_track[i][3] for i in range(len(racing_track))]
-        total_time = sum(optimal_times)
-        
-        waypoint_count = len(optimal_times)  # 153 waypoints
-        passed_waypoints = calculate_passed_waypoints(state.first_waypoint_index, prev_waypoint_index, waypoint_count)
-        # Determine waypoints passed in the last 5 steps
-
-        # Sum the times for the waypoints passed
-        passed_time_sum = sum(optimal_times[i] for i in passed_waypoints)
-
-        # Calculate the fraction of total time
-        fraction_of_total_time = passed_time_sum / total_time
-        global_prog_per_step = 0.37
-        waypoints_passed = len(passed_waypoints)  # Number of waypoints passed in this segment
-            
-        global_prog_per_step = 0.37
-
-        # Calculate the goal prog/step for the current segment
-        goal_prog_per_step = 0.37
-        if fraction_of_total_time > 0:  # Avoid division by zero
-            goal_prog_per_step = global_prog_per_step / fraction_of_total_time * waypoints_passed/len(optimal_times)
-        elif progress >= 99:
-            goal_prog_per_step = .37
-        else:
-            goal_prog_per_step = .37  # Handle the edge case
-        
-        if progress/steps >= goal_prog_per_step and steps < 270 and steps % 5 == 0:
-            step_interval_reward = ((progress/steps - goal_prog_per_step) * 1000) * (progress/25)
-        else:
-            step_interval_reward = 0
         
         reset_state(steps, prev_waypoint_index)
 
@@ -529,20 +502,22 @@ class Reward:
         else:
             speed_reward = 0
         
-        delta_progress = progress - state.prev_progress
-        if delta_progress < 0:
+        A = 4
+        B = 2
+        delta_progress_reward = 0
+        delta_progress = ((progress - state.prev_progress) * A)**B
+        delta_progress2 = ((progress - state.prev_progress2) * 0.5 * A) ** B
+        if delta_progress < 0 or delta_progress2 <= 0:
             print(f'progress: {progress}')
             print(f'prev_progress: {state.prev_progress}')
+            print(f'prev_progress2: {state.prev_progress2}')
+            print(f'Closest waypoint index: {closest_index}')
             print(f'steps: {steps}')
-            # I think when resetting an episode on first step we are having issues while prev_progress is being reset.
-            # This will check if we are on the first step and progress is in the expected value range, then it will just
-            # use current progress as delta progress.
-            if steps <= 1 and progress < 1:
-                delta_progress = progress
-        if delta_progress > 1:
-            delta_progress == 1
-        progress_reward = max(0, delta_progress)
-        
+        if delta_progress >= 3 or delta_progress2 >= 3:
+            delta_progress_reward == 1
+
+        delta_progress_reward = max(0, delta_progress + delta_progress2)
+        delta_progress_reward = min(100, delta_progress_reward)
         
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -605,7 +580,6 @@ class Reward:
                 STEERING_PUNISHMENT = 0.5
             else:
                 STEERING_PUNISHMENT = 1
-            straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
             DISTANCE_EXPONENT = 1.0
             DISTANCE_MULTIPLE = 1.0
             SPEED_THRESHOLD = 0.5
@@ -613,64 +587,16 @@ class Reward:
             SPEED_MULTIPLE = 2.0
             SPEED_CAP = None
         if (21 <= next_waypoint_index < 30) or (112 <= next_waypoint_index <= 124) or (next_waypoint_index >= 140) or (next_waypoint_index <= 2):
+            straight_steering_bonus = max(0.001, .2 - (abs(steering_angle)/150))
             # Bonus reward if going 4 m/s or faster during optimal spots
             if speed >= 3.95:
-                SUPER_FAST_BONUS = 1
-                
-        # reward = add_bonus_reward(next_waypoint_index, distance_reward, reward)
-        def calculate_wp_reward(params, state):
-            closest_wp_index = params['closest_waypoints'][1]
-            wp_reward = 0
+                SUPER_FAST_BONUS = speed/4
+                SUPER_FAST_BONUS = max(3, SUPER_FAST_BONUS)
 
-            # Check if previous waypoint index is set
-            if state.prev_wp_index is not None:
-                if state.prev_wp_index == closest_wp_index:
-                    # Increment steps if still at the same waypoint
-                    state.steps_at_waypoint += 1
-                else:
-                    # If we moved to a new waypoint
-                    skipped_waypoints = []  # Initialize the skipped waypoints list
-
-                    # Handle skipped waypoints (i.e., if we jumped more than 1 waypoint)
-                    if closest_wp_index > state.prev_wp_index + 1:
-                        skipped_waypoints = range(state.prev_wp_index + 1, closest_wp_index)
-                    
-                    # Check and reward the current waypoint if not already rewarded
-                    if state.wp_rewards[closest_wp_index] is None:
-                        wp_reward += max(0, (3 - state.steps_at_waypoint))
-                        state.wp_rewards[state.prev_wp_index] = wp_reward
-
-                    # Reward any skipped waypoints if they haven't been rewarded
-                    for i in skipped_waypoints:
-                        if state.wp_rewards[i] is None:
-                            state.wp_rewards[i] = 3  # Full reward for skipped waypoints
-                            wp_reward += 3
-
-                    # Handle the case where the car wraps around from the last waypoint (212) to the first (0)
-                    if closest_wp_index == 0 and state.prev_wp_index == 212 and state.wp_rewards[closest_wp_index] is None:
-                        wp_reward += max(0, (3 - state.steps_at_waypoint))
-                        state.wp_rewards[state.prev_wp_index] = wp_reward
-
-                    # Update the previous waypoint index and reset steps for the new waypoint
-                    state.prev_wp_index = closest_wp_index
-                    state.steps_at_waypoint = 0  # Start with 0 steps for the new waypoint
-            else:
-                # Initialize steps if it's the first step
-                state.steps_at_waypoint += 1
-                state.prev_wp_index = closest_wp_index
-
-            return wp_reward
-        
-        progress_interval_reward = calculate_progress_reward(params, state)
-        if distance_reward > 0.9:
-            step_interval_multiple = 1
-        else:
-            step_interval_multiple = distance_reward
-        
-        progress_multiplier = 4
         DC = (distance_reward**DISTANCE_EXPONENT) * DISTANCE_MULTIPLE
         SC = speed_reward * SPEED_MULTIPLE
-        PC = (progress_reward) * progress_multiplier
+        DPC = delta_progress_reward
+
         prog_squared = 0
         if steps <= 250:
             prog_squared = ((progress/100) ** 2) * 5
@@ -678,8 +604,8 @@ class Reward:
         if steps % 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
-            print(f'DC: {DC}\nPC: {PC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + SC + PC + prog_squared + (prog_squared * distance_reward) + SUPER_FAST_BONUS + straight_steering_bonus
+            print(f'DC: {DC}\nPC: {DPC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
+        reward += DC + DPC + SUPER_FAST_BONUS + straight_steering_bonus
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -719,16 +645,6 @@ class Reward:
         ## Zero reward if off track ##
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
-        
-        if progress == 100:
-            # finish reward starts scaling up when the steps are below 300, or time is below 20s.
-            finish_reward = ((1 - (steps/285)) * 3000) + 10
-            # Don't let finish_reward fall below 10.
-            if finish_reward < 10:
-                finish_reward = 10
-            reward += finish_reward
-        else:
-            finish_reward = 0
 
         # Zero reward if the center of the car is off the track.
 
@@ -755,9 +671,10 @@ class Reward:
         state.prev_distance = dist
         state.prev_speed = speed
         state.prev_progress = progress
+        state.prev_progress2 = state.prev_progress
         state.first_waypoint_index = prev_waypoint_index
-
         # Always return a float value
+
         return float(reward)
 
 
