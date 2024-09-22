@@ -605,7 +605,7 @@ class Reward:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {DPC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DPC
+        reward += DPC + DC + (DPC * DC) + SUPER_FAST_BONUS
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -617,12 +617,25 @@ class Reward:
                 reward *= 0.1
             elif delta_turn_angle >= 30:
                 reward = min(reward, 0.001)
+            smooth_steering_reward = .2 - (delta_turn_angle/150)
+            smooth_steering_reward = max(0.001, smooth_steering_reward)
+            smooth_acceleration_reward = .2 - (delta_speed/6.75)
+            smooth_acceleration_reward = max(0.001, smooth_acceleration_reward)
+            reward += smooth_acceleration_reward
+            reward += smooth_steering_reward
+
         
         # Punishing erratic steering or steering out of range of valid directions.
         if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.1
         if direction_diff > 30:
             reward = 1e-3
+        elif direction_diff > 25:
+            reward *= 0.5
+        elif direction_diff > 20:
+            reward *= 0.75
+        elif direction_diff > 15:
+            reward *= 0.9
         
         # Punishing too fast or too slow
         speed_diff_zero = optimals[2]-speed
@@ -630,6 +643,8 @@ class Reward:
             reward *= SPEED_PUNISHMENT
         if SPEED_CAP is not None and speed > SPEED_CAP:
             reward *= 0.01
+        if not is_within_range:
+            reward *- 0.01
         
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
