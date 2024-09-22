@@ -627,8 +627,6 @@ class Reward:
         # Punishing erratic steering or steering out of range of valid directions.
         if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.1
-        if not is_within_range:
-            reward *= 0.01
         if direction_diff > 30:
             reward = 1e-3
         
