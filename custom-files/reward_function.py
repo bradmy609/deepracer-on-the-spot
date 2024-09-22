@@ -605,17 +605,11 @@ class Reward:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {DPC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DC + DPC + SUPER_FAST_BONUS + straight_steering_bonus
+        reward += DPC
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
             delta_speed = abs(speed - state.prev_speed)
-            # Speed maintain bonus if speed is close to optimal
-            if delta_speed <= 0.1 and speed_diff <= 0.1:
-                reward += 0.1
-            # Bonus for small steering changes when close to racing line.
-            if delta_turn_angle <= 3 and dist <= 0.1:
-                reward += 0.1
             # Erratic steering punishments
             if state.prev_turn_angle > 10 and steering_angle < -10:
                 reward *= 0.1
