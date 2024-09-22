@@ -218,7 +218,7 @@ class Reward:
             
             # Calculate the half-width of the track
             half_width = track_width / 2.0
-            half_width += 0.3
+            half_width += 0.4
             
             # Calculate the border points
             inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
