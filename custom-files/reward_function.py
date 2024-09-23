@@ -597,15 +597,11 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         DPC = delta_progress_reward
 
-        prog_squared = 0
-        if steps <= 250:
-            prog_squared = ((progress/100) ** 2) * 5
-        # distance component, speed component, and progress_component
         if steps % 100 == 0:
             print(f'steps: {steps}')
             print(f'delta_progress: {progress-state.prev_progress}')
             print(f'DC: {DC}\nPC: {DPC}, SUPER_FAST_BONUS: {SUPER_FAST_BONUS}\nstraight_steering_bonus: {straight_steering_bonus}')
-        reward += DPC + DC + (DPC * DC) + SUPER_FAST_BONUS
+        reward += DPC + (DPC * DC)
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -617,9 +613,9 @@ class Reward:
                 reward *= 0.1
             elif delta_turn_angle >= 30:
                 reward = min(reward, 0.001)
-            smooth_steering_reward = .2 - (delta_turn_angle/150)
+            smooth_steering_reward = .1 - (delta_turn_angle/300)
             smooth_steering_reward = max(0.001, smooth_steering_reward)
-            smooth_acceleration_reward = .2 - (delta_speed/6.75)
+            smooth_acceleration_reward = .1 - (delta_speed/13.5)
             smooth_acceleration_reward = max(0.001, smooth_acceleration_reward)
             reward += smooth_acceleration_reward
             reward += smooth_steering_reward
