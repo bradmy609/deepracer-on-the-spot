@@ -619,6 +619,7 @@ class Reward:
         state.prev_distance = dist
         state.prev_speed = speed
         state.prev_progress = progress
+        state.prev_progress2 = state.prev_progress
 
         # Always return a float value
         return float(reward)
