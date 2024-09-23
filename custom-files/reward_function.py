@@ -528,8 +528,22 @@ class Reward:
         optimal_speed = optimals[2]
         speed_cap = optimal_speed + 0.75
             
+        STEERING_PUNISHMENT = 1
+        if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
+            if steering_angle > 0:
+                STEERING_PUNISHMENT = 0.1
+        elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
+            if steering_angle < 0:
+                STEERING_PUNISHMENT = 0.1
+        elif prev_waypoint_index >= 104 and prev_waypoint_index <= 118:
+            if steering_angle > 0:
+                STEERING_PUNISHMENT = 0.1
+        elif prev_waypoint_index >= 154 and prev_waypoint_index <= 161 or prev_waypoint_index >= 184 and prev_waypoint_index <= 190:
+            if steering_angle > 0:
+                STEERING_PUNISHMENT = 0.1
+        
         try:
-            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 4)
+            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.25, 2)
         except:
             print('Error with scaled_multiplier.')
             scaled_multiplier = 4/optimal_speed
@@ -556,7 +570,8 @@ class Reward:
                 print(f'DC: {DC}\nPC: {DPC}')
         except:
             print('Error in printing steps and delta_progress')
-        reward += DPC + (DC * DPC)
+            
+        reward += DPC + DC
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -577,19 +592,19 @@ class Reward:
         if direction_diff > 30:
             reward = 1e-3
         if direction_diff >= 25:
-            reward *= 0.8
+            reward *= 0.5
         if direction_diff >= 20:
-            reward *= 0.9
+            reward *= 0.8
         
         # Punishing too fast or too slow
         speed_diff_zero = optimals[2]-speed
         if speed_diff_zero > 0.75:
-            reward *= 0.9
-        if speed > speed_cap:
             reward *= 0.5
-        
+        if speed > speed_cap and speed_cap < 4:
+            reward *= 0.01
         
         reward *= DISTANCE_PUNISHMENT
+        reward *= STEERING_PUNISHMENT
 
         ## Zero reward if off track ##
         track_width = params['track_width']
