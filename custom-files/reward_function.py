@@ -561,15 +561,12 @@ class Reward:
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
             delta_speed = abs(speed - state.prev_speed)
-            # Bonus for small steering changes when close to racing line.
-            if delta_turn_angle <= 3 and dist <= 0.1:
-                reward += 0.1
             # Erratic steering punishments
             if state.prev_turn_angle > 10 and steering_angle < -10:
                 reward *= 0.1
             elif state.prev_turn_angle < -10 and steering_angle > 10:
                 reward *= 0.1
-            if delta_turn_angle >= 30:
+            if delta_turn_angle > 30:
                 reward *= 0.01
         
         # Punishing erratic steering or steering out of range of valid directions.
