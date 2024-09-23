@@ -17,7 +17,7 @@ class STATE:
         self.prev_distance = None
         self.prev_speed = None
         self.prev_progress = 0
-        self.prev_progress = 0
+        self.prev_progress2 = 0
         
 state = STATE()
 
