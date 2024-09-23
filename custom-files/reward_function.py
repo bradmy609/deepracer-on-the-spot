@@ -543,7 +543,7 @@ class Reward:
                 STEERING_PUNISHMENT = 0.1
         
         try:
-            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.25, 2)
+            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.5, 2)
         except:
             print('Error with scaled_multiplier.')
             scaled_multiplier = 4/optimal_speed
