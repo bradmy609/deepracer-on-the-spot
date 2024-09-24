@@ -560,13 +560,13 @@ class Reward:
         # This calculates how much of the reward is based on distance to racing line. (Ranging from 12.5%-37.5%)
         DISTANCE_MULTIPLE = scaled_multiplier
         
-        A = 4 * (1 + (DISTANCE_MULTIPLE * HARD_CODED_BONUS * (1 + distance_reward)))
+        A = 4 * (1 + (DISTANCE_MULTIPLE * HARD_CODED_BONUS * distance_reward))
         B = 2
         
         delta_progress = progress - state.prev_progress
         # Don't let that delta-p get abused on turn peaks.
-        if delta_progress >= 1:
-            delta_progress = 1
+        if delta_progress >= 1.5:
+            delta_progress = 1.5
             
         delta_progress_reward = ((delta_progress) * A)**B
         if delta_progress < 0:
