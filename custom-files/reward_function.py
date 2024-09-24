@@ -564,7 +564,7 @@ class Reward:
         B = 2
         
         delta_progress = progress - state.prev_progress
-        # Don't let that delta-p get abused on turn peaks.
+        # Don't let that delta-p get abused on turn peaks. No delta_progress above 1.5 is allowed.
         if delta_progress >= 1.5:
             delta_progress = 1.5
             
