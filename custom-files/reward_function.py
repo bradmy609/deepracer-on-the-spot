@@ -500,7 +500,7 @@ class Reward:
         else:
             speed_reward = 0
         
-        A = 4
+        A = 6
         B = 2
         delta_progress_reward = 0
         delta_progress = ((progress - state.prev_progress) * A)**B
