@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 class STATE:
     def __init__(self):
@@ -9,6 +10,8 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
+        self.prev_progress_reward = 0
+        self.prev_progress_reward2 = 0
 
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -18,6 +21,8 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
+        self.prev_progress_reward = 0
+        self.prev_progress_reward2 = 0
         
 state = STATE()
 
@@ -27,9 +32,6 @@ class Reward:
         self.verbose = verbose
 
     def reward_function(self, params):
-
-        # Import package (needed for heading)
-        import math
 
         ################## HELPER FUNCTIONS ###################
         def reset_state(steps):
@@ -500,24 +502,6 @@ class Reward:
         else:
             speed_reward = 0
         
-        A = 4
-        B = 2
-        delta_progress_reward = 0
-        delta_progress = ((progress - state.prev_progress) * A)**B
-        delta_progress2 = ((progress - state.prev_progress2) * 0.5 * A) ** B
-        if delta_progress < 0 or delta_progress2 < 0:
-            print(f'progress: {progress}')
-            print(f'prev_progress: {state.prev_progress}')
-            print(f'prev_progress2: {state.prev_progress2}')
-            print(f'Closest waypoint index: {closest_index}')
-            print(f'steps: {steps}')
-        if delta_progress >= 3 or delta_progress2 >= 3:
-            delta_progress_reward == 1
-
-        delta_progress_reward = max(0, delta_progress + delta_progress2)
-        delta_progress_reward = min(100, delta_progress_reward)
-        
-        
         inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
         min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
                 
@@ -543,10 +527,26 @@ class Reward:
                 STEERING_PUNISHMENT = 0.1
         
         try:
-            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.5, 2)
+            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 4)
         except:
             print('Error with scaled_multiplier.')
             scaled_multiplier = 4/optimal_speed
+        
+        A = 4 * scaled_multiplier * distance_reward
+        B = 2
+        
+        delta_progress = progress - state.prev_progress
+        delta_progress_reward = ((delta_progress) * A)**B
+        if delta_progress < 0:
+            print(f'progress: {progress}')
+            print(f'prev_progress: {state.prev_progress}')
+            print(f'Closest waypoint index: {closest_index}')
+            print(f'steps: {steps}')
+        if delta_progress >= 3:
+            delta_progress_reward == 1
+
+        delta_progress_reward = max(0, delta_progress)
+        delta_progress_reward = min(100, delta_progress_reward)
         
         DISTANCE_MULTIPLE = scaled_multiplier
         DISTANCE_EXPONENT = scaled_multiplier
@@ -565,13 +565,14 @@ class Reward:
             if steps % 100 == 0:
                 print(f'steps: {steps}')
                 print(f'progress: {progress}')
+                print(f'distance_reward: {distance_reward}')
                 print(f'delta_progress reward: {DPC}')
                 print(f'Total progress reward: {total_prog_reward}')
                 print(f'DC: {DC}\nPC: {DPC}')
         except:
             print('Error in printing steps and delta_progress')
             
-        reward += DPC + DC
+        reward += DPC
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
