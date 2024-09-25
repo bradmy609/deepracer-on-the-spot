@@ -514,27 +514,28 @@ class Reward:
         speed_cap = optimal_speed + 0.75
         
         HARD_CODED_BONUS = 1
+        WAYPOINT_MULTIPLE = 1.2
         # Key entry to first sharp turn, need to increase distance reward here more than typical.
         if prev_waypoint_index >= 11 and prev_waypoint_index <= 19:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 31 and prev_waypoint_index <= 36:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 49 and prev_waypoint_index <= 55:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 79 and prev_waypoint_index <= 86:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 98 and prev_waypoint_index <= 106:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 116 and prev_waypoint_index <= 122:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 149 and prev_waypoint_index <= 153:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 161 and prev_waypoint_index <= 166:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 181 and prev_waypoint_index <= 185:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         elif prev_waypoint_index >= 193 and prev_waypoint_index <= 198:
-            HARD_CODED_BONUS = 1.5
+            HARD_CODED_BONUS = WAYPOINT_MULTIPLE
         else:
             HARD_CODED_BONUS = 1
             
@@ -555,7 +556,7 @@ class Reward:
                 STEERING_PUNISHMENT = 0.1
         
         try:
-            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.25, 0.75)
+            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.1, 0.3)
         except:
             print('Error with scaled_multiplier.')
             scaled_multiplier = 4/optimal_speed
