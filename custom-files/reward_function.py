@@ -1,5 +1,4 @@
 import numpy as np
-import math
 
 class STATE:
     def __init__(self):
@@ -10,8 +9,8 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
-        self.prev_progress_reward = 0
-        self.prev_progress_reward2 = 0
+        self.prev_progress3 = 0
+        self.prev_progress4 = 0
 
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -21,8 +20,8 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
-        self.prev_progress_reward = 0
-        self.prev_progress_reward2 = 0
+        self.prev_progress3 = 0
+        self.prev_progress4 = 0
         
 state = STATE()
 
@@ -32,6 +31,9 @@ class Reward:
         self.verbose = verbose
 
     def reward_function(self, params):
+
+        # Import package (needed for heading)
+        import math
 
         ################## HELPER FUNCTIONS ###################
         def reset_state(steps):
@@ -511,33 +513,9 @@ class Reward:
         
         optimal_speed = optimals[2]
         speed_cap = optimal_speed + 0.75
-        
-        HARD_CODED_BONUS = 1
-        # Key entry to first sharp turn, need to increase distance reward here more than typical.
-        if prev_waypoint_index >= 11 and prev_waypoint_index <= 19:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 31 and prev_waypoint_index <= 36:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 49 and prev_waypoint_index <= 55:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 79 and prev_waypoint_index <= 86:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 98 and prev_waypoint_index <= 106:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 116 and prev_waypoint_index <= 122:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 149 and prev_waypoint_index <= 153:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 161 and prev_waypoint_index <= 166:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 181 and prev_waypoint_index <= 185:
-            HARD_CODED_BONUS = 1.5
-        elif prev_waypoint_index >= 193 and prev_waypoint_index <= 198:
-            HARD_CODED_BONUS = 1.5
-        else:
-            HARD_CODED_BONUS = 1
             
         STEERING_PUNISHMENT = 1
+        SPEED_PUNISHMENT = 1
         if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
             if steering_angle > 0:
                 STEERING_PUNISHMENT = 0.1
@@ -552,37 +530,43 @@ class Reward:
                 STEERING_PUNISHMENT = 0.1
         
         try:
-            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.25, 0.75)
+            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 0.5, 1)
         except:
             print('Error with scaled_multiplier.')
             scaled_multiplier = 4/optimal_speed
         
-        # This calculates how much of the reward is based on distance to racing line. (Ranging from 12.5%-37.5%)
         DISTANCE_MULTIPLE = scaled_multiplier
+        DISTANCE_EXPONENT = scaled_multiplier
+        SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
         
-        A = 4 * (1 + (DISTANCE_MULTIPLE * HARD_CODED_BONUS * distance_reward))
+        A = 4 * (1 + (distance_reward * DISTANCE_MULTIPLE))
         B = 2
-        
-        delta_progress = progress - state.prev_progress
-        # Don't let that delta-p get abused on turn peaks. No delta_progress above 1.5 is allowed.
-        if delta_progress >= 1.5:
-            delta_progress = 1.5
-            
-        delta_progress_reward = ((delta_progress) * A)**B
-        if delta_progress < 0:
+        delta_progress_reward = 0
+        dp = progress - state.prev_progress
+        dp2 = progress - state.prev_progress2
+        dp3 = progress - state.prev_progress3
+        dp4 = progress - state.prev_progress4
+        if dp > 1:
+            dp = 1
+        if dp2 > 2:
+            dp2 = 2
+        if dp3 > 3:
+            dp3 = 3
+        if dp4 > 4:
+            dp4 = 4
+        delta_progress = ((dp) * A)**B
+        delta_progress2 = (dp2 * 0.5 * A) ** B
+        delta_progress3 = (dp3 * 0.33 * A) ** B
+        delta_progress4 = (dp4 * 0.25 * A) ** B
+        if delta_progress < 0 or delta_progress2 < 0:
             print(f'progress: {progress}')
             print(f'prev_progress: {state.prev_progress}')
+            print(f'prev_progress2: {state.prev_progress2}')
             print(f'Closest waypoint index: {closest_index}')
             print(f'steps: {steps}')
-        if delta_progress >= 3:
-            delta_progress_reward == 1
 
-        delta_progress_reward = max(0, delta_progress)
+        delta_progress_reward = max(0, delta_progress + delta_progress2 + delta_progress3 + delta_progress4)
         delta_progress_reward = min(100, delta_progress_reward)
-        
-        DISTANCE_MULTIPLE = scaled_multiplier
-        
-        SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                 
         # Distance component
         DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -597,7 +581,6 @@ class Reward:
             if steps % 100 == 0:
                 print(f'steps: {steps}')
                 print(f'progress: {progress}')
-                print(f'distance_reward: {distance_reward}')
                 print(f'delta_progress reward: {DPC}')
                 print(f'Total progress reward: {total_prog_reward}')
                 print(f'DC: {DC}\nPC: {DPC}')
@@ -668,6 +651,8 @@ class Reward:
         state.prev_speed = speed
         state.prev_progress = progress
         state.prev_progress2 = state.prev_progress
+        state.prev_progress3 = state.prev_progress2
+        state.prev_progress4 = state.prev_progress3
 
         # Always return a float value
         return float(reward)
