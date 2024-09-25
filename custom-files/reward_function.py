@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 class STATE:
     def __init__(self):
@@ -32,8 +33,7 @@ class Reward:
 
     def reward_function(self, params):
 
-        # Import package (needed for heading)
-        import math
+        capstone_waypoints = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 156, 157, 158, 159, 160, 161, 162, 184, 185, 186, 187, 188]
 
         ################## HELPER FUNCTIONS ###################
         def reset_state(steps):
@@ -539,7 +539,7 @@ class Reward:
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
         
-        A = 4 * (1 + (distance_reward * DISTANCE_MULTIPLE))
+        A = 4
         B = 2
         delta_progress_reward = 0
         dp = progress - state.prev_progress
@@ -586,8 +586,11 @@ class Reward:
                 print(f'DC: {DC}\nPC: {DPC}')
         except:
             print('Error in printing steps and delta_progress')
-            
-        reward += DPC
+        
+        if prev_waypoint_index in capstone_waypoints:
+            reward += 4 * (DC + SC)
+        else:
+            reward += DPC + DC + SC
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
