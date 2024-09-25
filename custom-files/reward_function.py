@@ -539,7 +539,7 @@ class Reward:
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
         
-        A = 6
+        A = 8
         B = 2
         delta_progress_reward = 0
         dp = progress - state.prev_progress
@@ -578,7 +578,7 @@ class Reward:
         if prev_waypoint_index in capstone_waypoints:
             reward += 2 * (DC + SC) + (distance_reward ** DISTANCE_EXPONENT * DISTANCE_MULTIPLE)
         else:
-            reward += DPC + DC + SC
+            reward += DPC + DC
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
