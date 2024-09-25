@@ -588,7 +588,7 @@ class Reward:
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                 
         # Distance component
-        DC = (distance_reward) * DISTANCE_MULTIPLE
+        DC = (distance_reward) * DISTANCE_MULTIPLE * 4
         # Speed component
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
@@ -607,11 +607,10 @@ class Reward:
         except:
             print('Error in printing steps and delta_progress')
         
-        if prev_waypoint_index not in capstone_waypoints:
-            reward += DPC
-        elif prev_waypoint_index in capstone_waypoints:
+        if prev_waypoint_index in capstone_waypoints:
             reward += (DC + SC) / 5
-        
+        else:
+            reward += DPC
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
             delta_speed = abs(speed - state.prev_speed)
