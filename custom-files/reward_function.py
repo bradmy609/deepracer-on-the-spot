@@ -33,7 +33,7 @@ class Reward:
 
     def reward_function(self, params):
 
-        capstone_waypoints = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 156, 157, 158, 159, 160, 161, 162, 184, 185, 186, 187, 188]
+        capstone_waypoints = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 55, 56, 57, 58, 59, 67, 68, 69, 70, 71, 77, 78, 79, 80, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 155, 156, 157, 158, 159, 160, 161, 184, 185, 186, 187, 188]
 
         ################## HELPER FUNCTIONS ###################
         def reset_state(steps):
@@ -539,25 +539,14 @@ class Reward:
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
         
-        A = 4
+        A = 6
         B = 2
         delta_progress_reward = 0
         dp = progress - state.prev_progress
         dp2 = progress - state.prev_progress2
-        dp3 = progress - state.prev_progress3
-        dp4 = progress - state.prev_progress4
-        if dp > 1:
-            dp = 1
-        if dp2 > 2:
-            dp2 = 2
-        if dp3 > 3:
-            dp3 = 3
-        if dp4 > 4:
-            dp4 = 4
+        
         delta_progress = ((dp) * A)**B
         delta_progress2 = (dp2 * 0.5 * A) ** B
-        delta_progress3 = (dp3 * 0.33 * A) ** B
-        delta_progress4 = (dp4 * 0.25 * A) ** B
         if delta_progress < 0 or delta_progress2 < 0:
             print(f'progress: {progress}')
             print(f'prev_progress: {state.prev_progress}')
@@ -565,7 +554,7 @@ class Reward:
             print(f'Closest waypoint index: {closest_index}')
             print(f'steps: {steps}')
 
-        delta_progress_reward = max(0, delta_progress + delta_progress2 + delta_progress3 + delta_progress4)
+        delta_progress_reward = max(0, delta_progress + delta_progress2)
         delta_progress_reward = min(100, delta_progress_reward)
                 
         # Distance component
@@ -574,7 +563,6 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
         DPC = delta_progress_reward
-        
         total_prog_reward = (progress/100)
         
         try:
@@ -588,7 +576,7 @@ class Reward:
             print('Error in printing steps and delta_progress')
         
         if prev_waypoint_index in capstone_waypoints:
-            reward += 4 * (DC + SC)
+            reward += 2 * (DC + SC) + (distance_reward ** DISTANCE_EXPONENT * DISTANCE_MULTIPLE)
         else:
             reward += DPC + DC + SC
         
