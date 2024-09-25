@@ -33,6 +33,7 @@ class Reward:
 
     def reward_function(self, params):
 
+        capstone_waypoints = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 156, 157, 158, 159, 160, 161, 162, 184, 185, 186, 187, 188]
         ################## HELPER FUNCTIONS ###################
         def reset_state(steps):
             if steps <= 2:
@@ -541,6 +542,8 @@ class Reward:
         if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
             if steering_angle > 0:
                 STEERING_PUNISHMENT = 0.1
+            if prev_waypoint_index >= 26 and prev_waypoint_index <= 31:
+                HARD_CODED_BONUS = 2
         elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
             if steering_angle < 0:
                 STEERING_PUNISHMENT = 0.1
@@ -603,8 +606,11 @@ class Reward:
                 print(f'DC: {DC}\nPC: {DPC}')
         except:
             print('Error in printing steps and delta_progress')
-            
-        reward += DPC
+        
+        if prev_waypoint_index not in capstone_waypoints:
+            reward += DPC
+        elif prev_waypoint_index in capstone_waypoints:
+            reward += (DC + SC) / 5
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
