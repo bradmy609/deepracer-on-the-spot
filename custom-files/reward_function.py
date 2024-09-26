@@ -732,14 +732,18 @@ class Reward:
             
         STEERING_PUNISHMENT = 1
         SPEED_PUNISHMENT = 1
+        LANE_REWARD = 0
         if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
-            if steering_angle > 0:
+            if steering_angle > -2:
                 STEERING_PUNISHMENT = 0.1
             if speed > 2.5:
                 SPEED_PUNISHMENT = 0.1
-            if prev_waypoint_index >= 20 and prev_waypoint_index <= 32:
+            if prev_waypoint_index >= 20 and prev_waypoint_index <= 30:
                 if speed > 2.0:
                     SPEED_PUNISHMENT = 0.1
+            if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
+                if not is_left_of_center:
+                    LANE_REWARD = 0.1
         elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
             if steering_angle < 0:
                 STEERING_PUNISHMENT = 0.1
@@ -762,6 +766,7 @@ class Reward:
         
         A = 6
         B = 2
+        C = 1
         D = 0
         inner_dist = inner_border_dists[prev_waypoint_index]
         if inner_dist >= .25 and inner_dist <= .35:
@@ -771,12 +776,16 @@ class Reward:
         elif (inner_dist >= .20 and inner_dist < .25) or (inner_dist >= .35 and inner_dist <= .40):
             A = 3
             C = 1.5
-            D = 0.0
+            D = 0.5
         elif (inner_dist >= .1 and inner_dist < .20) or (inner_dist > .40 and inner_dist <= .5):
             A = 1
             C = 2
             D = 1
         else: 
+            if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == racing_track - 2 or prev_waypoint_index >= 0 and prev_waypoint_index <= 2:
+                A = 2
+                C = 2
+                D = 0
             A = 4
             C = 1
             D = 0
@@ -784,7 +793,10 @@ class Reward:
         delta_progress_reward = 0
         dp = progress - state.prev_progress
         dp2 = progress - state.prev_progress2
-        
+        if dp > 1:
+            dp = 1
+        if dp2 > 2:
+            dp2 = 2
         delta_progress = ((dp) * A)**B
         delta_progress2 = (dp2 * 0.5 * A) ** B
         if delta_progress < 0 or delta_progress2 < 0:
@@ -804,7 +816,7 @@ class Reward:
         SC = speed_reward * SPEED_MULTIPLE
         # Progress component
         DPC = delta_progress_reward
-        total_prog_reward = (progress/100)
+        total_prog_reward = 1 + ((progress/100))
         
         try:
             if steps % 100 == 0:
@@ -819,6 +831,10 @@ class Reward:
             print('Error in printing steps and delta_progress')
         
         reward = C * (DC + SC) + DPC + (D * SQDC)
+        reward *= total_prog_reward
+        reward = max(10*total_prog_reward, reward)
+        if optimal_speed >= 3.95 and speed < 3.95:
+            reward *= 0.5
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -835,16 +851,16 @@ class Reward:
         if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
             reward *= 0.5
         if not is_within_range:
-            reward *= 0.01
-        if direction_diff > 30:
-            reward = 1e-3
-        if direction_diff >= 25:
-            reward *= 0.25
-        if direction_diff >= 20:
             reward *= 0.5
-        if direction_diff >= 15:
-            reward *= 0.75
-        if direction_diff >= 10:
+        if direction_diff > 30:
+            reward *= 0.5
+        elif direction_diff >= 25:
+            reward *= 0.6
+        elif direction_diff >= 20:
+            reward *= 0.7
+        elif direction_diff >= 15:
+            reward *= 0.8
+        elif direction_diff >= 10:
             reward *= 0.9
         
         # Punishing too fast or too slow
@@ -856,12 +872,14 @@ class Reward:
         
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
+        reward *= SPEED_PUNISHMENT
 
         ## Zero reward if off track ##
         track_width = params['track_width']
         distance_from_center = params['distance_from_center']
 
         # Zero reward if the center of the car is off the track.
+        reward += LANE_REWARD
 
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
