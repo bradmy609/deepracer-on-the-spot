@@ -831,8 +831,7 @@ class Reward:
             print('Error in printing steps and delta_progress')
         
         reward = C * (DC + SC) + DPC + (D * SQDC)
-        reward *= total_prog_reward
-        reward = max(10*total_prog_reward, reward)
+        
         if optimal_speed >= 3.95 and speed < 3.95:
             reward *= 0.5
         
