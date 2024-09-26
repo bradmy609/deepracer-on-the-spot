@@ -830,10 +830,12 @@ class Reward:
         except:
             print('Error in printing steps and delta_progress')
         
-        reward = C * (DC + SC) + DPC + (D * SQDC)
+        reward += C * (DC + SC) + DPC + (D * SQDC)
+        dist_mult = scale_value(4/optimal_speed, 1, 2.9, 0.5, 1)
+        reward += DPC * (1 + (distance_reward * dist_mult)) * (1 + (D * distance_reward ** DISTANCE_EXPONENT))
         
         if optimal_speed >= 3.95 and speed < 3.95:
-            reward *= 0.5
+            reward *= 0.8
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -844,7 +846,7 @@ class Reward:
             elif state.prev_turn_angle < -10 and steering_angle > 10:
                 reward *= 0.1
             if delta_turn_angle > 30:
-                reward *= 0.01
+                reward *= 0.1
         
         # Punishing erratic steering or steering out of range of valid directions.
         if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
@@ -867,7 +869,7 @@ class Reward:
         if speed_diff_zero > 0.75:
             reward *= 0.5
         if speed > speed_cap and speed_cap < 4:
-            reward *= 0.01
+            reward *= 0.1
         
         reward *= DISTANCE_PUNISHMENT
         reward *= STEERING_PUNISHMENT
