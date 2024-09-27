@@ -787,7 +787,7 @@ class Reward:
             C = 5
             D = 1
             
-        if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == racing_track - 2 or prev_waypoint_index >= 0 and prev_waypoint_index <= 2:
+        if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
             A = 2
             B = 1.1
             C = 3
