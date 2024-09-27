@@ -681,55 +681,55 @@ class Reward:
         ############### OPTIMAL X,Y,SPEED,TIME ################
         
         reset_state(steps)
-
-        # Get closest indexes for racing line (and distances to all points on racing line)
-        closest_index, second_closest_index = closest_2_racing_points_index(
-            racing_track, [x, y])
-
-        # Get optimal [x, y, speed, time] for closest and second closest index
-        optimals = racing_track[closest_index]
-        optimals_second = racing_track[second_closest_index]
-
-        # Save first racingpoint of episode for later
-        if self.verbose == True:
-            self.first_racingpoint_index = 0 # this is just for testing purposes
-        if self.first_racingpoint_index is None:
-            self.first_racingpoint_index = closest_index
-
-        ################ REWARD AND PUNISHMENT ################
-
-        ## Define the default reward ##
-        reward = 0.1
-
-        ## Reward if car goes close to optimal racing line ##
-        dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-        distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-        
-        DISTANCE_PUNISHMENT = 1
-        if dist > (track_width * 0.5):
-            DISTANCE_PUNISHMENT = 0.5
-            
-        ## Reward if speed is close to optimal speed ##
-        SPEED_DIFF_NO_REWARD = 1
-        SPEED_MULTIPLE = 2
-        speed_diff = abs(optimals[2]-speed)
-        if speed_diff <= SPEED_DIFF_NO_REWARD:
-            # we use quadratic punishment (not linear) bc we're not as confident with the optimal speed
-            # so, we do not punish small deviations from optimal speed
-            speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
-        else:
-            speed_reward = 0
-        
-        inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
-        min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
-                
-        # Zero reward if obviously wrong direction (e.g. spin)
-        direction_diff = racing_direction_diff(
-            optimals[0:2], optimals_second[0:2], [x, y], heading)
-        
-        optimal_speed = optimals[2]
-        speed_cap = optimal_speed + 0.75
         try:
+            # Get closest indexes for racing line (and distances to all points on racing line)
+            closest_index, second_closest_index = closest_2_racing_points_index(
+                racing_track, [x, y])
+
+            # Get optimal [x, y, speed, time] for closest and second closest index
+            optimals = racing_track[closest_index]
+            optimals_second = racing_track[second_closest_index]
+
+            # Save first racingpoint of episode for later
+            if self.verbose == True:
+                self.first_racingpoint_index = 0 # this is just for testing purposes
+            if self.first_racingpoint_index is None:
+                self.first_racingpoint_index = closest_index
+
+            ################ REWARD AND PUNISHMENT ################
+
+            ## Define the default reward ##
+            reward = 0.1
+
+            ## Reward if car goes close to optimal racing line ##
+            dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
+            distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
+            
+            DISTANCE_PUNISHMENT = 1
+            if dist > (track_width * 0.5):
+                DISTANCE_PUNISHMENT = 0.5
+                
+            ## Reward if speed is close to optimal speed ##
+            SPEED_DIFF_NO_REWARD = 1
+            SPEED_MULTIPLE = 2
+            speed_diff = abs(optimals[2]-speed)
+            if speed_diff <= SPEED_DIFF_NO_REWARD:
+                # we use quadratic punishment (not linear) bc we're not as confident with the optimal speed
+                # so, we do not punish small deviations from optimal speed
+                speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
+            else:
+                speed_reward = 0
+            
+            inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
+            min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
+                    
+            # Zero reward if obviously wrong direction (e.g. spin)
+            direction_diff = racing_direction_diff(
+                optimals[0:2], optimals_second[0:2], [x, y], heading)
+            
+            optimal_speed = optimals[2]
+            speed_cap = optimal_speed + 0.75
+                
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
@@ -766,36 +766,34 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
             
-            A = 5
+            A = 4
             B = 2
             C = 1
             D = 0
             E = 1
+            F = 0
             inner_dist = inner_border_dists[prev_waypoint_index]
             if inner_dist >= .25 and inner_dist <= .35:
-                A = 5
+                A = 4
                 B = 2
-                C = 2
+                C = 1
                 D = 0
                 E = 1
-            elif (inner_dist >= .20 and inner_dist < .25) or (inner_dist >= .35 and inner_dist <= .40):
+                F = 1
+            elif (inner_dist < .25) or (inner_dist >= .35):
                 A = 2
                 B = 1.1
-                C = 5
+                C = 2
                 D = 1
                 E = 0
-            elif (inner_dist >= .1 and inner_dist < .20) or (inner_dist > .40 and inner_dist <= .5):
-                A = 2
-                B = 1.1
-                C = 5
-                D = 1
-                E = 0
+                F = 0
             if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
                 A = 2
                 B = 1.1
-                C = 5
+                C = 2
                 D = 0
                 E = 0
+                F = 0
                 
             delta_progress_reward = 0
             dp = progress - state.prev_progress
@@ -816,7 +814,7 @@ class Reward:
                 print(f'steps: {steps}')
 
             delta_progress_reward = max(0, delta_progress + delta_progress2)
-            delta_progress_reward = min(20, delta_progress_reward)
+            delta_progress_reward = min(16, delta_progress_reward)
                     
             # Distance component
             DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -839,12 +837,12 @@ class Reward:
             except:
                 print('Error in printing steps and delta_progress')
             
-            if prev_waypoint_index >= 26 and prev_waypoint_index <= 31:
-                reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC) + DC + (E * SQDC)
+            if F == 1:
+                reward += ((4/optimal_speed) * (C * (DC + SC) + DPC + (C * D * SQDC)))
             else:
-                reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC)
+                reward += (C * (DC + SC) + DPC + (C * D * SQDC))
             
-            if optimal_speed >= 3.95 and speed < 3.95:
+            if optimal_speed >= 3.95 and speed >= 3.95:
                 reward += 0.1
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
