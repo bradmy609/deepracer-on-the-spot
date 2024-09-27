@@ -766,34 +766,29 @@ class Reward:
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
         
-        A = 6
+        A = 4
         B = 2
         C = 1
         D = 0
         inner_dist = inner_border_dists[prev_waypoint_index]
         if inner_dist >= .25 and inner_dist <= .35:
-            A = 6
+            A = 4
             B = 2
             C = 1
             D = 0
         elif (inner_dist >= .20 and inner_dist < .25) or (inner_dist >= .35 and inner_dist <= .40):
-            A = 3
+            A = 2
             B = 1.5
-            C = 2.5
+            C = 3
             D = 0.5
         elif (inner_dist >= .1 and inner_dist < .20) or (inner_dist > .40 and inner_dist <= .5):
-            A = 2
+            A = 1
             B = 1.1
-            C = 4
+            C = 5
             D = 1
-        else: 
-            A = 4
-            B = 2
-            C = 1
-            D = 0
             
         if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == racing_track - 2 or prev_waypoint_index >= 0 and prev_waypoint_index <= 2:
-            A = 4
+            A = 2
             B = 1.1
             C = 3
             D = 0
@@ -840,7 +835,8 @@ class Reward:
         except:
             print('Error in printing steps and delta_progress')
         
-        reward += C * (DC + SC) + DPC + (C * D * SQDC)
+        new_dist_multiple = scale_value(4/optimal_speed, 1, 2.9, 0.5, 2) # This adds distance reward that is 15-60% of the delta-progress reward
+        reward += C * (DC + SC) + DPC + (C * D * SQDC) + (DPC * 1 + (distance_reward * new_dist_multiple))
         
         if optimal_speed >= 3.95 and speed < 3.95:
             reward *= 0.8
