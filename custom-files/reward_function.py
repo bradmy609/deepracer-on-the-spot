@@ -733,26 +733,28 @@ class Reward:
         STEERING_PUNISHMENT = 1
         SPEED_PUNISHMENT = 1
         LANE_REWARD = 0
+        log_rewards = False
         if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
-            if steering_angle > -2:
-                STEERING_PUNISHMENT = 0.1
+            if steering_angle > -1:
+                STEERING_PUNISHMENT = 0.5
             if speed > 2.5:
-                SPEED_PUNISHMENT = 0.1
+                SPEED_PUNISHMENT = 0.5
             if prev_waypoint_index >= 20 and prev_waypoint_index <= 30:
                 if speed > 2.0:
-                    SPEED_PUNISHMENT = 0.1
+                    SPEED_PUNISHMENT = 0.5
             if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
+                log_rewards = True
                 if not is_left_of_center:
                     LANE_REWARD = 0.1
         elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
             if steering_angle < 0:
-                STEERING_PUNISHMENT = 0.1
+                STEERING_PUNISHMENT = 0.5
         elif prev_waypoint_index >= 104 and prev_waypoint_index <= 118:
             if steering_angle > 0:
-                STEERING_PUNISHMENT = 0.1
+                STEERING_PUNISHMENT = 0.5
         elif prev_waypoint_index >= 154 and prev_waypoint_index <= 161 or prev_waypoint_index >= 184 and prev_waypoint_index <= 190:
             if steering_angle > 0:
-                STEERING_PUNISHMENT = 0.1
+                STEERING_PUNISHMENT = 0.5
         
         try:
             scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2)
@@ -794,8 +796,10 @@ class Reward:
         dp = progress - state.prev_progress
         dp2 = progress - state.prev_progress2
         if dp > 1:
+            print(f'Delta Progress: {dp}')
             dp = 1
         if dp2 > 2:
+            print(f'Delta Progress2: {dp2}')
             dp2 = 2
         delta_progress = ((dp) * A)**B
         delta_progress2 = (dp2 * 0.5 * A) ** B
@@ -832,7 +836,7 @@ class Reward:
         
         reward += C * (DC + SC) + DPC + (D * SQDC)
         dist_mult = scale_value(4/optimal_speed, 1, 2.9, 0.5, 1)
-        reward += DPC * (1 + (distance_reward * dist_mult)) * (1 + (D * distance_reward ** DISTANCE_EXPONENT))
+        reward += DPC * (1 + (distance_reward * dist_mult)) * (1 + (D * (distance_reward ** DISTANCE_EXPONENT)))
         
         if optimal_speed >= 3.95 and speed < 3.95:
             reward *= 0.8
@@ -881,6 +885,23 @@ class Reward:
 
         # Zero reward if the center of the car is off the track.
         reward += LANE_REWARD
+        
+        if log_rewards:
+            if steps % 5 == 0:
+                print(f'Closest waypoint: {prev_waypoint_index}')
+                print(f'Reward: {reward}')
+                print(f'Inner waypoint distance: {inner_dist}')
+                print(f'Distance Reward: {distance_reward}')
+                print(f'Speed Reward: {speed_reward}')
+                print(f'Delta Progress Reward: {delta_progress_reward}')
+                print(f'Current Progress: {progress}')
+                print(f'Previous Progress: {state.prev_progress}')
+                print(f'Prev Progress2 {state.prev_progress2}')
+                print(f'Optimal Speed: {optimals[2]}')
+                print(f'Speed diff zero: {speed_diff_zero}')
+                print(f'Distance punishment: {DISTANCE_PUNISHMENT}')
+                print(f'Steering punishment: {STEERING_PUNISHMENT}')
+                print(f'Speed punishment: {SPEED_PUNISHMENT}')
 
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
