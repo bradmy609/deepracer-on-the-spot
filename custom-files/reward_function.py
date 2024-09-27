@@ -773,23 +773,29 @@ class Reward:
         inner_dist = inner_border_dists[prev_waypoint_index]
         if inner_dist >= .25 and inner_dist <= .35:
             A = 6
+            B = 2
             C = 1
             D = 0
         elif (inner_dist >= .20 and inner_dist < .25) or (inner_dist >= .35 and inner_dist <= .40):
             A = 3
-            C = 1.5
+            B = 1.5
+            C = 2.5
             D = 0.5
         elif (inner_dist >= .1 and inner_dist < .20) or (inner_dist > .40 and inner_dist <= .5):
-            A = 1
-            C = 2
+            A = 2
+            B = 1.1
+            C = 4
             D = 1
         else: 
-            if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == racing_track - 2 or prev_waypoint_index >= 0 and prev_waypoint_index <= 2:
-                A = 2
-                C = 2
-                D = 0
             A = 4
+            B = 2
             C = 1
+            D = 0
+            
+        if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == racing_track - 2 or prev_waypoint_index >= 0 and prev_waypoint_index <= 2:
+            A = 4
+            B = 1.1
+            C = 3
             D = 0
             
         delta_progress_reward = 0
@@ -811,7 +817,7 @@ class Reward:
             print(f'steps: {steps}')
 
         delta_progress_reward = max(0, delta_progress + delta_progress2)
-        delta_progress_reward = min(100, delta_progress_reward)
+        delta_progress_reward = min(16, delta_progress_reward)
                 
         # Distance component
         DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -834,9 +840,7 @@ class Reward:
         except:
             print('Error in printing steps and delta_progress')
         
-        reward += C * (DC + SC) + DPC + (D * SQDC)
-        dist_mult = scale_value(4/optimal_speed, 1, 2.9, 0.5, 1)
-        reward += DPC * (1 + (distance_reward * dist_mult)) * (1 + (D * (distance_reward ** DISTANCE_EXPONENT)))
+        reward += C * (DC + SC) + DPC + (C * D * SQDC)
         
         if optimal_speed >= 3.95 and speed < 3.95:
             reward *= 0.8
