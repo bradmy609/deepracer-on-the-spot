@@ -729,168 +729,183 @@ class Reward:
         
         optimal_speed = optimals[2]
         speed_cap = optimal_speed + 0.75
-            
-        STEERING_PUNISHMENT = 1
-        SPEED_PUNISHMENT = 1
-        LANE_REWARD = 0
-        log_rewards = False
-        if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
-            if steering_angle > -1:
-                STEERING_PUNISHMENT = 0.5
-            if speed > 2.5:
-                SPEED_PUNISHMENT = 0.5
-            if prev_waypoint_index >= 20 and prev_waypoint_index <= 30:
-                if speed > 2.0:
-                    SPEED_PUNISHMENT = 0.5
-            if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
-                log_rewards = True
-                if not is_left_of_center:
-                    LANE_REWARD = 0.1
-        elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
-            if steering_angle < 0:
-                STEERING_PUNISHMENT = 0.5
-        elif prev_waypoint_index >= 104 and prev_waypoint_index <= 118:
-            if steering_angle > 0:
-                STEERING_PUNISHMENT = 0.5
-        elif prev_waypoint_index >= 154 and prev_waypoint_index <= 161 or prev_waypoint_index >= 184 and prev_waypoint_index <= 190:
-            if steering_angle > 0:
-                STEERING_PUNISHMENT = 0.5
-        
         try:
-            scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2)
-        except:
-            print('Error with scaled_multiplier.')
-            scaled_multiplier = 4/optimal_speed
-        
-        DISTANCE_MULTIPLE = scaled_multiplier
-        DISTANCE_EXPONENT = scaled_multiplier
-        SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
-        
-        A = 5
-        B = 2
-        C = 1
-        D = 0
-        E = 1
-        inner_dist = inner_border_dists[prev_waypoint_index]
-        if inner_dist >= .25 and inner_dist <= .35:
+            STEERING_PUNISHMENT = 1
+            SPEED_PUNISHMENT = 1
+            LANE_REWARD = 0
+            log_rewards = False
+            if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
+                if steering_angle > -1:
+                    STEERING_PUNISHMENT = 0.5
+                if speed > 2.5:
+                    SPEED_PUNISHMENT = 0.5
+                if prev_waypoint_index >= 20 and prev_waypoint_index <= 30:
+                    if speed > 2.0:
+                        SPEED_PUNISHMENT = 0.5
+                if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
+                    log_rewards = True
+                    if not is_left_of_center:
+                        LANE_REWARD = 0.1
+            elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
+                if steering_angle < 0:
+                    STEERING_PUNISHMENT = 0.5
+            elif prev_waypoint_index >= 104 and prev_waypoint_index <= 118:
+                if steering_angle > 0:
+                    STEERING_PUNISHMENT = 0.5
+            elif prev_waypoint_index >= 154 and prev_waypoint_index <= 161 or prev_waypoint_index >= 184 and prev_waypoint_index <= 190:
+                if steering_angle > 0:
+                    STEERING_PUNISHMENT = 0.5
+            
+            try:
+                scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2)
+            except:
+                print('Error with scaled_multiplier.')
+                scaled_multiplier = 4/optimal_speed
+            
+            DISTANCE_MULTIPLE = scaled_multiplier
+            DISTANCE_EXPONENT = scaled_multiplier
+            SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
+            
             A = 5
             B = 2
-            C = 2
+            C = 1
             D = 0
             E = 1
-        elif (inner_dist >= .20 and inner_dist < .25) or (inner_dist >= .35 and inner_dist <= .40):
-            A = 2
-            B = 1.1
-            C = 5
-            D = 1
-            E = 0
-        elif (inner_dist >= .1 and inner_dist < .20) or (inner_dist > .40 and inner_dist <= .5):
-            A = 2
-            B = 1.1
-            C = 5
-            D = 1
-            E = 0
-        if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
-            A = 2
-            B = 1.1
-            C = 5
-            D = 0
-            E = 0
-            
-        delta_progress_reward = 0
-        dp = progress - state.prev_progress
-        dp2 = progress - state.prev_progress2
-        if dp > 1:
-            print(f'Delta Progress: {dp}')
-            dp = 1
-        if dp2 > 2:
-            print(f'Delta Progress2: {dp2}')
-            dp2 = 2
-        delta_progress = ((dp) * A)**B
-        delta_progress2 = (dp2 * 0.5 * A) ** B
-        if delta_progress < 0 or delta_progress2 < 0:
-            print(f'progress: {progress}')
-            print(f'prev_progress: {state.prev_progress}')
-            print(f'prev_progress2: {state.prev_progress2}')
-            print(f'Closest waypoint index: {closest_index}')
-            print(f'steps: {steps}')
-
-        delta_progress_reward = max(0, delta_progress + delta_progress2)
-        delta_progress_reward = min(20, delta_progress_reward)
+            inner_dist = inner_border_dists[prev_waypoint_index]
+            if inner_dist >= .25 and inner_dist <= .35:
+                A = 5
+                B = 2
+                C = 2
+                D = 0
+                E = 1
+            elif (inner_dist >= .20 and inner_dist < .25) or (inner_dist >= .35 and inner_dist <= .40):
+                A = 2
+                B = 1.1
+                C = 5
+                D = 1
+                E = 0
+            elif (inner_dist >= .1 and inner_dist < .20) or (inner_dist > .40 and inner_dist <= .5):
+                A = 2
+                B = 1.1
+                C = 5
+                D = 1
+                E = 0
+            if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
+                A = 2
+                B = 1.1
+                C = 5
+                D = 0
+                E = 0
                 
-        # Distance component
-        DC = (distance_reward) * DISTANCE_MULTIPLE
-        SQDC = distance_reward ** DISTANCE_EXPONENT
-        # Speed component
-        SC = speed_reward * SPEED_MULTIPLE
-        # Progress component
-        DPC = delta_progress_reward
-        total_prog_reward = 1 + ((progress/100))
-        
-        try:
-            if steps % 100 == 0:
-                print(f'steps: {steps}')
+            delta_progress_reward = 0
+            dp = progress - state.prev_progress
+            dp2 = progress - state.prev_progress2
+            if dp > 1:
+                print(f'Delta Progress: {dp}')
+                dp = 1
+            if dp2 > 2:
+                print(f'Delta Progress2: {dp2}')
+                dp2 = 2
+            delta_progress = ((dp) * A)**B
+            delta_progress2 = (dp2 * 0.5 * A) ** B
+            if delta_progress < 0 or delta_progress2 < 0:
                 print(f'progress: {progress}')
-                print(f'delta_progress reward: {DPC}')
-                print(f'Total progress reward: {total_prog_reward}')
-                print(f'DC: {DC}\nPC: {DPC}\n SC: {SC}\nSQDC: {SQDC}')
-                print(f'A: {A}\nB: {B}\nC: {C}\nD: {D}')
-                print(f'Prev waypoint index: {prev_waypoint_index}')
-        except:
-            print('Error in printing steps and delta_progress')
-        
-        if prev_waypoint_index >= 26 and prev_waypoint_index <= 31:
-            reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC) + DC + (E * SQDC)
-        else:
-            reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC)
-        
-        if optimal_speed >= 3.95 and speed < 3.95:
-            reward += 0.1
-        
-        if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-            delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-            delta_speed = abs(speed - state.prev_speed)
-            # Erratic steering punishments
-            if state.prev_turn_angle > 10 and steering_angle < -10:
-                reward *= 0.1
-            elif state.prev_turn_angle < -10 and steering_angle > 10:
-                reward *= 0.1
-            if delta_turn_angle > 30:
-                reward *= 0.1
-        
-        # Punishing erratic steering or steering out of range of valid directions.
-        if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
-            reward *= 0.5
-        if not is_within_range:
-            reward *= 0.5
-        if direction_diff > 30:
-            reward *= 0.5
-        elif direction_diff >= 25:
-            reward *= 0.6
-        elif direction_diff >= 20:
-            reward *= 0.7
-        elif direction_diff >= 15:
-            reward *= 0.8
-        elif direction_diff >= 10:
-            reward *= 0.9
-        
-        # Punishing too fast or too slow
-        speed_diff_zero = optimals[2]-speed
-        if speed_diff_zero > 0.75:
-            reward *= 0.5
-        if speed > speed_cap and speed_cap < 4:
-            reward *= 0.1
-        
-        reward *= DISTANCE_PUNISHMENT
-        reward *= STEERING_PUNISHMENT
-        reward *= SPEED_PUNISHMENT
+                print(f'prev_progress: {state.prev_progress}')
+                print(f'prev_progress2: {state.prev_progress2}')
+                print(f'Closest waypoint index: {closest_index}')
+                print(f'steps: {steps}')
 
-        ## Zero reward if off track ##
-        track_width = params['track_width']
-        distance_from_center = params['distance_from_center']
+            delta_progress_reward = max(0, delta_progress + delta_progress2)
+            delta_progress_reward = min(20, delta_progress_reward)
+                    
+            # Distance component
+            DC = (distance_reward) * DISTANCE_MULTIPLE
+            SQDC = distance_reward ** DISTANCE_EXPONENT
+            # Speed component
+            SC = speed_reward * SPEED_MULTIPLE
+            # Progress component
+            DPC = delta_progress_reward
+            total_prog_reward = 1 + ((progress/100))
+            
+            try:
+                if steps % 100 == 0:
+                    print(f'steps: {steps}')
+                    print(f'progress: {progress}')
+                    print(f'delta_progress reward: {DPC}')
+                    print(f'Total progress reward: {total_prog_reward}')
+                    print(f'DC: {DC}\nPC: {DPC}\n SC: {SC}\nSQDC: {SQDC}')
+                    print(f'A: {A}\nB: {B}\nC: {C}\nD: {D}')
+                    print(f'Prev waypoint index: {prev_waypoint_index}')
+            except:
+                print('Error in printing steps and delta_progress')
+            
+            if prev_waypoint_index >= 26 and prev_waypoint_index <= 31:
+                reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC) + DC + (E * SQDC)
+            else:
+                reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC)
+            
+            if optimal_speed >= 3.95 and speed < 3.95:
+                reward += 0.1
+            
+            if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+                delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+                delta_speed = abs(speed - state.prev_speed)
+                # Erratic steering punishments
+                if state.prev_turn_angle > 10 and steering_angle < -10:
+                    reward *= 0.1
+                elif state.prev_turn_angle < -10 and steering_angle > 10:
+                    reward *= 0.1
+                if delta_turn_angle > 30:
+                    reward *= 0.1
+            
+            # Punishing erratic steering or steering out of range of valid directions.
+            if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
+                reward *= 0.5
+            if not is_within_range:
+                reward *= 0.5
+            if direction_diff > 30:
+                reward *= 0.5
+            elif direction_diff >= 25:
+                reward *= 0.6
+            elif direction_diff >= 20:
+                reward *= 0.7
+            elif direction_diff >= 15:
+                reward *= 0.8
+            elif direction_diff >= 10:
+                reward *= 0.9
+            
+            # Punishing too fast or too slow
+            speed_diff_zero = optimals[2]-speed
+            if speed_diff_zero > 0.75:
+                reward *= 0.5
+            if speed > speed_cap and speed_cap < 4:
+                reward *= 0.1
+            
+            reward *= DISTANCE_PUNISHMENT
+            reward *= STEERING_PUNISHMENT
+            reward *= SPEED_PUNISHMENT
 
-        # Zero reward if the center of the car is off the track.
-        reward += LANE_REWARD
+            ## Zero reward if off track ##
+            track_width = params['track_width']
+            distance_from_center = params['distance_from_center']
+
+            # Zero reward if the center of the car is off the track.
+            reward += LANE_REWARD
+        except Exception as e:
+            print(f'Error in reward calculation: {e}')
+            print(f'prev_waypoint_index: {prev_waypoint_index}')
+            print(f'progress: {progress}')
+            print(f'steps: {steps}')
+            print(f'Closest waypoint index: {closest_index}')
+            print(f'Optimal speed: {optimals[2]}')
+            print(f'Speed: {speed}')
+            print(f'Reward: {reward}')
+            print(f'DC: {DC}\nPC: {DPC}\n SC: {SC}\nSQDC: {SQDC}')
+            print(f'A: {A}\nB: {B}\nC: {C}\nD: {D}')
+            print(f'Inner border dist: {inner_dist}')
+            print(f'Optimals over 4: {optimal_speed/4}')
+            if distance_from_center <= track_width/2:
+                reward += 1
 
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
