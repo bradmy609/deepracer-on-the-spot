@@ -766,34 +766,36 @@ class Reward:
         DISTANCE_EXPONENT = scaled_multiplier
         SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
         
-        A = 4
+        A = 5
         B = 2
         C = 1
         D = 0
         E = 1
-        F = 0
         inner_dist = inner_border_dists[prev_waypoint_index]
         if inner_dist >= .25 and inner_dist <= .35:
-            A = 4
+            A = 5
             B = 2
-            C = 1
+            C = 2
             D = 0
             E = 1
-            F = 1
-        elif (inner_dist < .25) or (inner_dist >= .35):
+        elif (inner_dist >= .20 and inner_dist < .25) or (inner_dist >= .35 and inner_dist <= .40):
             A = 2
             B = 1.1
-            C = 2
+            C = 5
             D = 1
             E = 0
-            F = 0
+        elif (inner_dist >= .1 and inner_dist < .20) or (inner_dist > .40 and inner_dist <= .5):
+            A = 2
+            B = 1.1
+            C = 5
+            D = 1
+            E = 0
         if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
             A = 2
             B = 1.1
-            C = 2
+            C = 5
             D = 0
             E = 0
-            F = 0
             
         delta_progress_reward = 0
         dp = progress - state.prev_progress
@@ -814,7 +816,7 @@ class Reward:
             print(f'steps: {steps}')
 
         delta_progress_reward = max(0, delta_progress + delta_progress2)
-        delta_progress_reward = min(16, delta_progress_reward)
+        delta_progress_reward = min(20, delta_progress_reward)
                 
         # Distance component
         DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -837,12 +839,9 @@ class Reward:
         except:
             print('Error in printing steps and delta_progress')
         
-        if F == 1:
-            reward += ((4/optimal_speed) * (C * (DC + SC) + DPC + (C * D * SQDC)))
-        else:
-            reward += (C * (DC + SC) + DPC + (C * D * SQDC))
+        reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC)
         
-        if optimal_speed >= 3.95 and speed >= 3.95:
+        if optimal_speed >= 3.95 and speed < 3.95:
             reward += 0.1
         
         if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
@@ -889,23 +888,6 @@ class Reward:
 
         # Zero reward if the center of the car is off the track.
         reward += LANE_REWARD
-        
-        if log_rewards:
-            if steps % 20 == 0:
-                print(f'Closest waypoint: {prev_waypoint_index}')
-                print(f'Reward: {reward}')
-                print(f'Inner waypoint distance: {inner_dist}')
-                print(f'Distance Reward: {distance_reward}')
-                print(f'Speed Reward: {speed_reward}')
-                print(f'Delta Progress Reward: {delta_progress_reward}')
-                print(f'Current Progress: {progress}')
-                print(f'Previous Progress: {state.prev_progress}')
-                print(f'Prev Progress2 {state.prev_progress2}')
-                print(f'Optimal Speed: {optimals[2]}')
-                print(f'Speed diff zero: {speed_diff_zero}')
-                print(f'Distance punishment: {DISTANCE_PUNISHMENT}')
-                print(f'Steering punishment: {STEERING_PUNISHMENT}')
-                print(f'Speed punishment: {SPEED_PUNISHMENT}')
 
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
