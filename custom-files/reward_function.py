@@ -817,7 +817,7 @@ class Reward:
             print(f'steps: {steps}')
 
         delta_progress_reward = max(0, delta_progress + delta_progress2)
-        delta_progress_reward = min(16, delta_progress_reward)
+        delta_progress_reward = min(20, delta_progress_reward)
                 
         # Distance component
         DC = (distance_reward) * DISTANCE_MULTIPLE
