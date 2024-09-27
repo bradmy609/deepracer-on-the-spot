@@ -891,7 +891,7 @@ class Reward:
         reward += LANE_REWARD
         
         if log_rewards:
-            if steps % 5 == 0:
+            if steps % 20 == 0:
                 print(f'Closest waypoint: {prev_waypoint_index}')
                 print(f'Reward: {reward}')
                 print(f'Inner waypoint distance: {inner_dist}')
