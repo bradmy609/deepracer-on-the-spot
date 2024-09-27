@@ -839,7 +839,10 @@ class Reward:
         except:
             print('Error in printing steps and delta_progress')
         
-        reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC)
+        if prev_waypoint_index >= 26 and prev_waypoint_index <= 31:
+            reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC) + DC + (E * SQDC)
+        else:
+            reward += C * (DC + SC) + DPC + (C * D * SQDC) + (E * DC)
         
         if optimal_speed >= 3.95 and speed < 3.95:
             reward += 0.1
