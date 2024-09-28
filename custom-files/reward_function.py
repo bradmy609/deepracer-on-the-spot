@@ -814,7 +814,7 @@ class Reward:
             
             reward += DC + SC + DPC
             
-            if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 29:
                 reward += 2 * (DC + SC) + DPC + SQDC
             
             if optimal_speed >= 3.95 and speed >= 3.95:
