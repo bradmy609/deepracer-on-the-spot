@@ -766,26 +766,26 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
             
-            A = 4.5
+            A = 4.0
             B = 2
             C = 1
             D = 0
             F = 0
             inner_dist = inner_border_dists[prev_waypoint_index]
             if inner_dist >= .25 and inner_dist <= .35:
-                A = 4.5
+                A = 4.0
                 B = 2
                 C = 1
                 D = 0
                 F = 1
             elif (inner_dist < .25) or (inner_dist >= .35):
-                A = 4.5
+                A = 4.0
                 B = 1.1
                 C = 2.0
                 D = 1
                 F = 0
             if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
-                A = 4.5
+                A = 4.0
                 B = 1.1
                 C = 2.0
                 D = 0
@@ -810,7 +810,7 @@ class Reward:
                 print(f'steps: {steps}')
 
             delta_progress_reward = max(0, delta_progress + delta_progress2)
-            delta_progress_reward = min(16, delta_progress_reward)
+            delta_progress_reward = min(10, delta_progress_reward)
                     
             # Distance component
             DC = (distance_reward) * DISTANCE_MULTIPLE
