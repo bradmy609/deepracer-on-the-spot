@@ -733,17 +733,17 @@ class Reward:
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
-            log_rewards = False
-            if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
+            if prev_waypoint_index >= 17 and prev_waypoint_index <= 31:
                 if steering_angle > -1:
                     STEERING_PUNISHMENT = 0.5
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
-                if prev_waypoint_index >= 20 and prev_waypoint_index <= 30:
+                if prev_waypoint_index >= 25 and prev_waypoint_index <= 29:
                     if speed > 2.0:
                         SPEED_PUNISHMENT = 0.5
-                if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
-                    log_rewards = True
+                if prev_waypoint_index >= 25 and prev_waypoint_index <= 29:
+                    if steering_angle > -6:
+                        STEERING_PUNISHMENT = 0.5
                     if not is_left_of_center:
                         LANE_REWARD = 0.1
             elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
@@ -757,10 +757,14 @@ class Reward:
                     STEERING_PUNISHMENT = 0.5
             
             try:
-                scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2)
+                scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2) # Ranges 1-2 based on optimal speed
+                distance_weight = scale_value(4/optimal_speed, 1, 2.9, 1, 2)  # Ranges 1-4 based on optimal speed
+                speed_weight = scale_value(4/optimal_speed, 1, 2.9, 0, 2) # Ranges 0-4 based on optimal speed
             except:
                 print('Error with scaled_multiplier.')
-                scaled_multiplier = 4/optimal_speed
+                scaled_multiplier = 1
+                distance_weight = 1
+                speed_weight = 0
             
             DISTANCE_MULTIPLE = scaled_multiplier
             DISTANCE_EXPONENT = scaled_multiplier
@@ -768,28 +772,6 @@ class Reward:
             
             A = 4.0
             B = 2
-            C = 1
-            D = 0
-            F = 0
-            inner_dist = inner_border_dists[prev_waypoint_index]
-            if inner_dist >= .25 and inner_dist <= .35:
-                A = 4.0
-                B = 2
-                C = 1
-                D = 0
-                F = 1
-            elif (inner_dist < .25) or (inner_dist >= .35):
-                A = 4.0
-                B = 1.1
-                C = 2.0
-                D = 1
-                F = 0
-            if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
-                A = 4.0
-                B = 1.1
-                C = 2.0
-                D = 0
-                F = 0
                 
             delta_progress_reward = 0
             dp = progress - state.prev_progress
@@ -813,40 +795,27 @@ class Reward:
             delta_progress_reward = min(10, delta_progress_reward)
                     
             # Distance component
-            DC = (distance_reward) * DISTANCE_MULTIPLE
+            DC = distance_reward * distance_weight
             SQDC = distance_reward ** DISTANCE_EXPONENT
             # Speed component
-            SC = speed_reward * SPEED_MULTIPLE
+            SC = speed_reward * speed_weight
             # Progress component
             DPC = delta_progress_reward
-            total_prog_reward = 1 + ((progress/100))
             
             try:
                 if steps % 100 == 0:
                     print(f'steps: {steps}')
                     print(f'progress: {progress}')
                     print(f'delta_progress reward: {DPC}')
-                    print(f'Total progress reward: {total_prog_reward}')
                     print(f'DC: {DC}\nPC: {DPC}\n SC: {SC}\nSQDC: {SQDC}')
-                    print(f'A: {A}\nB: {B}\nC: {C}\nD: {D}')
                     print(f'Prev waypoint index: {prev_waypoint_index}')
             except:
                 print('Error in printing steps and delta_progress')
-            try:
-                relative_speed_multiplier = 2 * (optimal_speed/4)
-            except:
-                relative_speed_multiplier = 1
             
-            modulated_delta_p = (distance_reward * (dp**2) * 10)
-            modulated_delta_p2 = (distance_reward * (dp2**2) * 10)
+            reward += DC + SC + DPC
             
-            if F == 1:
-                reward += (C * (DC + SC) + DPC + (C * D * SQDC)) + (relative_speed_multiplier * (modulated_delta_p + modulated_delta_p2))
-            else:
-                reward += (C * (DC + SC) + DPC + (C * D * SQDC))
-            
-            if prev_waypoint_index >= 26 and prev_waypoint_index <= 32:
-                reward += (2 * C * DC) + (2 * C * D * SQDC) + (C * SC)
+            if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
+                reward += 2 * (DC + SC) + DPC + SQDC
             
             if optimal_speed >= 3.95 and speed >= 3.95:
                 reward += 0.1
