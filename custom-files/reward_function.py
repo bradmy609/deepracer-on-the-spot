@@ -780,13 +780,13 @@ class Reward:
                 F = 1
             elif (inner_dist < .25) or (inner_dist >= .35):
                 A = 4.0
-                B = 1.5
+                B = 1.1
                 C = 2.0
                 D = 1
                 F = 0
             if prev_waypoint_index == len(racing_track)-1 or prev_waypoint_index == len(racing_track) - 2 or (prev_waypoint_index >= 0 and prev_waypoint_index <= 2):
                 A = 4.0
-                B = 1.5
+                B = 1.1
                 C = 2.0
                 D = 0
                 F = 0
@@ -837,8 +837,11 @@ class Reward:
             except:
                 relative_speed_multiplier = 1
             
+            modulated_delta_p = (distance_reward * (dp**2) * 10)
+            modulated_delta_p2 = (distance_reward * (dp2**2) * 10)
+            
             if F == 1:
-                reward += (C * (DC + SC) + DPC + (C * D * SQDC)) + (relative_speed_multiplier * (distance_reward * ((dp**2) * 10)))
+                reward += (C * (DC + SC) + DPC + (C * D * SQDC)) + (relative_speed_multiplier * (modulated_delta_p + modulated_delta_p2))
             else:
                 reward += (C * (DC + SC) + DPC + (C * D * SQDC))
             
