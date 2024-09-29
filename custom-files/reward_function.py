@@ -538,7 +538,7 @@ class Reward:
             avg_delta_p_reward = (avg_delta_p * 4) ** 2
             reward += avg_delta_p_reward + (distance_reward/4) # Distance reward should be about 25% of average reward.
             total_progress_multiplier = 1 + (progress/100) # Later actions are worth more than earlier actions.
-            
+            reward *= total_progress_multiplier
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
             except:
