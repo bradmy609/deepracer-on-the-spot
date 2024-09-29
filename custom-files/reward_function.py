@@ -774,7 +774,7 @@ class Reward:
             if optimal_speed >= 3.0:
                 A = 15
             else:
-                A = 5
+                A = 7.5
                 
             delta_progress_reward = 0
             dp = progress - state.prev_progress
@@ -785,7 +785,7 @@ class Reward:
             if dp2 > 2:
                 print(f'Delta Progress2: {dp2}')
                 dp2 = 2
-            if dp > 0.5:
+            if dp > 0.6:
                 print(f'Delta_progress is greater than 0.5 at waypoint: {prev_waypoint_index}')
             delta_progress = ((dp) ** B) * A
             delta_progress2 = ((dp2 * 0.5) ** B) * A
@@ -820,7 +820,7 @@ class Reward:
             reward += DC + SC + DPC
             
             if (prev_waypoint_index >= 24 and prev_waypoint_index <= 31) or (prev_waypoint_index >= 77 and prev_waypoint_index <= 83) or (prev_waypoint_index >= 110 and prev_waypoint_index <= 116):
-                reward += 2 * (distance_reward * DPC)
+                reward += (distance_reward * DPC)
             
             if optimal_speed >= 3.95 and speed >= 3.95:
                 reward += 0.1
