@@ -536,7 +536,7 @@ class Reward:
             delta_p = progress - state.prev_progress
             avg_delta_p = update_and_calculate_reward(delta_p)
             avg_delta_p_reward = (avg_delta_p * 4) ** 2
-            reward += avg_delta_p_reward * (1 + (distance_reward/10)) + distance_reward
+            reward += avg_delta_p_reward * (1 + (distance_reward/10))
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
