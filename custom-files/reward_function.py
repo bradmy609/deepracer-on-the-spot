@@ -10,8 +10,7 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
-        self.prev_progress3 = 0
-        self.prev_progress4 = 0
+        self.delta_progress_list = [0] * 10
 
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -21,8 +20,7 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
-        self.prev_progress3 = 0
-        self.prev_progress4 = 0
+        self.delta_progress_list = [0] * 10
         
 state = STATE()
 
@@ -33,8 +31,23 @@ class Reward:
 
     def reward_function(self, params):
         try:
-            capstone_waypoints = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 55, 56, 57, 58, 59, 67, 68, 69, 70, 71, 77, 78, 79, 80, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 155, 156, 157, 158, 159, 160, 161, 184, 185, 186, 187, 188]
+            def update_and_calculate_reward(new_delta_progress):
+                # FILO: Add new delta-progress value to the end and remove the oldest one
+                state.delta_progress_list.append(new_delta_progress)  # Add new value
+                state.delta_progress_list.pop(0)  # Remove the oldest value (first in the list)
 
+                # Filter non-zero values
+                non_zero_values = [val for val in state.delta_progress_list if val != 0]
+
+                if len(non_zero_values) == 0:
+                    return 0  # If no non-zero values, return 0 as reward
+
+                # Calculate the average of the non-zero values
+                avg_delta_progress = sum(non_zero_values) / len(non_zero_values)
+
+                # Return the average as the reward
+                return avg_delta_progress
+            
             ################## HELPER FUNCTIONS ###################
             def reset_state(steps):
                 if steps <= 2:
@@ -441,222 +454,6 @@ class Reward:
             [0.39604, -5.40109, 4.0, 0.07538],
             [0.09452, -5.40134, 4.0, 0.07538],
             [-0.207, -5.40163, 4.0, 0.07538]]
-            
-            delta_rl_angles = [0.0,
-        0.23899301931345462,
-        0.18436071594925352,
-        0.12000842886214969,
-        0.0880490941751475,
-        0.05569602663140927,
-        0.056818338599327944,
-        0.049238629517162735,
-        0.04752293695284493,
-        0.031189862879415386,
-        0.04604920371883736,
-        0.052575019432225645,
-        0.14231961099983437,
-        1.1940139410189659,
-        2.2259830641281724,
-        3.2361889968515243,
-        4.2268382999033065,
-        5.2637681472298254,
-        6.339691065020247,
-        7.503936960609451,
-        8.979089242197404,
-        11.02780930446886,
-        16.862333803103468,
-        14.095933227028752,
-        12.019486930117978,
-        11.192824735891577,
-        12.029499019657521,
-        10.589592576334155,
-        9.175025000174912,
-        8.157968187211111,
-        7.2010458613666515,
-        6.278057034068979,
-        5.237275710447136,
-        4.2766377719406705,
-        3.460224577260533,
-        2.714069573284803,
-        2.0855691676673587,
-        1.5599526218059054,
-        1.117954291876913,
-        0.7628494942950965,
-        0.41276931013618423,
-        0.11661593814739035,
-        0.0005888243483127553,
-        2.269266019538918e-07,
-        0.05977376514096022,
-        0.25953911222632087,
-        0.5329235950999305,
-        0.8169182000436308,
-        1.1105324545242183,
-        1.4378471673243212,
-        1.804974008754641,
-        2.267455063504883,
-        2.7750458009714976,
-        3.457346581348247,
-        4.398939147160206,
-        5.379014938930197,
-        6.678068642449034,
-        8.194580765505862,
-        11.053618774684423,
-        9.409956743129953,
-        7.911104075224046,
-        7.038883512739858,
-        6.222749338957954,
-        5.671983263962318,
-        5.262769070746117,
-        4.976986418725232,
-        4.692922411884183,
-        4.656472989631425,
-        5.153252467355287,
-        6.040336595434837,
-        4.682085319072712,
-        4.6721844065611435,
-        4.7474692589124174,
-        4.906217257951425,
-        5.621365904750007,
-        6.375706500906233,
-        7.412640884749749,
-        8.820495011641128,
-        11.26394451367048,
-        14.425313990100136,
-        9.941225388947174,
-        7.446508861203085,
-        5.019289133618173,
-        2.3961076519518087,
-        1.1510301401957577,
-        1.1458219806992247,
-        1.1728693000448231,
-        1.2183699845647595,
-        1.3440155740917987,
-        1.433872714789743,
-        1.5281908117138698,
-        1.69003726607707,
-        1.8495823707064574,
-        1.9559053020506383,
-        2.0132059158919446,
-        1.955702297198144,
-        2.104867888006254,
-        2.261764637699173,
-        2.5050384372352426,
-        2.823567281750371,
-        3.2400867361828602,
-        3.780648140454389,
-        4.648077494292977,
-        5.66304425713588,
-        7.026628978145027,
-        8.829860943545668,
-        11.198119503535395,
-        14.33743474512579,
-        18.33685531714667,
-        13.53860401563503,
-        11.080709921271307,
-        9.449853320969169,
-        8.107462397211066,
-        6.863989162120674,
-        6.396259545916507,
-        6.81463820076624,
-        5.427005682863182,
-        4.418943298481793,
-        3.4518053883269886,
-        2.5352747496128245,
-        1.6923358493547767,
-        0.8500621141889155,
-        0.6232239632932419,
-        0.4975078207672823,
-        0.36370866261654555,
-        0.2388046123748495,
-        0.11417801971651897,
-        0.16543345372593876,
-        0.30118145406322583,
-        0.45077991166652964,
-        0.6313839943323387,
-        0.8256999909589808,
-        1.0459592846686974,
-        1.3152396178412005,
-        1.7354622486631683,
-        2.210044139759077,
-        2.765629669728696,
-        3.573469694004473,
-        4.564334734979582,
-        2.8384242103994666,
-        2.317398505457618,
-        1.9046389329123485,
-        1.5216166895531273,
-        1.21502878455982,
-        0.9247542713757753,
-        0.6876838855368419,
-        0.508817688512579,
-        359.64287687559107,
-        0.6181685032387918,
-        0.9317879975774304,
-        1.2645054120050077,
-        1.6647958287693427,
-        2.123467696920443,
-        2.6346314354900073,
-        3.274421476458599,
-        3.9424547907017313,
-        5.045285784931309,
-        6.560702223235751,
-        8.485927476672884,
-        11.155186444370315,
-        8.499595498839653,
-        6.906803118057383,
-        5.708228921310592,
-        4.634083721787135,
-        3.6577148606456262,
-        2.7247103629865705,
-        1.746993552718152,
-        0.9178604387791438,
-        0.06952145205872284,
-        0.17347169581205435,
-        0.2620578136973677,
-        0.3086491647029561,
-        0.32758547682476546,
-        0.3188026628017724,
-        0.3055960645122582,
-        0.3335592464039223,
-        0.36980531613619405,
-        0.4164230780946241,
-        0.48562519540899984,
-        0.5852219903318314,
-        0.6877966559280253,
-        0.9575793942516952,
-        1.9177625089828894,
-        2.906379212646641,
-        4.15843500741812,
-        5.566655295675332,
-        7.282939110468817,
-        11.017946224478578,
-        8.956828304438318,
-        7.434781417086668,
-        6.059240359572755,
-        5.200265870383134,
-        4.5055477691158785,
-        3.939760207989025,
-        3.4763922467069506,
-        3.088101940247185,
-        2.7611700387227813,
-        2.501223786686211,
-        2.2837432657933334,
-        2.0895963667150284,
-        1.9092965991274014,
-        1.7387055110629035,
-        1.576325286725762,
-        1.4628300232893992,
-        1.2669335947175853,
-        1.130935703988996,
-        1.0042462615624572,
-        0.8865994529441537,
-        0.7774964528930184,
-        0.6764647946909577,
-        0.5832930712465441,
-        0.49811398763029047,
-        0.4212330017340662,
-        0.34314381752574263,
-        0.5418649230508947]
 
             ################## INPUT PARAMETERS ###################
 
@@ -680,7 +477,10 @@ class Reward:
 
             ############### OPTIMAL X,Y,SPEED,TIME ################
             
-            reset_state(steps)
+            try:
+                reset_state(steps)
+            except:
+                print('Error with reset_state.')
 
             # Get closest indexes for racing line (and distances to all points on racing line)
             closest_index, second_closest_index = closest_2_racing_points_index(
@@ -732,28 +532,11 @@ class Reward:
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
-            log_rewards = False
-            if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
-                if steering_angle > -1:
-                    STEERING_PUNISHMENT = 0.5
-                if speed > 2.5:
-                    SPEED_PUNISHMENT = 0.5
-                if prev_waypoint_index >= 20 and prev_waypoint_index <= 30:
-                    if speed > 2.0:
-                        SPEED_PUNISHMENT = 0.5
-                if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
-                    log_rewards = True
-                    if not is_left_of_center:
-                        LANE_REWARD = 0.1
-            elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
-                if steering_angle < 0:
-                    STEERING_PUNISHMENT = 0.5
-            elif prev_waypoint_index >= 104 and prev_waypoint_index <= 118:
-                if steering_angle > 0:
-                    STEERING_PUNISHMENT = 0.5
-            elif prev_waypoint_index >= 154 and prev_waypoint_index <= 161 or prev_waypoint_index >= 184 and prev_waypoint_index <= 190:
-                if steering_angle > 0:
-                    STEERING_PUNISHMENT = 0.5
+            
+            delta_p = progress - state.prev_progress
+            avg_delta_p = update_and_calculate_reward(delta_p)
+            avg_delta_p_reward = (avg_delta_p * 4) ** 2
+            reward += avg_delta_p_reward * (1 + (distance_reward/10)) + distance_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -764,44 +547,6 @@ class Reward:
             DISTANCE_MULTIPLE = scaled_multiplier
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
-            
-            A = 5
-            B = 2
-            C = 1
-            D = 0
-            delta_angle = delta_rl_angles[prev_waypoint_index]
-            if delta_angle >= -3 and delta_angle <= 3:
-                A = 5
-                B = 2
-                C = 1 # Distance multiplier
-                D = 0 # Speed multiplier
-                E = 0 # Squared distance multiplier
-            elif delta_angle < -3 or delta_angle > 3:
-                A = 3
-                B = 1.1
-                C = 1.5 # Distance multiplier
-                D = 1 # Speed multiplier
-                E = 1 # Squared distance multiplier
-            delta_progress_reward = 0
-            dp = progress - state.prev_progress
-            dp2 = progress - state.prev_progress2
-            if dp > 1:
-                print(f'Delta Progress: {dp}')
-                dp = 1
-            if dp2 > 2:
-                print(f'Delta Progress2: {dp2}')
-                dp2 = 2
-            delta_progress = ((dp) * A)**B
-            delta_progress2 = (dp2 * 0.5 * A) ** B
-            if delta_progress < 0 or delta_progress2 < 0:
-                print(f'progress: {progress}')
-                print(f'prev_progress: {state.prev_progress}')
-                print(f'prev_progress2: {state.prev_progress2}')
-                print(f'Closest waypoint index: {closest_index}')
-                print(f'steps: {steps}')
-
-            delta_progress_reward = max(0, delta_progress + delta_progress2)
-            delta_progress_reward = min(16, delta_progress_reward)
                     
             # Distance component
             DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -809,30 +554,7 @@ class Reward:
             # Speed component
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
-            DPC = delta_progress_reward
             
-            try:
-                if steps % 100 == 0:
-                    print(f'steps: {steps}')
-                    print(f'progress: {progress}')
-                    print(f'delta_progress reward: {DPC}')
-                    print(f'DC: {DC}\nPC: {DPC}\n SC: {SC}\nSQDC: {SQDC}')
-                    print(f'Prev waypoint index: {prev_waypoint_index}')
-            except:
-                print('Error in printing steps and delta_progress')
-            try:
-                optimal_speed_multiplier = -1 + (optimal_speed / 4)
-                optimal_speed_multiplier = max(0, optimal_speed_multiplier)
-            except:
-                optimal_speed_multiplier = 1
-            
-            if (prev_waypoint_index >= 24 and prev_waypoint_index <= 29) or (prev_waypoint_index >= 76 and prev_waypoint_index <= 83):
-                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (C * DC) + (D * SC) + (distance_reward * DPC) # Add extra squared distance, extra C distance, and extra C capstone.
-            else:
-                reward += (C * DC) + (D * SC) + DPC + (optimal_speed_multiplier * distance_reward * DPC)
-            
-            if optimal_speed >= 3.95 and speed > 3.95:
-                reward += 0.1
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -885,18 +607,6 @@ class Reward:
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
 
-        ####################### VERBOSE #######################
-
-        if self.verbose == True:
-            print("Closest index: %i" % closest_index)
-            print("Distance to racing line: %f" % dist)
-            print("=== Distance reward (w/out multiple): %f ===" % (distance_reward))
-            print("Optimal speed: %f" % optimals[2])
-            print("Speed difference: %f" % speed_diff)
-            print("=== Speed reward (w/out multiple): %f ===" % speed_reward)
-            print("Direction difference: %f" % direction_diff)
-            # print("=== Finish reward: %f ===" % finish_reward)
-
         #################### RETURN REWARD ####################
         
         state.prev_turn_angle = steering_angle
@@ -905,8 +615,6 @@ class Reward:
         state.prev_speed = speed
         state.prev_progress = progress
         state.prev_progress2 = state.prev_progress
-        state.prev_progress3 = state.prev_progress2
-        state.prev_progress4 = state.prev_progress3
 
         # Always return a float value
         return float(reward)
