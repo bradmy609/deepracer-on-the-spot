@@ -32,656 +32,656 @@ class Reward:
         self.verbose = verbose
 
     def reward_function(self, params):
+        try:
+            capstone_waypoints = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 55, 56, 57, 58, 59, 67, 68, 69, 70, 71, 77, 78, 79, 80, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 155, 156, 157, 158, 159, 160, 161, 184, 185, 186, 187, 188]
 
-        capstone_waypoints = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 55, 56, 57, 58, 59, 67, 68, 69, 70, 71, 77, 78, 79, 80, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 155, 156, 157, 158, 159, 160, 161, 184, 185, 186, 187, 188]
+            ################## HELPER FUNCTIONS ###################
+            def reset_state(steps):
+                if steps <= 2:
+                    state.reset()
 
-        ################## HELPER FUNCTIONS ###################
-        def reset_state(steps):
-            if steps <= 2:
-                state.reset()
+            def dist_2_points(x1, x2, y1, y2):
+                return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
 
-        def dist_2_points(x1, x2, y1, y2):
-            return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
+            def closest_2_racing_points_index(racing_coords, car_coords):
 
-        def closest_2_racing_points_index(racing_coords, car_coords):
+                # Calculate all distances to racing points
+                distances = []
+                for i in range(len(racing_coords)):
+                    distance = dist_2_points(x1=racing_coords[i][0], x2=car_coords[0],
+                                            y1=racing_coords[i][1], y2=car_coords[1])
+                    distances.append(distance)
 
-            # Calculate all distances to racing points
-            distances = []
-            for i in range(len(racing_coords)):
-                distance = dist_2_points(x1=racing_coords[i][0], x2=car_coords[0],
-                                         y1=racing_coords[i][1], y2=car_coords[1])
-                distances.append(distance)
+                # Get index of the closest racing point
+                closest_index = distances.index(min(distances))
 
-            # Get index of the closest racing point
-            closest_index = distances.index(min(distances))
+                # Get index of the second closest racing point
+                distances_no_closest = distances.copy()
+                distances_no_closest[closest_index] = 999
+                second_closest_index = distances_no_closest.index(
+                    min(distances_no_closest))
 
-            # Get index of the second closest racing point
-            distances_no_closest = distances.copy()
-            distances_no_closest[closest_index] = 999
-            second_closest_index = distances_no_closest.index(
-                min(distances_no_closest))
+                return [closest_index, second_closest_index]
 
-            return [closest_index, second_closest_index]
+            def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
+                
+                # Calculate the distances between 2 closest racing points
+                a = abs(dist_2_points(x1=closest_coords[0],
+                                    x2=second_closest_coords[0],
+                                    y1=closest_coords[1],
+                                    y2=second_closest_coords[1]))
 
-        def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
+                # Distances between car and closest and second closest racing point
+                b = abs(dist_2_points(x1=car_coords[0],
+                                    x2=closest_coords[0],
+                                    y1=car_coords[1],
+                                    y2=closest_coords[1]))
+                c = abs(dist_2_points(x1=car_coords[0],
+                                    x2=second_closest_coords[0],
+                                    y1=car_coords[1],
+                                    y2=second_closest_coords[1]))
+
+                # Calculate distance between car and racing line (goes through 2 closest racing points)
+                # try-except in case a=0 (rare bug in DeepRacer)
+                try:
+                    distance = abs(-(a**4) + 2*(a**2)*(b**2) + 2*(a**2)*(c**2) -
+                                (b**4) + 2*(b**2)*(c**2) - (c**4))**0.5 / (2*a)
+                except:
+                    distance = b
+
+                return distance
+
+            # Calculate which one of the closest racing points is the next one and which one the previous one
+            def next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading):
+
+                # Virtually set the car more into the heading direction
+                heading_vector = [math.cos(math.radians(
+                    heading)), math.sin(math.radians(heading))]
+                new_car_coords = [car_coords[0]+heading_vector[0],
+                                car_coords[1]+heading_vector[1]]
+
+                # Calculate distance from new car coords to 2 closest racing points
+                distance_closest_coords_new = dist_2_points(x1=new_car_coords[0],
+                                                            x2=closest_coords[0],
+                                                            y1=new_car_coords[1],
+                                                            y2=closest_coords[1])
+                distance_second_closest_coords_new = dist_2_points(x1=new_car_coords[0],
+                                                                x2=second_closest_coords[0],
+                                                                y1=new_car_coords[1],
+                                                                y2=second_closest_coords[1])
+
+                if distance_closest_coords_new <= distance_second_closest_coords_new:
+                    next_point_coords = closest_coords
+                    prev_point_coords = second_closest_coords
+                else:
+                    next_point_coords = second_closest_coords
+                    prev_point_coords = closest_coords
+
+                return [next_point_coords, prev_point_coords]
+
+            def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
+
+                # Calculate the direction of the center line based on the closest waypoints
+                next_point, prev_point = next_prev_racing_point(closest_coords,
+                                                                second_closest_coords,
+                                                                car_coords,
+                                                                heading)
+
+                # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
+                track_direction = math.atan2(
+                    next_point[1] - prev_point[1], next_point[0] - prev_point[0])
+
+                # Convert to degree
+                track_direction = math.degrees(track_direction)
+
+                # Calculate the difference between the track direction and the heading direction of the car
+                direction_diff = abs(track_direction - heading)
+                if direction_diff > 180:
+                    direction_diff = 360 - direction_diff
+
+                return direction_diff
+
+            # Gives back indexes that lie between start and end index of a cyclical list 
+            # (start index is included, end index is not)
+            def indexes_cyclical(start, end, array_len):
+                if end < start:
+                    end += array_len
+
+                return [index % array_len for index in range(start, end)]
             
-            # Calculate the distances between 2 closest racing points
-            a = abs(dist_2_points(x1=closest_coords[0],
-                                  x2=second_closest_coords[0],
-                                  y1=closest_coords[1],
-                                  y2=second_closest_coords[1]))
+            def find_border_points(params):
+                waypoints = params['waypoints']
+                closest_waypoints = params['closest_waypoints']
+                track_width = params['track_width']
+                
+                next_waypoint_index = closest_waypoints[1]
+                prev_waypoint_index = closest_waypoints[0]
+                next_waypoint = waypoints[next_waypoint_index]
+                prev_waypoint = waypoints[prev_waypoint_index]
+                
+                # Calculate the direction vector from prev_waypoint to next_waypoint
+                direction_vector = np.array([next_waypoint[0] - prev_waypoint[0], next_waypoint[1] - prev_waypoint[1]])
+                
+                # Calculate the perpendicular vector
+                perpendicular_vector = np.array([-direction_vector[1], direction_vector[0]])
+                
+                # Normalize the perpendicular vector
+                perpendicular_vector = perpendicular_vector / np.linalg.norm(perpendicular_vector)
+                
+                # Calculate the half-width of the track
+                half_width = track_width / 2.0
+                half_width += 0.4
+                
+                # Calculate the border points
+                inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
+                outer_border1 = np.array(prev_waypoint) + perpendicular_vector * half_width
+                inner_border2 = np.array(next_waypoint) - perpendicular_vector * half_width
+                outer_border2 = np.array(next_waypoint) + perpendicular_vector * half_width
+                
+                return inner_border1, outer_border1, inner_border2, outer_border2
+            
+            def find_min_max_heading(params, inner_border2, outer_border2):
+                car_x = params['x']
+                car_y = params['y']
+                car_heading = params['heading']
 
-            # Distances between car and closest and second closest racing point
-            b = abs(dist_2_points(x1=car_coords[0],
-                                  x2=closest_coords[0],
-                                  y1=car_coords[1],
-                                  y2=closest_coords[1]))
-            c = abs(dist_2_points(x1=car_coords[0],
-                                  x2=second_closest_coords[0],
-                                  y1=car_coords[1],
-                                  y2=second_closest_coords[1]))
+                # Calculate the vector from the car to the inner border
+                inner_vector_x = inner_border2[0] - car_x
+                inner_vector_y = inner_border2[1] - car_y
 
-            # Calculate distance between car and racing line (goes through 2 closest racing points)
-            # try-except in case a=0 (rare bug in DeepRacer)
-            try:
-                distance = abs(-(a**4) + 2*(a**2)*(b**2) + 2*(a**2)*(c**2) -
-                               (b**4) + 2*(b**2)*(c**2) - (c**4))**0.5 / (2*a)
-            except:
-                distance = b
+                # Calculate the vector from the car to the outer border
+                outer_vector_x = outer_border2[0] - car_x
+                outer_vector_y = outer_border2[1] - car_y
 
-            return distance
+                # Compute the angles in degrees
+                inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
+                outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
 
-        # Calculate which one of the closest racing points is the next one and which one the previous one
-        def next_prev_racing_point(closest_coords, second_closest_coords, car_coords, heading):
+                # Normalize angles to be within 0 to 360 degrees
+                inner_heading = (inner_heading + 360) % 360
+                outer_heading = (outer_heading + 360) % 360
 
-            # Virtually set the car more into the heading direction
-            heading_vector = [math.cos(math.radians(
-                heading)), math.sin(math.radians(heading))]
-            new_car_coords = [car_coords[0]+heading_vector[0],
-                              car_coords[1]+heading_vector[1]]
+                # Normalize car heading to be within 0 to 360 degrees
+                car_heading = (car_heading + 360) % 360
 
-            # Calculate distance from new car coords to 2 closest racing points
-            distance_closest_coords_new = dist_2_points(x1=new_car_coords[0],
-                                                        x2=closest_coords[0],
-                                                        y1=new_car_coords[1],
-                                                        y2=closest_coords[1])
-            distance_second_closest_coords_new = dist_2_points(x1=new_car_coords[0],
-                                                               x2=second_closest_coords[0],
-                                                               y1=new_car_coords[1],
-                                                               y2=second_closest_coords[1])
+                # Get the min and max headings
+                min_heading = min(inner_heading, outer_heading)
+                max_heading = max(inner_heading, outer_heading)
 
-            if distance_closest_coords_new <= distance_second_closest_coords_new:
-                next_point_coords = closest_coords
-                prev_point_coords = second_closest_coords
-            else:
-                next_point_coords = second_closest_coords
-                prev_point_coords = closest_coords
+                # Check if the car's heading is within the range considering circular nature
+                if max_heading - min_heading <= 180:
+                    # Normal case where min_heading is less than max_heading and the angle difference is <= 180
+                    is_within_range = min_heading <= car_heading <= max_heading
+                else:
+                    # Case where angles wrap around, e.g., min_heading=60, max_heading=270, car_heading=350
+                    is_within_range = car_heading >= max_heading or car_heading <= min_heading
 
-            return [next_point_coords, prev_point_coords]
+                return min_heading, max_heading, is_within_range
+            
+            def scale_value(x, old_min=1, old_max=2.9, new_min=1, new_max=2):
+                # Scale the value from the old range to the new range
+                scaled_value = new_min + ((x - old_min) / (old_max - old_min)) * (new_max - new_min)
+                return scaled_value
 
-        def racing_direction_diff(closest_coords, second_closest_coords, car_coords, heading):
+            #################### RACING LINE ######################
 
-            # Calculate the direction of the center line based on the closest waypoints
-            next_point, prev_point = next_prev_racing_point(closest_coords,
-                                                            second_closest_coords,
-                                                            car_coords,
-                                                            heading)
+            # Optimal racing line
+            # Each row: [x,y,speed,timeFromPreviousPoint]
+            racing_track = [[-0.37852, -5.40179, 4.0, 0.04288],
+            [-0.50852, -5.40192, 4.0, 0.0325],
+            [-0.63852, -5.40204, 4.0, 0.0325],
+            [-0.81004, -5.4022, 4.0, 0.04288],
+            [-1.11156, -5.40248, 4.0, 0.07538],
+            [-1.41308, -5.40276, 4.0, 0.07538],
+            [-1.71459, -5.40304, 4.0, 0.07538],
+            [-2.01611, -5.40333, 4.0, 0.07538],
+            [-2.31763, -5.40361, 4.0, 0.07538],
+            [-2.61915, -5.40389, 4.0, 0.07538],
+            [-2.92067, -5.40417, 4.0, 0.07538],
+            [-3.22219, -5.40444, 3.51477, 0.08579],
+            [-3.52371, -5.40475, 2.76264, 0.10914],
+            [-3.82523, -5.40512, 2.34805, 0.12841],
+            [-4.12675, -5.40529, 2.07692, 0.14518],
+            [-4.42507, -5.39906, 1.88106, 0.15863],
+            [-4.71489, -5.37705, 1.72525, 0.16847],
+            [-4.9902, -5.3321, 1.60171, 0.17416],
+            [-5.24501, -5.26007, 1.4, 0.18914],
+            [-5.47393, -5.15974, 1.4, 0.17853],
+            [-5.6723, -5.0322, 1.4, 0.16845],
+            [-5.83587, -4.88001, 1.4, 0.15958],
+            [-5.96069, -4.70701, 1.4, 0.15238],
+            [-6.03633, -4.51695, 1.45035, 0.14104],
+            [-6.06755, -4.31946, 1.50478, 0.13287],
+            [-6.05832, -4.12084, 1.5416, 0.12898],
+            [-6.01054, -3.92594, 1.61119, 0.12455],
+            [-5.9268, -3.73877, 1.68956, 0.12136],
+            [-5.80924, -3.56282, 1.7798, 0.1189],
+            [-5.6598, -3.40118, 1.88133, 0.11701],
+            [-5.48039, -3.25674, 2.00242, 0.11503],
+            [-5.27326, -3.13198, 2.14792, 0.11258],
+            [-5.04113, -3.02881, 2.32729, 0.10915],
+            [-4.78736, -2.94822, 2.55634, 0.10416],
+            [-4.51589, -2.88991, 2.86736, 0.09684],
+            [-4.23102, -2.85197, 3.32172, 0.08652],
+            [-3.93705, -2.83089, 4.0, 0.07368],
+            [-3.63779, -2.82176, 4.0, 0.07485],
+            [-3.33629, -2.81881, 4.0, 0.07538],
+            [-3.03479, -2.81577, 4.0, 0.07538],
+            [-2.73329, -2.81274, 4.0, 0.07538],
+            [-2.43178, -2.80973, 4.0, 0.07538],
+            [-2.13028, -2.80671, 4.0, 0.07538],
+            [-1.82877, -2.80369, 4.0, 0.07538],
+            [-1.52727, -2.80067, 4.0, 0.07538],
+            [-1.22577, -2.79765, 4.0, 0.07538],
+            [-0.92426, -2.79464, 4.0, 0.07538],
+            [-0.62276, -2.79161, 3.54819, 0.08498],
+            [-0.32202, -2.78696, 3.19953, 0.09401],
+            [-0.02379, -2.77708, 2.93607, 0.10163],
+            [0.27011, -2.75859, 2.7191, 0.1083],
+            [0.5578, -2.72851, 2.54003, 0.11388],
+            [0.83745, -2.68437, 2.39008, 0.11845],
+            [1.10728, -2.62417, 2.26065, 0.12229],
+            [1.36559, -2.54638, 2.14251, 0.12591],
+            [1.61065, -2.44973, 2.14251, 0.12296],
+            [1.84067, -2.33326, 2.14251, 0.12034],
+            [2.05369, -2.19616, 2.14251, 0.11824],
+            [2.2474, -2.03777, 2.14251, 0.11679],
+            [2.4188, -1.85745, 2.17344, 0.11447],
+            [2.56731, -1.65739, 2.20331, 0.11308],
+            [2.69201, -1.43948, 2.23409, 0.11238],
+            [2.79172, -1.20565, 2.26316, 0.11232],
+            [2.86503, -0.95799, 2.29084, 0.11275],
+            [2.91036, -0.69902, 2.31557, 0.11354],
+            [2.92621, -0.43193, 2.34084, 0.1143],
+            [2.91151, -0.16069, 2.36616, 0.1148],
+            [2.86597, 0.11009, 2.38343, 0.1152],
+            [2.79012, 0.37556, 2.40063, 0.11501],
+            [2.68525, 0.63151, 2.31643, 0.11941],
+            [2.55275, 0.87503, 2.23071, 0.12428],
+            [2.39319, 1.10447, 2.15362, 0.12977],
+            [2.20791, 1.31679, 2.07939, 0.13552],
+            [2.00312, 1.5047, 2.01149, 0.13818],
+            [1.78549, 1.66174, 1.94742, 0.13781],
+            [1.56001, 1.78587, 1.88725, 0.13638],
+            [1.32999, 1.87716, 1.82448, 0.13564],
+            [1.09769, 1.93597, 1.82448, 0.13134],
+            [0.86489, 1.96236, 1.82448, 0.12842],
+            [0.63319, 1.95569, 1.82448, 0.12705],
+            [0.40434, 1.91425, 1.82448, 0.12747],
+            [0.18065, 1.83462, 2.11313, 0.11237],
+            [-0.03762, 1.72475, 2.33402, 0.1047],
+            [-0.2504, 1.58789, 2.63792, 0.09591],
+            [-0.4582, 1.42764, 3.09814, 0.0847],
+            [-0.66204, 1.2485, 3.92939, 0.06906],
+            [-0.86331, 1.05643, 4.0, 0.06955],
+            [-1.08458, 0.85947, 3.9202, 0.07556],
+            [-1.31235, 0.67148, 3.83916, 0.07693],
+            [-1.54668, 0.49291, 3.75315, 0.0785],
+            [-1.78762, 0.32427, 3.67023, 0.08013],
+            [-2.03524, 0.16612, 3.58928, 0.08186],
+            [-2.28958, 0.01902, 3.50814, 0.08375],
+            [-2.55065, -0.11636, 3.41411, 0.08614],
+            [-2.81846, -0.23927, 3.17588, 0.09278],
+            [-3.09296, -0.34883, 2.85877, 0.10338],
+            [-3.37397, -0.44407, 2.61751, 0.11336],
+            [-3.66117, -0.5239, 2.42783, 0.12278],
+            [-3.95396, -0.58693, 2.27003, 0.13194],
+            [-4.25131, -0.6299, 2.13881, 0.14047],
+            [-4.54938, -0.64752, 2.0262, 0.14737],
+            [-4.84095, -0.63577, 1.92638, 0.15148],
+            [-5.11934, -0.59302, 1.83824, 0.15322],
+            [-5.37929, -0.51944, 1.75792, 0.15368],
+            [-5.61665, -0.41652, 1.68525, 0.15352],
+            [-5.82806, -0.28647, 1.60349, 0.15479],
+            [-6.01047, -0.13192, 1.60349, 0.1491],
+            [-6.16098, 0.04416, 1.60349, 0.14446],
+            [-6.27649, 0.23842, 1.60349, 0.14094],
+            [-6.35359, 0.44677, 1.60349, 0.13855],
+            [-6.38776, 0.66407, 1.67785, 0.1311],
+            [-6.38245, 0.88379, 1.75833, 0.12499],
+            [-6.34087, 1.10135, 1.84866, 0.11982],
+            [-6.26599, 1.31343, 1.95274, 0.11518],
+            [-6.16052, 1.51756, 2.07373, 0.1108],
+            [-6.02707, 1.71193, 2.21699, 0.10635],
+            [-5.8682, 1.89532, 2.39468, 0.10132],
+            [-5.68669, 2.06713, 2.61751, 0.09549],
+            [-5.48543, 2.22744, 2.91256, 0.08834],
+            [-5.26747, 2.37712, 3.33316, 0.07932],
+            [-5.03579, 2.51796, 4.0, 0.06778],
+            [-4.79315, 2.65268, 4.0, 0.06938],
+            [-4.54289, 2.78434, 4.0, 0.07069],
+            [-4.28696, 2.92106, 4.0, 0.07254],
+            [-4.03213, 3.05971, 4.0, 0.07253],
+            [-3.77863, 3.20061, 4.0, 0.07251],
+            [-3.52669, 3.34408, 4.0, 0.07248],
+            [-3.27656, 3.49043, 4.0, 0.07245],
+            [-3.02855, 3.63993, 4.0, 0.0724],
+            [-2.78299, 3.79283, 4.0, 0.07232],
+            [-2.54031, 3.94934, 3.95671, 0.07298],
+            [-2.30121, 4.09781, 3.68418, 0.07639],
+            [-2.06046, 4.2398, 3.45626, 0.08087],
+            [-1.81759, 4.37379, 3.26512, 0.08495],
+            [-1.57215, 4.49835, 3.0877, 0.08914],
+            [-1.32369, 4.61208, 3.0877, 0.0885],
+            [-1.07179, 4.71357, 3.0877, 0.08795],
+            [-0.81608, 4.80137, 3.0877, 0.08756],
+            [-0.55621, 4.87395, 3.0877, 0.08739],
+            [-0.29178, 4.92951, 3.66397, 0.07374],
+            [-0.02414, 4.97288, 3.96557, 0.06837],
+            [0.2463, 5.00572, 4.0, 0.06811],
+            [0.51919, 5.02966, 4.0, 0.06848],
+            [0.79414, 5.04632, 4.0, 0.06886],
+            [1.07076, 5.0574, 4.0, 0.06921],
+            [1.34861, 5.06462, 4.0, 0.06949],
+            [1.63171, 5.0698, 4.0, 0.07079],
+            [1.91482, 5.07644, 3.89932, 0.07262],
+            [2.19793, 5.08381, 3.38375, 0.0837],
+            [2.47928, 5.09082, 3.02986, 0.09289],
+            [2.75674, 5.09363, 2.76163, 0.10048],
+            [3.02985, 5.08871, 2.55092, 0.10708],
+            [3.29776, 5.07287, 2.38056, 0.11274],
+            [3.55928, 5.04331, 2.2359, 0.11771],
+            [3.8131, 4.99767, 2.10779, 0.12235],
+            [4.05775, 4.93387, 1.99724, 0.12659],
+            [4.29159, 4.85014, 1.99724, 0.12436],
+            [4.51273, 4.7449, 1.99724, 0.12262],
+            [4.71889, 4.61662, 1.99724, 0.12157],
+            [4.9071, 4.46362, 1.99724, 0.12145],
+            [5.07338, 4.28422, 2.17273, 0.11258],
+            [5.21906, 4.08318, 2.28663, 0.10858],
+            [5.34419, 3.86288, 2.41821, 0.10477],
+            [5.44893, 3.62543, 2.57484, 0.10079],
+            [5.53375, 3.37289, 2.75749, 0.09661],
+            [5.59938, 3.10721, 2.9853, 0.09167],
+            [5.64703, 2.83045, 3.27677, 0.08571],
+            [5.67845, 2.54465, 3.66743, 0.0784],
+            [5.69596, 2.25184, 4.0, 0.07333],
+            [5.70247, 1.95395, 4.0, 0.07449],
+            [5.71686, 1.65548, 4.0, 0.07471],
+            [5.73868, 1.35841, 4.0, 0.07447],
+            [5.76753, 1.06272, 4.0, 0.07427],
+            [5.80306, 0.76836, 4.0, 0.07412],
+            [5.84493, 0.4753, 4.0, 0.07401],
+            [5.89283, 0.18349, 4.0, 0.07393],
+            [5.94646, -0.10711, 4.0, 0.07388],
+            [6.00557, -0.39653, 4.0, 0.07385],
+            [6.06993, -0.68481, 3.54702, 0.08327],
+            [6.13932, -0.97197, 3.17461, 0.09306],
+            [6.21251, -1.25412, 2.89851, 0.10056],
+            [6.27523, -1.52513, 2.67676, 0.10392],
+            [6.32652, -1.7924, 2.49464, 0.10909],
+            [6.36391, -2.05751, 2.17447, 0.12313],
+            [6.38482, -2.32027, 2.17447, 0.12122],
+            [6.38679, -2.58012, 2.17447, 0.1195],
+            [6.36741, -2.8363, 2.17447, 0.11815],
+            [6.32415, -3.08779, 2.17447, 0.11735],
+            [6.25006, -3.33187, 2.24576, 0.11358],
+            [6.1473, -3.56719, 2.31823, 0.11077],
+            [6.01768, -3.79228, 2.39681, 0.10837],
+            [5.86299, -4.00558, 2.4801, 0.10624],
+            [5.68512, -4.20554, 2.56824, 0.1042],
+            [5.48613, -4.39076, 2.66167, 0.10214],
+            [5.26819, -4.56006, 2.76129, 0.09994],
+            [5.03359, -4.71258, 2.87175, 0.09744],
+            [4.78463, -4.84787, 2.99385, 0.09464],
+            [4.52354, -4.96589, 3.12995, 0.09154],
+            [4.25239, -5.06696, 3.28584, 0.08807],
+            [3.97307, -5.15176, 3.46447, 0.08426],
+            [3.68725, -5.22125, 3.6752, 0.08004],
+            [3.39637, -5.27663, 3.92664, 0.07541],
+            [3.1017, -5.31929, 4.0, 0.07444],
+            [2.80429, -5.35078, 4.0, 0.07477],
+            [2.50501, -5.37274, 4.0, 0.07502],
+            [2.20457, -5.38686, 4.0, 0.07519],
+            [1.90347, -5.39491, 4.0, 0.0753],
+            [1.60208, -5.39865, 4.0, 0.07535],
+            [1.30059, -5.39987, 4.0, 0.07537],
+            [0.99907, -5.40033, 4.0, 0.07538],
+            [0.69756, -5.40082, 4.0, 0.07538],
+            [0.39604, -5.40109, 4.0, 0.07538],
+            [0.09452, -5.40134, 4.0, 0.07538],
+            [-0.207, -5.40163, 4.0, 0.07538]]
+            
+            delta_rl_angles = [0.0,
+        0.23899301931345462,
+        0.18436071594925352,
+        0.12000842886214969,
+        0.0880490941751475,
+        0.05569602663140927,
+        0.056818338599327944,
+        0.049238629517162735,
+        0.04752293695284493,
+        0.031189862879415386,
+        0.04604920371883736,
+        0.052575019432225645,
+        0.14231961099983437,
+        1.1940139410189659,
+        2.2259830641281724,
+        3.2361889968515243,
+        4.2268382999033065,
+        5.2637681472298254,
+        6.339691065020247,
+        7.503936960609451,
+        8.979089242197404,
+        11.02780930446886,
+        16.862333803103468,
+        14.095933227028752,
+        12.019486930117978,
+        11.192824735891577,
+        12.029499019657521,
+        10.589592576334155,
+        9.175025000174912,
+        8.157968187211111,
+        7.2010458613666515,
+        6.278057034068979,
+        5.237275710447136,
+        4.2766377719406705,
+        3.460224577260533,
+        2.714069573284803,
+        2.0855691676673587,
+        1.5599526218059054,
+        1.117954291876913,
+        0.7628494942950965,
+        0.41276931013618423,
+        0.11661593814739035,
+        0.0005888243483127553,
+        2.269266019538918e-07,
+        0.05977376514096022,
+        0.25953911222632087,
+        0.5329235950999305,
+        0.8169182000436308,
+        1.1105324545242183,
+        1.4378471673243212,
+        1.804974008754641,
+        2.267455063504883,
+        2.7750458009714976,
+        3.457346581348247,
+        4.398939147160206,
+        5.379014938930197,
+        6.678068642449034,
+        8.194580765505862,
+        11.053618774684423,
+        9.409956743129953,
+        7.911104075224046,
+        7.038883512739858,
+        6.222749338957954,
+        5.671983263962318,
+        5.262769070746117,
+        4.976986418725232,
+        4.692922411884183,
+        4.656472989631425,
+        5.153252467355287,
+        6.040336595434837,
+        4.682085319072712,
+        4.6721844065611435,
+        4.7474692589124174,
+        4.906217257951425,
+        5.621365904750007,
+        6.375706500906233,
+        7.412640884749749,
+        8.820495011641128,
+        11.26394451367048,
+        14.425313990100136,
+        9.941225388947174,
+        7.446508861203085,
+        5.019289133618173,
+        2.3961076519518087,
+        1.1510301401957577,
+        1.1458219806992247,
+        1.1728693000448231,
+        1.2183699845647595,
+        1.3440155740917987,
+        1.433872714789743,
+        1.5281908117138698,
+        1.69003726607707,
+        1.8495823707064574,
+        1.9559053020506383,
+        2.0132059158919446,
+        1.955702297198144,
+        2.104867888006254,
+        2.261764637699173,
+        2.5050384372352426,
+        2.823567281750371,
+        3.2400867361828602,
+        3.780648140454389,
+        4.648077494292977,
+        5.66304425713588,
+        7.026628978145027,
+        8.829860943545668,
+        11.198119503535395,
+        14.33743474512579,
+        18.33685531714667,
+        13.53860401563503,
+        11.080709921271307,
+        9.449853320969169,
+        8.107462397211066,
+        6.863989162120674,
+        6.396259545916507,
+        6.81463820076624,
+        5.427005682863182,
+        4.418943298481793,
+        3.4518053883269886,
+        2.5352747496128245,
+        1.6923358493547767,
+        0.8500621141889155,
+        0.6232239632932419,
+        0.4975078207672823,
+        0.36370866261654555,
+        0.2388046123748495,
+        0.11417801971651897,
+        0.16543345372593876,
+        0.30118145406322583,
+        0.45077991166652964,
+        0.6313839943323387,
+        0.8256999909589808,
+        1.0459592846686974,
+        1.3152396178412005,
+        1.7354622486631683,
+        2.210044139759077,
+        2.765629669728696,
+        3.573469694004473,
+        4.564334734979582,
+        2.8384242103994666,
+        2.317398505457618,
+        1.9046389329123485,
+        1.5216166895531273,
+        1.21502878455982,
+        0.9247542713757753,
+        0.6876838855368419,
+        0.508817688512579,
+        359.64287687559107,
+        0.6181685032387918,
+        0.9317879975774304,
+        1.2645054120050077,
+        1.6647958287693427,
+        2.123467696920443,
+        2.6346314354900073,
+        3.274421476458599,
+        3.9424547907017313,
+        5.045285784931309,
+        6.560702223235751,
+        8.485927476672884,
+        11.155186444370315,
+        8.499595498839653,
+        6.906803118057383,
+        5.708228921310592,
+        4.634083721787135,
+        3.6577148606456262,
+        2.7247103629865705,
+        1.746993552718152,
+        0.9178604387791438,
+        0.06952145205872284,
+        0.17347169581205435,
+        0.2620578136973677,
+        0.3086491647029561,
+        0.32758547682476546,
+        0.3188026628017724,
+        0.3055960645122582,
+        0.3335592464039223,
+        0.36980531613619405,
+        0.4164230780946241,
+        0.48562519540899984,
+        0.5852219903318314,
+        0.6877966559280253,
+        0.9575793942516952,
+        1.9177625089828894,
+        2.906379212646641,
+        4.15843500741812,
+        5.566655295675332,
+        7.282939110468817,
+        11.017946224478578,
+        8.956828304438318,
+        7.434781417086668,
+        6.059240359572755,
+        5.200265870383134,
+        4.5055477691158785,
+        3.939760207989025,
+        3.4763922467069506,
+        3.088101940247185,
+        2.7611700387227813,
+        2.501223786686211,
+        2.2837432657933334,
+        2.0895963667150284,
+        1.9092965991274014,
+        1.7387055110629035,
+        1.576325286725762,
+        1.4628300232893992,
+        1.2669335947175853,
+        1.130935703988996,
+        1.0042462615624572,
+        0.8865994529441537,
+        0.7774964528930184,
+        0.6764647946909577,
+        0.5832930712465441,
+        0.49811398763029047,
+        0.4212330017340662,
+        0.34314381752574263,
+        0.5418649230508947]
 
-            # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
-            track_direction = math.atan2(
-                next_point[1] - prev_point[1], next_point[0] - prev_point[0])
+            ################## INPUT PARAMETERS ###################
 
-            # Convert to degree
-            track_direction = math.degrees(track_direction)
-
-            # Calculate the difference between the track direction and the heading direction of the car
-            direction_diff = abs(track_direction - heading)
-            if direction_diff > 180:
-                direction_diff = 360 - direction_diff
-
-            return direction_diff
-
-        # Gives back indexes that lie between start and end index of a cyclical list 
-        # (start index is included, end index is not)
-        def indexes_cyclical(start, end, array_len):
-            if end < start:
-                end += array_len
-
-            return [index % array_len for index in range(start, end)]
-        
-        def find_border_points(params):
+            # Read all input parameters
+            all_wheels_on_track = params['all_wheels_on_track']
+            x = params['x']
+            y = params['y']
+            distance_from_center = params['distance_from_center']
+            is_left_of_center = params['is_left_of_center']
+            heading = params['heading']
+            progress = params['progress']
+            steps = params['steps']
+            speed = params['speed']
+            steering_angle = params['steering_angle']
+            track_width = params['track_width']
             waypoints = params['waypoints']
             closest_waypoints = params['closest_waypoints']
-            track_width = params['track_width']
-            
-            next_waypoint_index = closest_waypoints[1]
             prev_waypoint_index = closest_waypoints[0]
-            next_waypoint = waypoints[next_waypoint_index]
-            prev_waypoint = waypoints[prev_waypoint_index]
+            next_waypoint_index = closest_waypoints[1]
+            is_offtrack = params['is_offtrack']
+
+            ############### OPTIMAL X,Y,SPEED,TIME ################
             
-            # Calculate the direction vector from prev_waypoint to next_waypoint
-            direction_vector = np.array([next_waypoint[0] - prev_waypoint[0], next_waypoint[1] - prev_waypoint[1]])
-            
-            # Calculate the perpendicular vector
-            perpendicular_vector = np.array([-direction_vector[1], direction_vector[0]])
-            
-            # Normalize the perpendicular vector
-            perpendicular_vector = perpendicular_vector / np.linalg.norm(perpendicular_vector)
-            
-            # Calculate the half-width of the track
-            half_width = track_width / 2.0
-            half_width += 0.4
-            
-            # Calculate the border points
-            inner_border1 = np.array(prev_waypoint) - perpendicular_vector * half_width
-            outer_border1 = np.array(prev_waypoint) + perpendicular_vector * half_width
-            inner_border2 = np.array(next_waypoint) - perpendicular_vector * half_width
-            outer_border2 = np.array(next_waypoint) + perpendicular_vector * half_width
-            
-            return inner_border1, outer_border1, inner_border2, outer_border2
-        
-        def find_min_max_heading(params, inner_border2, outer_border2):
-            car_x = params['x']
-            car_y = params['y']
-            car_heading = params['heading']
+            reset_state(steps)
 
-            # Calculate the vector from the car to the inner border
-            inner_vector_x = inner_border2[0] - car_x
-            inner_vector_y = inner_border2[1] - car_y
-
-            # Calculate the vector from the car to the outer border
-            outer_vector_x = outer_border2[0] - car_x
-            outer_vector_y = outer_border2[1] - car_y
-
-            # Compute the angles in degrees
-            inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
-            outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
-
-            # Normalize angles to be within 0 to 360 degrees
-            inner_heading = (inner_heading + 360) % 360
-            outer_heading = (outer_heading + 360) % 360
-
-            # Normalize car heading to be within 0 to 360 degrees
-            car_heading = (car_heading + 360) % 360
-
-            # Get the min and max headings
-            min_heading = min(inner_heading, outer_heading)
-            max_heading = max(inner_heading, outer_heading)
-
-            # Check if the car's heading is within the range considering circular nature
-            if max_heading - min_heading <= 180:
-                # Normal case where min_heading is less than max_heading and the angle difference is <= 180
-                is_within_range = min_heading <= car_heading <= max_heading
-            else:
-                # Case where angles wrap around, e.g., min_heading=60, max_heading=270, car_heading=350
-                is_within_range = car_heading >= max_heading or car_heading <= min_heading
-
-            return min_heading, max_heading, is_within_range
-        
-        def scale_value(x, old_min=1, old_max=2.9, new_min=1, new_max=2):
-            # Scale the value from the old range to the new range
-            scaled_value = new_min + ((x - old_min) / (old_max - old_min)) * (new_max - new_min)
-            return scaled_value
-
-        #################### RACING LINE ######################
-
-        # Optimal racing line
-        # Each row: [x,y,speed,timeFromPreviousPoint]
-        racing_track = [[-0.37852, -5.40179, 4.0, 0.04288],
-        [-0.50852, -5.40192, 4.0, 0.0325],
-        [-0.63852, -5.40204, 4.0, 0.0325],
-        [-0.81004, -5.4022, 4.0, 0.04288],
-        [-1.11156, -5.40248, 4.0, 0.07538],
-        [-1.41308, -5.40276, 4.0, 0.07538],
-        [-1.71459, -5.40304, 4.0, 0.07538],
-        [-2.01611, -5.40333, 4.0, 0.07538],
-        [-2.31763, -5.40361, 4.0, 0.07538],
-        [-2.61915, -5.40389, 4.0, 0.07538],
-        [-2.92067, -5.40417, 4.0, 0.07538],
-        [-3.22219, -5.40444, 3.51477, 0.08579],
-        [-3.52371, -5.40475, 2.76264, 0.10914],
-        [-3.82523, -5.40512, 2.34805, 0.12841],
-        [-4.12675, -5.40529, 2.07692, 0.14518],
-        [-4.42507, -5.39906, 1.88106, 0.15863],
-        [-4.71489, -5.37705, 1.72525, 0.16847],
-        [-4.9902, -5.3321, 1.60171, 0.17416],
-        [-5.24501, -5.26007, 1.4, 0.18914],
-        [-5.47393, -5.15974, 1.4, 0.17853],
-        [-5.6723, -5.0322, 1.4, 0.16845],
-        [-5.83587, -4.88001, 1.4, 0.15958],
-        [-5.96069, -4.70701, 1.4, 0.15238],
-        [-6.03633, -4.51695, 1.45035, 0.14104],
-        [-6.06755, -4.31946, 1.50478, 0.13287],
-        [-6.05832, -4.12084, 1.5416, 0.12898],
-        [-6.01054, -3.92594, 1.61119, 0.12455],
-        [-5.9268, -3.73877, 1.68956, 0.12136],
-        [-5.80924, -3.56282, 1.7798, 0.1189],
-        [-5.6598, -3.40118, 1.88133, 0.11701],
-        [-5.48039, -3.25674, 2.00242, 0.11503],
-        [-5.27326, -3.13198, 2.14792, 0.11258],
-        [-5.04113, -3.02881, 2.32729, 0.10915],
-        [-4.78736, -2.94822, 2.55634, 0.10416],
-        [-4.51589, -2.88991, 2.86736, 0.09684],
-        [-4.23102, -2.85197, 3.32172, 0.08652],
-        [-3.93705, -2.83089, 4.0, 0.07368],
-        [-3.63779, -2.82176, 4.0, 0.07485],
-        [-3.33629, -2.81881, 4.0, 0.07538],
-        [-3.03479, -2.81577, 4.0, 0.07538],
-        [-2.73329, -2.81274, 4.0, 0.07538],
-        [-2.43178, -2.80973, 4.0, 0.07538],
-        [-2.13028, -2.80671, 4.0, 0.07538],
-        [-1.82877, -2.80369, 4.0, 0.07538],
-        [-1.52727, -2.80067, 4.0, 0.07538],
-        [-1.22577, -2.79765, 4.0, 0.07538],
-        [-0.92426, -2.79464, 4.0, 0.07538],
-        [-0.62276, -2.79161, 3.54819, 0.08498],
-        [-0.32202, -2.78696, 3.19953, 0.09401],
-        [-0.02379, -2.77708, 2.93607, 0.10163],
-        [0.27011, -2.75859, 2.7191, 0.1083],
-        [0.5578, -2.72851, 2.54003, 0.11388],
-        [0.83745, -2.68437, 2.39008, 0.11845],
-        [1.10728, -2.62417, 2.26065, 0.12229],
-        [1.36559, -2.54638, 2.14251, 0.12591],
-        [1.61065, -2.44973, 2.14251, 0.12296],
-        [1.84067, -2.33326, 2.14251, 0.12034],
-        [2.05369, -2.19616, 2.14251, 0.11824],
-        [2.2474, -2.03777, 2.14251, 0.11679],
-        [2.4188, -1.85745, 2.17344, 0.11447],
-        [2.56731, -1.65739, 2.20331, 0.11308],
-        [2.69201, -1.43948, 2.23409, 0.11238],
-        [2.79172, -1.20565, 2.26316, 0.11232],
-        [2.86503, -0.95799, 2.29084, 0.11275],
-        [2.91036, -0.69902, 2.31557, 0.11354],
-        [2.92621, -0.43193, 2.34084, 0.1143],
-        [2.91151, -0.16069, 2.36616, 0.1148],
-        [2.86597, 0.11009, 2.38343, 0.1152],
-        [2.79012, 0.37556, 2.40063, 0.11501],
-        [2.68525, 0.63151, 2.31643, 0.11941],
-        [2.55275, 0.87503, 2.23071, 0.12428],
-        [2.39319, 1.10447, 2.15362, 0.12977],
-        [2.20791, 1.31679, 2.07939, 0.13552],
-        [2.00312, 1.5047, 2.01149, 0.13818],
-        [1.78549, 1.66174, 1.94742, 0.13781],
-        [1.56001, 1.78587, 1.88725, 0.13638],
-        [1.32999, 1.87716, 1.82448, 0.13564],
-        [1.09769, 1.93597, 1.82448, 0.13134],
-        [0.86489, 1.96236, 1.82448, 0.12842],
-        [0.63319, 1.95569, 1.82448, 0.12705],
-        [0.40434, 1.91425, 1.82448, 0.12747],
-        [0.18065, 1.83462, 2.11313, 0.11237],
-        [-0.03762, 1.72475, 2.33402, 0.1047],
-        [-0.2504, 1.58789, 2.63792, 0.09591],
-        [-0.4582, 1.42764, 3.09814, 0.0847],
-        [-0.66204, 1.2485, 3.92939, 0.06906],
-        [-0.86331, 1.05643, 4.0, 0.06955],
-        [-1.08458, 0.85947, 3.9202, 0.07556],
-        [-1.31235, 0.67148, 3.83916, 0.07693],
-        [-1.54668, 0.49291, 3.75315, 0.0785],
-        [-1.78762, 0.32427, 3.67023, 0.08013],
-        [-2.03524, 0.16612, 3.58928, 0.08186],
-        [-2.28958, 0.01902, 3.50814, 0.08375],
-        [-2.55065, -0.11636, 3.41411, 0.08614],
-        [-2.81846, -0.23927, 3.17588, 0.09278],
-        [-3.09296, -0.34883, 2.85877, 0.10338],
-        [-3.37397, -0.44407, 2.61751, 0.11336],
-        [-3.66117, -0.5239, 2.42783, 0.12278],
-        [-3.95396, -0.58693, 2.27003, 0.13194],
-        [-4.25131, -0.6299, 2.13881, 0.14047],
-        [-4.54938, -0.64752, 2.0262, 0.14737],
-        [-4.84095, -0.63577, 1.92638, 0.15148],
-        [-5.11934, -0.59302, 1.83824, 0.15322],
-        [-5.37929, -0.51944, 1.75792, 0.15368],
-        [-5.61665, -0.41652, 1.68525, 0.15352],
-        [-5.82806, -0.28647, 1.60349, 0.15479],
-        [-6.01047, -0.13192, 1.60349, 0.1491],
-        [-6.16098, 0.04416, 1.60349, 0.14446],
-        [-6.27649, 0.23842, 1.60349, 0.14094],
-        [-6.35359, 0.44677, 1.60349, 0.13855],
-        [-6.38776, 0.66407, 1.67785, 0.1311],
-        [-6.38245, 0.88379, 1.75833, 0.12499],
-        [-6.34087, 1.10135, 1.84866, 0.11982],
-        [-6.26599, 1.31343, 1.95274, 0.11518],
-        [-6.16052, 1.51756, 2.07373, 0.1108],
-        [-6.02707, 1.71193, 2.21699, 0.10635],
-        [-5.8682, 1.89532, 2.39468, 0.10132],
-        [-5.68669, 2.06713, 2.61751, 0.09549],
-        [-5.48543, 2.22744, 2.91256, 0.08834],
-        [-5.26747, 2.37712, 3.33316, 0.07932],
-        [-5.03579, 2.51796, 4.0, 0.06778],
-        [-4.79315, 2.65268, 4.0, 0.06938],
-        [-4.54289, 2.78434, 4.0, 0.07069],
-        [-4.28696, 2.92106, 4.0, 0.07254],
-        [-4.03213, 3.05971, 4.0, 0.07253],
-        [-3.77863, 3.20061, 4.0, 0.07251],
-        [-3.52669, 3.34408, 4.0, 0.07248],
-        [-3.27656, 3.49043, 4.0, 0.07245],
-        [-3.02855, 3.63993, 4.0, 0.0724],
-        [-2.78299, 3.79283, 4.0, 0.07232],
-        [-2.54031, 3.94934, 3.95671, 0.07298],
-        [-2.30121, 4.09781, 3.68418, 0.07639],
-        [-2.06046, 4.2398, 3.45626, 0.08087],
-        [-1.81759, 4.37379, 3.26512, 0.08495],
-        [-1.57215, 4.49835, 3.0877, 0.08914],
-        [-1.32369, 4.61208, 3.0877, 0.0885],
-        [-1.07179, 4.71357, 3.0877, 0.08795],
-        [-0.81608, 4.80137, 3.0877, 0.08756],
-        [-0.55621, 4.87395, 3.0877, 0.08739],
-        [-0.29178, 4.92951, 3.66397, 0.07374],
-        [-0.02414, 4.97288, 3.96557, 0.06837],
-        [0.2463, 5.00572, 4.0, 0.06811],
-        [0.51919, 5.02966, 4.0, 0.06848],
-        [0.79414, 5.04632, 4.0, 0.06886],
-        [1.07076, 5.0574, 4.0, 0.06921],
-        [1.34861, 5.06462, 4.0, 0.06949],
-        [1.63171, 5.0698, 4.0, 0.07079],
-        [1.91482, 5.07644, 3.89932, 0.07262],
-        [2.19793, 5.08381, 3.38375, 0.0837],
-        [2.47928, 5.09082, 3.02986, 0.09289],
-        [2.75674, 5.09363, 2.76163, 0.10048],
-        [3.02985, 5.08871, 2.55092, 0.10708],
-        [3.29776, 5.07287, 2.38056, 0.11274],
-        [3.55928, 5.04331, 2.2359, 0.11771],
-        [3.8131, 4.99767, 2.10779, 0.12235],
-        [4.05775, 4.93387, 1.99724, 0.12659],
-        [4.29159, 4.85014, 1.99724, 0.12436],
-        [4.51273, 4.7449, 1.99724, 0.12262],
-        [4.71889, 4.61662, 1.99724, 0.12157],
-        [4.9071, 4.46362, 1.99724, 0.12145],
-        [5.07338, 4.28422, 2.17273, 0.11258],
-        [5.21906, 4.08318, 2.28663, 0.10858],
-        [5.34419, 3.86288, 2.41821, 0.10477],
-        [5.44893, 3.62543, 2.57484, 0.10079],
-        [5.53375, 3.37289, 2.75749, 0.09661],
-        [5.59938, 3.10721, 2.9853, 0.09167],
-        [5.64703, 2.83045, 3.27677, 0.08571],
-        [5.67845, 2.54465, 3.66743, 0.0784],
-        [5.69596, 2.25184, 4.0, 0.07333],
-        [5.70247, 1.95395, 4.0, 0.07449],
-        [5.71686, 1.65548, 4.0, 0.07471],
-        [5.73868, 1.35841, 4.0, 0.07447],
-        [5.76753, 1.06272, 4.0, 0.07427],
-        [5.80306, 0.76836, 4.0, 0.07412],
-        [5.84493, 0.4753, 4.0, 0.07401],
-        [5.89283, 0.18349, 4.0, 0.07393],
-        [5.94646, -0.10711, 4.0, 0.07388],
-        [6.00557, -0.39653, 4.0, 0.07385],
-        [6.06993, -0.68481, 3.54702, 0.08327],
-        [6.13932, -0.97197, 3.17461, 0.09306],
-        [6.21251, -1.25412, 2.89851, 0.10056],
-        [6.27523, -1.52513, 2.67676, 0.10392],
-        [6.32652, -1.7924, 2.49464, 0.10909],
-        [6.36391, -2.05751, 2.17447, 0.12313],
-        [6.38482, -2.32027, 2.17447, 0.12122],
-        [6.38679, -2.58012, 2.17447, 0.1195],
-        [6.36741, -2.8363, 2.17447, 0.11815],
-        [6.32415, -3.08779, 2.17447, 0.11735],
-        [6.25006, -3.33187, 2.24576, 0.11358],
-        [6.1473, -3.56719, 2.31823, 0.11077],
-        [6.01768, -3.79228, 2.39681, 0.10837],
-        [5.86299, -4.00558, 2.4801, 0.10624],
-        [5.68512, -4.20554, 2.56824, 0.1042],
-        [5.48613, -4.39076, 2.66167, 0.10214],
-        [5.26819, -4.56006, 2.76129, 0.09994],
-        [5.03359, -4.71258, 2.87175, 0.09744],
-        [4.78463, -4.84787, 2.99385, 0.09464],
-        [4.52354, -4.96589, 3.12995, 0.09154],
-        [4.25239, -5.06696, 3.28584, 0.08807],
-        [3.97307, -5.15176, 3.46447, 0.08426],
-        [3.68725, -5.22125, 3.6752, 0.08004],
-        [3.39637, -5.27663, 3.92664, 0.07541],
-        [3.1017, -5.31929, 4.0, 0.07444],
-        [2.80429, -5.35078, 4.0, 0.07477],
-        [2.50501, -5.37274, 4.0, 0.07502],
-        [2.20457, -5.38686, 4.0, 0.07519],
-        [1.90347, -5.39491, 4.0, 0.0753],
-        [1.60208, -5.39865, 4.0, 0.07535],
-        [1.30059, -5.39987, 4.0, 0.07537],
-        [0.99907, -5.40033, 4.0, 0.07538],
-        [0.69756, -5.40082, 4.0, 0.07538],
-        [0.39604, -5.40109, 4.0, 0.07538],
-        [0.09452, -5.40134, 4.0, 0.07538],
-        [-0.207, -5.40163, 4.0, 0.07538]]
-        
-        inner_border_dists = [0.13,
-        0.13000000000000467,
-        0.17151094299700986,
-        0.3015183326338469,
-        0.3015201216622421,
-        0.30151809465991103,
-        0.3015202408714796,
-        0.3015221482192793,
-        0.3015159524771242,
-        0.30150617152089987,
-        0.3015452639062174,
-        0.3016091975828829,
-        0.3013992226139085,
-        0.30102090907581425,
-        0.30215698480106956,
-        0.30440133253226187,
-        0.2983525567627781,
-        0.2887299062375854,
-        0.2541338912873072,
-        0.19130644392948673,
-        0.12901771821617347,
-        0.10792716440920026,
-        0.15209874191506093,
-        0.20535105480786137,
-        0.20605582560228491,
-        0.17473040202148532,
-        0.1756774532399916,
-        0.1861599942990254,
-        0.18770038869595976,
-        0.19355178058349706,
-        0.20030017661782878,
-        0.2291157655346903,
-        0.26734994891024605,
-        0.2952858178233674,
-        0.30659812783631435,
-        0.30175674041319667,
-        0.30082838681348534,
-        0.3015912679691182,
-        0.30161121659175466,
-        0.3014993128254409,
-        0.30150990256698956,
-        0.3015251987500194,
-        0.301521167321651,
-        0.3015160511330448,
-        0.3015141032974548,
-        0.30153338562366927,
-        0.30152725671197445,
-        0.30139248623258896,
-        0.3015632810743322,
-        0.3024055467447197,
-        0.3003313824568261,
-        0.29602618812819775,
-        0.31355470958811493,
-        0.32377089653411995,
-        0.325837022687767,
-        0.3733362829464503,
-        0.4340742693015761,
-        0.44165416522612294,
-        0.41645232705802265,
-        0.40549994978680326,
-        0.4012724890423557,
-        0.38630906103376417,
-        0.3373111045576776,
-        0.3001024761125301,
-        0.301491018261021,
-        0.30095482349903097,
-        0.31773504490347104,
-        0.3819850755807846,
-        0.4429911170761009,
-        0.4512151795296634,
-        0.4218672120212558,
-        0.33243173185334185,
-        0.20767656214159227,
-        0.2181574536147724,
-        0.31805759691147695,
-        0.37186443284478166,
-        0.41131738129855405,
-        0.4336818456270205,
-        0.4430338985664258,
-        0.48106340013280047,
-        0.4925823375956175,
-        0.4175268483845072,
-        0.337056238559897,
-        0.29417406537116786,
-        0.27556934488757867,
-        0.27535694611982114,
-        0.2628707305821031,
-        0.269814349304622,
-        0.26867779631354965,
-        0.24677323214147473,
-        0.25349977297869586,
-        0.2614978235545927,
-        0.2666145285834842,
-        0.26287791153725926,
-        0.27965427949666927,
-        0.2829267042391148,
-        0.27173713509623526,
-        0.2878774559596001,
-        0.27390946579894665,
-        0.2772769391303775,
-        0.27999527387233597,
-        0.2714190530849446,
-        0.27635104501855473,
-        0.25573163328406356,
-        0.2300310056925409,
-        0.17751688850263192,
-        0.155650567096035,
-        0.16966530302682856,
-        0.1663739504906159,
-        0.17507029899707113,
-        0.2008058945860772,
-        0.2281012231298025,
-        0.24898309170852728,
-        0.25961458801147325,
-        0.2236374423941454,
-        0.17221786934902428,
-        0.17893928015137256,
-        0.216793683607256,
-        0.24289989036685,
-        0.27529931135567254,
-        0.3002094984003433,
-        0.31147238673298344,
-        0.31769569027102684,
-        0.34143538146852004,
-        0.3706349487705974,
-        0.3904293672881669,
-        0.39331733597392093,
-        0.33849675304738575,
-        0.29947430619063087,
-        0.30152840984847973,
-        0.30160057687153424,
-        0.30121059781398446,
-        0.29977460359685304,
-        0.269925927934953,
-        0.24181030088979338,
-        0.23654273752439559,
-        0.21306571345273015,
-        0.19544917724462788,
-        0.21338902583782385,
-        0.2333886197174249,
-        0.22353464466061962,
-        0.21672338085819193,
-        0.2574148376422784,
-        0.33257220595984793,
-        0.3878810761058204,
-        0.3926491620711604,
-        0.3928860005362821,
-        0.409867328934779,
-        0.37390535660702345,
-        0.31646125225128574,
-        0.3016101965867597,
-        0.2839607232851433,
-        0.20382361782530226,
-        0.17061915290800406,
-        0.2207456054096936,
-        0.23781206323290732,
-        0.2307330686117736,
-        0.22399845037799954,
-        0.21427495382483805,
-        0.19774588501358464,
-        0.17851161377053812,
-        0.17514596301715302,
-        0.21975261862147694,
-        0.2849693542953416,
-        0.3058702093376437,
-        0.30081404794752814,
-        0.30164684440434825,
-        0.30150431408155504,
-        0.3015160347163512,
-        0.3015442952042853,
-        0.3013348227123927,
-        0.30253498335697326,
-        0.29548742364823,
-        0.32719649438322673,
-        0.35327017656057225,
-        0.34334325667476095,
-        0.34830047745038195,
-        0.34371707302497795,
-        0.33404840171977485,
-        0.3327703463981383,
-        0.32106384341255895,
-        0.301553398593209,
-        0.2885198934985422,
-        0.25406272965436405,
-        0.19677224971254875,
-        0.1633484345523131,
-        0.16180585540762676,
-        0.1676091405086116,
-        0.19387341951556386,
-        0.24640904797652252,
-        0.29149206551175244,
-        0.3066813639556173,
-        0.3123479807439385,
-        0.2708710681984462,
-        0.22039606270654358,
-        0.2369608675834585,
-        0.2561018495962481,
-        0.26263291514665366,
-        0.27147370157929446,
-        0.27345856152172643,
-        0.2811109490669406,
-        0.2943541068145216,
-        0.2861457249569081,
-        0.2856802560918105,
-        0.3001080111406742,
-        0.2947406346804786,
-        0.2959082242198081,
-        0.3026740310062198,
-        0.302652055337323,
-        0.301343300160943,
-        0.301310386826607,
-        0.3015403979067059,
-        0.3015533496433731,
-        0.17151372276971388,
-        0.13]
-
-        ################## INPUT PARAMETERS ###################
-
-        # Read all input parameters
-        all_wheels_on_track = params['all_wheels_on_track']
-        x = params['x']
-        y = params['y']
-        distance_from_center = params['distance_from_center']
-        is_left_of_center = params['is_left_of_center']
-        heading = params['heading']
-        progress = params['progress']
-        steps = params['steps']
-        speed = params['speed']
-        steering_angle = params['steering_angle']
-        track_width = params['track_width']
-        waypoints = params['waypoints']
-        closest_waypoints = params['closest_waypoints']
-        prev_waypoint_index = closest_waypoints[0]
-        next_waypoint_index = closest_waypoints[1]
-        is_offtrack = params['is_offtrack']
-
-        ############### OPTIMAL X,Y,SPEED,TIME ################
-        
-        reset_state(steps)
-        try:
             # Get closest indexes for racing line (and distances to all points on racing line)
             closest_index, second_closest_index = closest_2_racing_points_index(
                 racing_track, [x, y])
@@ -729,21 +729,20 @@ class Reward:
             
             optimal_speed = optimals[2]
             speed_cap = optimal_speed + 0.75
-                
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
-            if prev_waypoint_index >= 17 and prev_waypoint_index <= 31:
+            log_rewards = False
+            if prev_waypoint_index >= 17 and prev_waypoint_index <= 32:
                 if steering_angle > -1:
                     STEERING_PUNISHMENT = 0.5
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
-                if prev_waypoint_index >= 25 and prev_waypoint_index <= 29:
+                if prev_waypoint_index >= 20 and prev_waypoint_index <= 30:
                     if speed > 2.0:
                         SPEED_PUNISHMENT = 0.5
-                if prev_waypoint_index >= 25 and prev_waypoint_index <= 29:
-                    if steering_angle > -6:
-                        STEERING_PUNISHMENT = 0.5
+                if prev_waypoint_index >= 25 and prev_waypoint_index <= 31:
+                    log_rewards = True
                     if not is_left_of_center:
                         LANE_REWARD = 0.1
             elif prev_waypoint_index >= 53 and prev_waypoint_index <= 80:
@@ -757,25 +756,32 @@ class Reward:
                     STEERING_PUNISHMENT = 0.5
             
             try:
-                scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 2) # Ranges 1-2 based on optimal speed
-                distance_weight = scale_value(4/optimal_speed, 1, 2.9, 1, 2)  # Ranges 1-4 based on optimal speed
-                speed_weight = scale_value(4/optimal_speed, 1, 2.9, 0, 2) # Ranges 0-4 based on optimal speed
+                scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
             except:
                 print('Error with scaled_multiplier.')
-                scaled_multiplier = 1
-                distance_weight = 1
-                speed_weight = 0
+                scaled_multiplier = 4/optimal_speed
             
             DISTANCE_MULTIPLE = scaled_multiplier
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
             
-            B = 2.0
-            if optimal_speed >= 3.0:
-                A = 15
-            else:
-                A = 7.5
-                
+            A = 5
+            B = 2
+            C = 1
+            D = 0
+            delta_angle = delta_rl_angles[prev_waypoint_index]
+            if delta_angle >= -3 and delta_angle <= 3:
+                A = 5
+                B = 2
+                C = 1 # Distance multiplier
+                D = 0 # Speed multiplier
+                E = 0 # Squared distance multiplier
+            elif delta_angle < -3 or delta_angle > 3:
+                A = 3
+                B = 1.1
+                C = 1.5 # Distance multiplier
+                D = 1 # Speed multiplier
+                E = 1 # Squared distance multiplier
             delta_progress_reward = 0
             dp = progress - state.prev_progress
             dp2 = progress - state.prev_progress2
@@ -785,10 +791,8 @@ class Reward:
             if dp2 > 2:
                 print(f'Delta Progress2: {dp2}')
                 dp2 = 2
-            if dp > 0.6:
-                print(f'Delta_progress is greater than 0.5 at waypoint: {prev_waypoint_index}')
-            delta_progress = ((dp) ** B) * A
-            delta_progress2 = ((dp2 * 0.5) ** B) * A
+            delta_progress = ((dp) * A)**B
+            delta_progress2 = (dp2 * 0.5 * A) ** B
             if delta_progress < 0 or delta_progress2 < 0:
                 print(f'progress: {progress}')
                 print(f'prev_progress: {state.prev_progress}')
@@ -797,13 +801,13 @@ class Reward:
                 print(f'steps: {steps}')
 
             delta_progress_reward = max(0, delta_progress + delta_progress2)
-            delta_progress_reward = min(10, delta_progress_reward)
+            delta_progress_reward = min(20, delta_progress_reward)
                     
             # Distance component
-            DC = distance_reward * distance_weight
+            DC = (distance_reward) * DISTANCE_MULTIPLE
             SQDC = distance_reward ** DISTANCE_EXPONENT
             # Speed component
-            SC = speed_reward * speed_weight
+            SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             DPC = delta_progress_reward
             
@@ -816,13 +820,18 @@ class Reward:
                     print(f'Prev waypoint index: {prev_waypoint_index}')
             except:
                 print('Error in printing steps and delta_progress')
+            try:
+                optimal_speed_multiplier = -1 + (optimal_speed / 4)
+                optimal_speed_multiplier = max(0, optimal_speed_multiplier)
+            except:
+                optimal_speed_multiplier = 1
             
-            reward += DC + SC + DPC
+            if (prev_waypoint_index >= 24 and prev_waypoint_index <= 29) or (prev_waypoint_index >= 76 and prev_waypoint_index <= 83):
+                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (C * DC) + (D * SC) + (distance_reward * DPC) # Add extra squared distance, extra C distance, and extra C capstone.
+            else:
+                reward += (C * DC) + (D * SC) + DPC + (optimal_speed_multiplier * distance_reward * DPC)
             
-            if (prev_waypoint_index >= 24 and prev_waypoint_index <= 31) or (prev_waypoint_index >= 77 and prev_waypoint_index <= 83) or (prev_waypoint_index >= 110 and prev_waypoint_index <= 116):
-                reward += (distance_reward * DPC)
-            
-            if optimal_speed >= 3.95 and speed >= 3.95:
+            if optimal_speed >= 3.95 and speed > 3.95:
                 reward += 0.1
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
@@ -840,16 +849,15 @@ class Reward:
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
                 reward *= 0.5
             if not is_within_range:
-                reward *= 0.5
-            if direction_diff > 30:
-                reward *= 0.5
-            elif direction_diff >= 25:
-                reward *= 0.6
-            elif direction_diff >= 20:
-                reward *= 0.7
-            elif direction_diff >= 15:
                 reward *= 0.8
-            elif direction_diff >= 10:
+                
+            if direction_diff > 30:
+                reward *= 0.75
+            elif direction_diff >= 25:
+                reward *= 0.8
+            elif direction_diff >= 20:
+                reward *= 0.85
+            elif direction_diff >= 15:
                 reward *= 0.9
             
             # Punishing too fast or too slow
@@ -857,7 +865,7 @@ class Reward:
             if speed_diff_zero > 0.75:
                 reward *= 0.5
             if speed > speed_cap and speed_cap < 4:
-                reward *= 0.5
+                reward *= 0.1
             
             reward *= DISTANCE_PUNISHMENT
             reward *= STEERING_PUNISHMENT
