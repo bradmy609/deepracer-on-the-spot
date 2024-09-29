@@ -536,7 +536,8 @@ class Reward:
             delta_p = progress - state.prev_progress
             avg_delta_p = update_and_calculate_reward(delta_p)
             avg_delta_p_reward = (avg_delta_p * 4) ** 2
-            reward += avg_delta_p_reward * (1 + (distance_reward/10))
+            reward += avg_delta_p_reward + (distance_reward/4) # Distance reward should be about 25% of average reward.
+            total_progress_multiplier = 1 + (progress/100) # Later actions are worth more than earlier actions.
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
