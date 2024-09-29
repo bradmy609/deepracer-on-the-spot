@@ -801,7 +801,7 @@ class Reward:
                 print(f'steps: {steps}')
 
             delta_progress_reward = max(0, delta_progress + delta_progress2)
-            delta_progress_reward = min(20, delta_progress_reward)
+            delta_progress_reward = min(16, delta_progress_reward)
                     
             # Distance component
             DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -827,7 +827,7 @@ class Reward:
                 optimal_speed_multiplier = 1
             
             if (prev_waypoint_index >= 24 and prev_waypoint_index <= 29) or (prev_waypoint_index >= 76 and prev_waypoint_index <= 83):
-                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (C * DC) + (D * SC) + (distance_reward * DPC) # Add extra squared distance, extra C distance, and extra C capstone.
+                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (2 * C * DC) + (D * SC) + (distance_reward * DPC) # Add extra squared distance, extra C distance, and extra C capstone.
             else:
                 reward += (C * DC) + (D * SC) + DPC + (optimal_speed_multiplier * distance_reward * DPC)
             
