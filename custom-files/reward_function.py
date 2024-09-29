@@ -770,8 +770,11 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
             
-            A = 4.0
-            B = 2
+            B = 2.0
+            if optimal_speed >= 3.0:
+                A = 15
+            else:
+                A = 5
                 
             delta_progress_reward = 0
             dp = progress - state.prev_progress
@@ -782,8 +785,10 @@ class Reward:
             if dp2 > 2:
                 print(f'Delta Progress2: {dp2}')
                 dp2 = 2
-            delta_progress = ((dp) * A) ** B
-            delta_progress2 = (dp2 * 0.5 * A) ** B
+            if dp > 0.5:
+                print(f'Delta_progress is greater than 0.5 at waypoint: {prev_waypoint_index}')
+            delta_progress = ((dp) ** B) * A
+            delta_progress2 = ((dp2 * 0.5) ** B) * A
             if delta_progress < 0 or delta_progress2 < 0:
                 print(f'progress: {progress}')
                 print(f'prev_progress: {state.prev_progress}')
@@ -814,8 +819,8 @@ class Reward:
             
             reward += DC + SC + DPC
             
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 29:
-                reward += 2 * (DC + SC) + DPC + SQDC
+            if (prev_waypoint_index >= 24 and prev_waypoint_index <= 31) or (prev_waypoint_index >= 77 and prev_waypoint_index <= 83) or (prev_waypoint_index >= 110 and prev_waypoint_index <= 116):
+                reward += 2 * (distance_reward * DPC)
             
             if optimal_speed >= 3.95 and speed >= 3.95:
                 reward += 0.1
@@ -852,7 +857,7 @@ class Reward:
             if speed_diff_zero > 0.75:
                 reward *= 0.5
             if speed > speed_cap and speed_cap < 4:
-                reward *= 0.1
+                reward *= 0.5
             
             reward *= DISTANCE_PUNISHMENT
             reward *= STEERING_PUNISHMENT
