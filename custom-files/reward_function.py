@@ -10,7 +10,12 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
-        self.delta_progress_list = [0] * 10
+        self.delta_progress_list1 = [0] * 1
+        self.delta_progress_list2 = [0] * 2
+        self.delta_progress_list4 = [0] * 4
+        self.delta_progress_list8 = [0] * 8
+        self.delta_progress_list16 = [0] * 16
+        
 
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -20,7 +25,11 @@ class STATE:
         self.prev_speed = None
         self.prev_progress = 0
         self.prev_progress2 = 0
-        self.delta_progress_list = [0] * 10
+        self.delta_progress_list1 = [0] * 1
+        self.delta_progress_list2 = [0] * 2
+        self.delta_progress_list4 = [0] * 4
+        self.delta_progress_list8 = [0] * 8
+        self.delta_progress_list16 = [0] * 16
         
 state = STATE()
 
@@ -31,22 +40,25 @@ class Reward:
 
     def reward_function(self, params):
         try:
-            def update_and_calculate_reward(new_delta_progress):
+            def update_and_calculate_reward(new_delta_progress, delta_progress_list):
                 # FILO: Add new delta-progress value to the end and remove the oldest one
-                state.delta_progress_list.append(new_delta_progress)  # Add new value
-                state.delta_progress_list.pop(0)  # Remove the oldest value (first in the list)
+                delta_progress_list.append(new_delta_progress)  # Add new value
+                delta_progress_list.pop(0)  # Remove the oldest value (first in the list)
 
-                # Filter non-zero values
-                non_zero_values = [val for val in state.delta_progress_list if val != 0]
-
-                if len(non_zero_values) == 0:
-                    return 0  # If no non-zero values, return 0 as reward
+                # Check if the list contains any zeros
+                if 0 in delta_progress_list:
+                    return 0  # If any zero values, return 0 as reward
 
                 # Calculate the average of the non-zero values
-                avg_delta_progress = sum(non_zero_values) / len(non_zero_values)
+                avg_delta_progress = sum(delta_progress_list) / len(delta_progress_list)
 
                 # Return the average as the reward
                 return avg_delta_progress
+            
+            def normalize_delta_angle(angle, old_min=0, old_max=18.4, new_min=0.1, new_max=1):
+                # Apply min-max normalization formula
+                normalized_angle = ((angle - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+                return normalized_angle
             
             ################## HELPER FUNCTIONS ###################
             def reset_state(steps):
@@ -534,11 +546,18 @@ class Reward:
             LANE_REWARD = 0
             
             delta_p = progress - state.prev_progress
-            avg_delta_p = update_and_calculate_reward(delta_p)
-            avg_delta_p_reward = (avg_delta_p * 4) ** 2
-            reward += avg_delta_p_reward + (distance_reward/4) # Distance reward should be about 25% of average reward.
-            total_progress_multiplier = 1 + (progress/100) # Later actions are worth more than earlier actions.
-            reward *= total_progress_multiplier
+            if delta_p > 1:
+                print(f'Error with delta-p calculation: {delta_p}')
+                delta_p = 1
+                
+            avg_delta_p = (update_and_calculate_reward(delta_p, state.delta_progress_list1) * 4) ** 2
+            avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * 4) ** 2
+            avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * 4) ** 2
+            avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * 4) ** 2
+            avg_delta_p16 = (update_and_calculate_reward(delta_p, state.delta_progress_list16) * 4) ** 2
+            
+            reward += (avg_delta_p/2 + avg_delta_p2/1 + avg_delta_p4/0.5 + avg_delta_p8/0.25 + avg_delta_p16/0.125) * (1 + distance_reward/5)
+            
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
             except:
