@@ -15,6 +15,8 @@ class STATE:
         self.delta_progress_list4 = [0] * 4
         self.delta_progress_list8 = [0] * 8
         self.delta_progress_list16 = [0] * 16
+        self.delta_progress_list32 = [0] * 32
+        self.delta_progress_list64 = [0] * 64
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -29,6 +31,8 @@ class STATE:
         self.delta_progress_list4 = [0] * 4
         self.delta_progress_list8 = [0] * 8
         self.delta_progress_list16 = [0] * 16
+        self.delta_progress_list32 = [0] * 32
+        self.delta_progress_list64 = [0] * 64
         
 state = STATE()
 
@@ -554,8 +558,8 @@ class Reward:
             avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * 4) ** 2
             avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * 4) ** 2
             avg_delta_p16 = (update_and_calculate_reward(delta_p, state.delta_progress_list16) * 4) ** 2
-            
-            reward += (avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16) * (1 + distance_reward/5) + distance_reward
+            avg_delta_p32 = (update_and_calculate_reward(delta_p, state.delta_progress_list32) * 4) ** 2
+            avg_delta_p64 = (update_and_calculate_reward(delta_p, state.delta_progress_list64) * 4) ** 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -573,7 +577,7 @@ class Reward:
             # Speed component
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
-            
+            reward += ((avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16 + avg_delta_p32 + avg_delta_p64) * (1 + distance_reward/4)) + (distance_reward * DISTANCE_MULTIPLE) + (speed_reward * SPEED_MULTIPLE) 
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
