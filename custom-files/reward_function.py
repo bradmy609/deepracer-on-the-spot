@@ -554,10 +554,8 @@ class Reward:
             avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * 4) ** 2
             avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * 4) ** 2
             avg_delta_p16 = (update_and_calculate_reward(delta_p, state.delta_progress_list16) * 4) ** 2
-            avg_delta_p32 = (update_and_calculate_reward(delta_p, state.delta_progress_list32) * 4) ** 2
-            avg_delta_p64 = (update_and_calculate_reward(delta_p, state.delta_progress_list64) * 4) ** 2
             
-            reward += (avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16 + avg_delta_p32 + avg_delta_p64) * (1 + distance_reward/5) + distance_reward
+            reward += (avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16) * (1 + distance_reward/5) + distance_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
