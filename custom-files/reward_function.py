@@ -15,10 +15,7 @@ class STATE:
         self.delta_progress_list4 = [0] * 4
         self.delta_progress_list8 = [0] * 8
         self.delta_progress_list16 = [0] * 16
-        self.delta_progress_list32 = [0] * 32
-        self.delta_progress_list64 = [0] * 64
         
-
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
         self.prev_turn_angle = None
@@ -32,8 +29,6 @@ class STATE:
         self.delta_progress_list4 = [0] * 4
         self.delta_progress_list8 = [0] * 8
         self.delta_progress_list16 = [0] * 16
-        self.delta_progress_list32 = [0] * 32
-        self.delta_progress_list64 = [0] * 64
         
 state = STATE()
 
