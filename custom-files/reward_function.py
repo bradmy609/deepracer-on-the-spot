@@ -577,7 +577,9 @@ class Reward:
             # Speed component
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
-            reward += ((avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16 + avg_delta_p32 + avg_delta_p64) * (1 + distance_reward)) + distance_reward
+            if prev_waypoint_index >= 18 and prev_waypoint_index <= 21:
+                reward += 3 * ((distance_reward * DISTANCE_MULTIPLE) + (speed_reward * SPEED_MULTIPLE))
+            reward += ((avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16 + avg_delta_p32 + avg_delta_p64) * (1 + distance_reward)) + (distance_reward * DISTANCE_MULTIPLE) + (speed_reward * SPEED_MULTIPLE)
             
             if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
                 if speed > 2.5:
