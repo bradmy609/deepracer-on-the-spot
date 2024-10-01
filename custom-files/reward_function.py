@@ -771,7 +771,7 @@ class Reward:
             
             if rl_to_cl[prev_waypoint_index] >= 0.3:
                 delta_p_multiple = 2
-                capstone_multiple = 2.25
+                capstone_multiple = 3.0
             else:
                 delta_p_multiple = 4
                 capstone_multiple = 0
@@ -801,7 +801,7 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             
-            reward += ((avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16 + avg_delta_p32 + avg_delta_p64) * (0.5 + distance_reward)) + distance_reward + capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE))
+            reward += ((avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16 + avg_delta_p32 + avg_delta_p64) * (1 + distance_reward)) + (4 * distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
             
             if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
                 if speed > 2.5:
@@ -837,8 +837,11 @@ class Reward:
             
             # Punishing too fast or too slow
             speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.75:
+            if speed_diff_zero > 0.5:
                 reward *= 0.5
+            elif speed_diff_zero < -0.5:
+                reward *= 0.5
+
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
             
