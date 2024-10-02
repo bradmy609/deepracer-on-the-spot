@@ -769,9 +769,9 @@ class Reward:
                 print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
                 delta_p = 0.8
             
-            if rl_to_cl[prev_waypoint_index] >= 0.3:
+            if rl_to_cl[prev_waypoint_index] >= 0.4:
                 delta_p_multiple = 2
-                capstone_multiple = 3.0
+                capstone_multiple = 2.5
             else:
                 delta_p_multiple = 4
                 capstone_multiple = 0
@@ -801,12 +801,19 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             
-            reward += ((avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8 + avg_delta_p16 + avg_delta_p32 + avg_delta_p64) * (1 + distance_reward)) + (5 * distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
+            reward += ((avg_delta_p + (avg_delta_p2) + (avg_delta_p4) + (avg_delta_p8) + (avg_delta_p16) + (avg_delta_p32) + (avg_delta_p64)) * (1 + distance_reward)) + (4 * distance_reward)
             
-            if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
+            if prev_waypoint_index >= 19 and prev_waypoint_index <= 32:
+                reward *= 0.7 + ((prev_waypoint_index - 19) / 10)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle > 0:
+                    STEERING_PUNISHMENT *= 0.5
+            if prev_waypoint_index >= 76 and prev_waypoint_index <= 86:
+                reward *= 1 + ((prev_waypoint_index - 76) / 10)
+                if speed > 2.5:
+                    SPEED_PUNISHMENT = 0.5
+                if steering_angle < 0:
                     STEERING_PUNISHMENT *= 0.5
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
