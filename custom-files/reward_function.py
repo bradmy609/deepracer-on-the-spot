@@ -805,7 +805,7 @@ class Reward:
                 if steering_angle > 0:
                     STEERING_PUNISHMENT *= 0.5
             if prev_waypoint_index >= 75 and prev_waypoint_index <= 84:
-                reward *= 1 + ((prev_waypoint_index - 76) / 3)
+                reward *= 1 + ((prev_waypoint_index - 75) / 3)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle < 5:
