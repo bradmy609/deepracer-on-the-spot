@@ -832,6 +832,9 @@ class Reward:
                     reward *= 0.1
                 if delta_turn_angle > 30:
                     reward *= 0.1
+                    
+            reward *= total_progress_multiplier
+            total_progress_multiplier = 1 + ((progress/100)**2) * 10
             
             # Punishing erratic steering or steering out of range of valid directions.
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
