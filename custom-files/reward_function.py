@@ -768,13 +768,8 @@ class Reward:
             if delta_p > 0.8:
                 print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
                 delta_p = 0.8
-            
-            if rl_to_cl[prev_waypoint_index] >= 0.4:
-                delta_p_multiple = 2
-                capstone_multiple = 2.5
-            else:
-                delta_p_multiple = 4
-                capstone_multiple = 0
+                
+            delta_p_multiple = 4
                 
             avg_delta_p = (update_and_calculate_reward(delta_p, state.delta_progress_list1) * delta_p_multiple) ** 2
             avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * delta_p_multiple) ** 2
@@ -803,14 +798,14 @@ class Reward:
             
             reward += (avg_delta_p + (avg_delta_p2) + (avg_delta_p4) + (avg_delta_p8) + (avg_delta_p16) + (avg_delta_p32) + (avg_delta_p64)) + (4 * distance_reward)
             
-            if prev_waypoint_index >= 19 and prev_waypoint_index <= 32:
-                reward *= 0.6 + ((prev_waypoint_index - 19) / 5)
+            if prev_waypoint_index >= 20 and prev_waypoint_index <= 32:
+                reward *= 0.8 + ((prev_waypoint_index - 20) / 3)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle > 0:
                     STEERING_PUNISHMENT *= 0.5
             if prev_waypoint_index >= 75 and prev_waypoint_index <= 84:
-                reward *= 1 + ((prev_waypoint_index - 76) / 5)
+                reward *= 1 + ((prev_waypoint_index - 76) / 3)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle < 5:
