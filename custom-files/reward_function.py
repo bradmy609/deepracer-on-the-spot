@@ -771,15 +771,15 @@ class Reward:
             
             if rl_to_cl[prev_waypoint_index] >= 0.4:
                 delta_p_multiple = 3
-                capstone_multiple = .7
+                capstone_multiple = 2.8
             else:
                 delta_p_multiple = 6
                 capstone_multiple = 0
                 
             avg_delta_p = (update_and_calculate_reward(delta_p, state.delta_progress_list1) * delta_p_multiple) ** 2
-            # avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * delta_p_multiple) ** 2
-            # avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * delta_p_multiple) ** 2
-            # avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * delta_p_multiple) ** 2
+            avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * delta_p_multiple) ** 2
+            avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * delta_p_multiple) ** 2
+            avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * delta_p_multiple) ** 2
             # avg_delta_p16 = (update_and_calculate_reward(delta_p, state.delta_progress_list16) * delta_p_multiple) ** 2
             
             try:
@@ -799,7 +799,7 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             
-            reward += (avg_delta_p) + (distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
+            reward += (avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8) + (4 * distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
@@ -809,6 +809,7 @@ class Reward:
             #         reward += 0.1
             #     if delta_speed == 0:
             #         reward += 0.1
+            
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
                 reward *= 1 + ((prev_waypoint_index - 20)/5)
