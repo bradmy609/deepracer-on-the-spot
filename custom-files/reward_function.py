@@ -768,16 +768,19 @@ class Reward:
             if delta_p > 0.8:
                 print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
                 delta_p = 0.8
-                
-            delta_p_multiple = 4
+            
+            if rl_to_cl[prev_waypoint_index] >= 0.4:
+                delta_p_multiple = 3
+                capstone_multiple = .7
+            else:
+                delta_p_multiple = 6
+                capstone_multiple = 0
                 
             avg_delta_p = (update_and_calculate_reward(delta_p, state.delta_progress_list1) * delta_p_multiple) ** 2
-            avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * delta_p_multiple) ** 2
-            avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * delta_p_multiple) ** 2
-            avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * delta_p_multiple) ** 2
-            avg_delta_p16 = (update_and_calculate_reward(delta_p, state.delta_progress_list16) * delta_p_multiple) ** 2
-            avg_delta_p32 = (update_and_calculate_reward(delta_p, state.delta_progress_list32) * delta_p_multiple) ** 2
-            avg_delta_p64 = (update_and_calculate_reward(delta_p, state.delta_progress_list64) * delta_p_multiple) ** 2
+            # avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * delta_p_multiple) ** 2
+            # avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * delta_p_multiple) ** 2
+            # avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * delta_p_multiple) ** 2
+            # avg_delta_p16 = (update_and_calculate_reward(delta_p, state.delta_progress_list16) * delta_p_multiple) ** 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -796,37 +799,42 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             
-            reward += (avg_delta_p + (avg_delta_p2) + (avg_delta_p4) + (avg_delta_p8) + (avg_delta_p16) + (avg_delta_p32) + (avg_delta_p64)) + (4 * distance_reward)
+            reward += (avg_delta_p) + (distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
             
-            if prev_waypoint_index >= 20 and prev_waypoint_index <= 32:
-                reward *= 0.6 + ((prev_waypoint_index - 20) / 3)
-                if speed > 2.5:
-                    SPEED_PUNISHMENT = 0.5
-                if steering_angle > 0:
-                    STEERING_PUNISHMENT *= 0.5
-            if prev_waypoint_index >= 75 and prev_waypoint_index <= 84:
-                reward *= 1 + ((prev_waypoint_index - 75) / 3)
-                if speed > 2.5:
-                    SPEED_PUNISHMENT = 0.5
-                if steering_angle < 5:
-                    STEERING_PUNISHMENT *= 0.5
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
-                reward *= 1 + ((prev_waypoint_index - 110) / 10)
+            # Bonuses for not changing steering.
+            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+            #     delta_speed = abs(speed - state.prev_speed)
+            #     if delta_turn_angle == 0:
+            #         reward += 0.1
+            #     if delta_speed == 0:
+            #         reward += 0.1
+            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
+                reward *= 1 + ((prev_waypoint_index - 20)/5)
+            if prev_waypoint_index >= 78 and prev_waypoint_index <= 84:
+                reward *= 1 + ((prev_waypoint_index - 58)/5)
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
+                reward *= 1 + ((prev_waypoint_index - 110)/10)
+                
+            # No more additions to rewards after this point.
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+                # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
                 delta_speed = abs(speed - state.prev_speed)
-                if delta_turn_angle == 0:
-                    reward += 0.3
-                if delta_speed == 0:
-                    reward += 0.3
-                # Erratic steering punishments
                 if state.prev_turn_angle > 10 and steering_angle < -10:
                     reward *= 0.1
                 elif state.prev_turn_angle < -10 and steering_angle > 10:
                     reward *= 0.1
                 if delta_turn_angle > 30:
                     reward *= 0.1
+            
+            if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
+                if speed > 2.5:
+                    SPEED_PUNISHMENT = 0.5
+                if steering_angle > 0:
+                    STEERING_PUNISHMENT *= 0.5
             
             # Punishing erratic steering or steering out of range of valid directions.
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
