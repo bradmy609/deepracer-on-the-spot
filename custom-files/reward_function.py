@@ -809,16 +809,22 @@ class Reward:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle > 0:
                     STEERING_PUNISHMENT *= 0.5
-            if prev_waypoint_index >= 76 and prev_waypoint_index <= 86:
+            if prev_waypoint_index >= 75 and prev_waypoint_index <= 84:
                 reward *= 1 + ((prev_waypoint_index - 76) / 10)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
-                if steering_angle < 0:
+                if steering_angle < 5:
                     STEERING_PUNISHMENT *= 0.5
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
+                reward *= 1 + ((prev_waypoint_index - 110) / 10)
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
                 delta_speed = abs(speed - state.prev_speed)
+                if delta_turn_angle == 0:
+                    reward += 0.1
+                if delta_speed == 0:
+                    reward += 0.1
                 # Erratic steering punishments
                 if state.prev_turn_angle > 10 and steering_angle < -10:
                     reward *= 0.1
