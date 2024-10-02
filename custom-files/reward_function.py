@@ -801,16 +801,16 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             
-            reward += ((avg_delta_p + (avg_delta_p2) + (avg_delta_p4) + (avg_delta_p8) + (avg_delta_p16) + (avg_delta_p32) + (avg_delta_p64)) * (1 + distance_reward)) + (4 * distance_reward)
+            reward += (avg_delta_p + (avg_delta_p2) + (avg_delta_p4) + (avg_delta_p8) + (avg_delta_p16) + (avg_delta_p32) + (avg_delta_p64)) + (4 * distance_reward)
             
             if prev_waypoint_index >= 19 and prev_waypoint_index <= 32:
-                reward *= 0.7 + ((prev_waypoint_index - 19) / 10)
+                reward *= 0.6 + ((prev_waypoint_index - 19) / 5)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle > 0:
                     STEERING_PUNISHMENT *= 0.5
             if prev_waypoint_index >= 75 and prev_waypoint_index <= 84:
-                reward *= 1 + ((prev_waypoint_index - 76) / 10)
+                reward *= 1 + ((prev_waypoint_index - 76) / 5)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle < 5:
@@ -822,9 +822,9 @@ class Reward:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
                 delta_speed = abs(speed - state.prev_speed)
                 if delta_turn_angle == 0:
-                    reward += 0.1
+                    reward += 0.3
                 if delta_speed == 0:
-                    reward += 0.1
+                    reward += 0.3
                 # Erratic steering punishments
                 if state.prev_turn_angle > 10 and steering_angle < -10:
                     reward *= 0.1
