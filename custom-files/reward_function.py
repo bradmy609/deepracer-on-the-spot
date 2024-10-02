@@ -799,7 +799,7 @@ class Reward:
             reward += (avg_delta_p + (avg_delta_p2) + (avg_delta_p4) + (avg_delta_p8) + (avg_delta_p16) + (avg_delta_p32) + (avg_delta_p64)) + (4 * distance_reward)
             
             if prev_waypoint_index >= 20 and prev_waypoint_index <= 32:
-                reward *= 0.8 + ((prev_waypoint_index - 20) / 3)
+                reward *= 0.6 + ((prev_waypoint_index - 20) / 3)
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle > 0:
