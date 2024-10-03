@@ -771,7 +771,7 @@ class Reward:
             
             if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 delta_p_multiple = 3
-                capstone_multiple = 2.0
+                capstone_multiple = 1.6
             else:
                 delta_p_multiple = 6
                 capstone_multiple = 0
@@ -780,7 +780,6 @@ class Reward:
             avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * delta_p_multiple) ** 2
             avg_delta_p4 = (update_and_calculate_reward(delta_p, state.delta_progress_list4) * delta_p_multiple) ** 2
             avg_delta_p8 = (update_and_calculate_reward(delta_p, state.delta_progress_list8) * delta_p_multiple) ** 2
-            # avg_delta_p16 = (update_and_calculate_reward(delta_p, state.delta_progress_list16) * delta_p_multiple) ** 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
