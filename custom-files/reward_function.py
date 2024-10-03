@@ -589,7 +589,7 @@ class Reward:
         0.9247542713757753,
         0.6876838855368419,
         0.508817688512579,
-        0.50,
+        359.64287687559107,
         0.6181685032387918,
         0.9317879975774304,
         1.2645054120050077,
@@ -765,13 +765,13 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
             
-            A = 5.5
+            A = 6
             B = 2
             C = 1
             D = 0
             delta_angle = delta_rl_angles[prev_waypoint_index]
             if delta_angle >= -5 and delta_angle <= 5:
-                A = 5.5
+                A = 6
                 B = 2
                 C = 1 # Distance multiplier
                 D = 0 # Speed multiplier
@@ -827,7 +827,7 @@ class Reward:
                 optimal_speed_multiplier = 1
             
             if (prev_waypoint_index >= 25 and prev_waypoint_index <= 30) or (prev_waypoint_index >= 76 and prev_waypoint_index <= 83):
-                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (C * DC) + (D * SC) + (DPC) # Add extra squared distance, extra C distance, and extra D speed, and extra DPC.
+                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (0.5 * C * DC) + (0.5 * D * SC) + (0.5 * distance_reward * DPC) # Add extra squared distance, extra C distance, and extra D speed, and extra DPC.
             else:
                 reward += (C * DC) + (D * SC) + DPC + (optimal_speed_multiplier * distance_reward * DPC)
             
