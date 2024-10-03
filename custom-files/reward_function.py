@@ -771,7 +771,7 @@ class Reward:
             
             if rl_to_cl[prev_waypoint_index] >= 0.4:
                 delta_p_multiple = 3
-                capstone_multiple = 2.8
+                capstone_multiple = 2.0
             else:
                 delta_p_multiple = 6
                 capstone_multiple = 0
@@ -812,9 +812,9 @@ class Reward:
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward *= 1 + ((prev_waypoint_index - 20)/5)
+                reward *= 1 + ((prev_waypoint_index - 20)/10)
             if prev_waypoint_index >= 78 and prev_waypoint_index <= 84:
-                reward *= 1 + ((prev_waypoint_index - 58)/5)
+                reward *= 1 + ((prev_waypoint_index - 58)/10)
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
                 reward *= 1 + ((prev_waypoint_index - 110)/10)
                 
