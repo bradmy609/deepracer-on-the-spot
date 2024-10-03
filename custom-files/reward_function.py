@@ -798,7 +798,7 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             
-            reward += (avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8) + (4 * distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
+            reward += (avg_delta_p + avg_delta_p2 + avg_delta_p4 + avg_delta_p8) + (2 * distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
