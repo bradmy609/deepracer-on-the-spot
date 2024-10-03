@@ -765,19 +765,19 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
             
-            A = 5.5
+            A = 6
             B = 2
             C = 1
             D = 0
             delta_angle = delta_rl_angles[prev_waypoint_index]
             if delta_angle >= -5 and delta_angle <= 5:
-                A = 5.5
+                A = 6
                 B = 2
                 C = 1 # Distance multiplier
                 D = 0 # Speed multiplier
                 E = 0 # Squared distance multiplier
             elif delta_angle < -5 or delta_angle > 5:
-                A = 3
+                A = 4
                 B = 1.5
                 C = 1.5 # Distance multiplier
                 D = 1.5 # Speed multiplier
