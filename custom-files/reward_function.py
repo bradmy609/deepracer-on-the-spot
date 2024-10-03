@@ -771,9 +771,9 @@ class Reward:
             
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 delta_p_multiple = 4
-                capstone_multiple = 1.75
+                capstone_multiple = 1.5
             else:
-                delta_p_multiple = 6
+                delta_p_multiple = 7
                 capstone_multiple = 1
                 
             avg_delta_p = (update_and_calculate_reward(delta_p, state.delta_progress_list1) * delta_p_multiple) ** 2
@@ -786,7 +786,6 @@ class Reward:
                 SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.9)
             except:
                 print('Error with scaled_multiplier.')
-                SPEED_BONUS = 1
                 scaled_multiplier = 4/optimal_speed
             
             DISTANCE_MULTIPLE = scaled_multiplier
@@ -799,8 +798,10 @@ class Reward:
             # Speed component
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
-            
-            reward += (avg_delta_p * (1 + distance_reward)) + ((capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE) + (0.5 * SPEED_BONUS * DC) + (0.5 * SPEED_BONUS * SQDC)))
+            if delta_turn_angle <= 5 and delta_turn_angle >= -5 and SPEED_BONUS > 1.4:
+                reward += (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))) + (avg_delta_p * distance_reward)
+            else:
+                reward += (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
@@ -813,10 +814,10 @@ class Reward:
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward *= 1 + ((prev_waypoint_index - 23)/12)
-            if prev_waypoint_index >= 78 and prev_waypoint_index <= 84:
-                reward *= 1 + ((prev_waypoint_index - 58)/12)
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
+                reward *= 1 + ((prev_waypoint_index - 20)/12)
+            if prev_waypoint_index >= 76 and prev_waypoint_index <= 85:
+                reward *= 1 + ((prev_waypoint_index - 76)/12)
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 117:
                 reward *= 1 + ((prev_waypoint_index - 110)/12)
                 
             # No more additions to rewards after this point.
