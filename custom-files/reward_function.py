@@ -765,7 +765,7 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
             
-            A = 5
+            A = 5.5
             B = 2
             C = 1
             D = 0
