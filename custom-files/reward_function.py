@@ -770,7 +770,7 @@ class Reward:
                 delta_p = 0.8
             
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
-                delta_p_multiple = 4
+                delta_p_multiple = 5
                 capstone_multiple = 1.5
             else:
                 delta_p_multiple = 7
