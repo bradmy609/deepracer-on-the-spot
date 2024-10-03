@@ -770,8 +770,8 @@ class Reward:
             C = 1
             D = 0
             delta_angle = delta_rl_angles[prev_waypoint_index]
-            if delta_angle >= -3 and delta_angle <= 3:
-                A = 5
+            if delta_angle >= -5 and delta_angle <= 5:
+                A = 5.5
                 B = 2
                 C = 1 # Distance multiplier
                 D = 0 # Speed multiplier
