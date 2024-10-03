@@ -780,7 +780,7 @@ class Reward:
                 A = 3
                 B = 1.5
                 C = 1.5 # Distance multiplier
-                D = 1 # Speed multiplier
+                D = 1.5 # Speed multiplier
                 E = 1 # Squared distance multiplier
             delta_progress_reward = 0
             dp = progress - state.prev_progress
