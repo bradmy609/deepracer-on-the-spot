@@ -769,12 +769,12 @@ class Reward:
                 print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
                 delta_p = 0.8
             
-            if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
-                delta_p_multiple = 3
-                capstone_multiple = 0.5
+            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
+                delta_p_multiple = 4
+                capstone_multiple = 1.5
             else:
                 delta_p_multiple = 6
-                capstone_multiple = 0
+                capstone_multiple = 1
                 
             avg_delta_p = (update_and_calculate_reward(delta_p, state.delta_progress_list1) * delta_p_multiple) ** 2
             avg_delta_p2 = (update_and_calculate_reward(delta_p, state.delta_progress_list2) * delta_p_multiple) ** 2
@@ -783,6 +783,7 @@ class Reward:
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
+                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.9)
             except:
                 print('Error with scaled_multiplier.')
                 scaled_multiplier = 4/optimal_speed
@@ -798,7 +799,7 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             
-            reward += (avg_delta_p) + (0.5 * distance_reward) + (capstone_multiple * ((speed_reward * SPEED_MULTIPLE + distance_reward * DISTANCE_MULTIPLE)))
+            reward += (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
