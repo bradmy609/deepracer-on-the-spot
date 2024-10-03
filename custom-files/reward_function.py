@@ -769,10 +769,13 @@ class Reward:
                 print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
                 delta_p = 0.8
             
+            is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
+                is_in_turn = True
                 delta_p_multiple = 5
                 capstone_multiple = 1.5
             else:
+                is_in_turn = False
                 delta_p_multiple = 7
                 capstone_multiple = 1
                 
@@ -798,10 +801,10 @@ class Reward:
             # Speed component
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
-            if delta_turn_angle <= 5 and delta_turn_angle >= -5 and SPEED_BONUS > 1.4:
-                reward += (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))) + (0.5 * avg_delta_p * distance_reward)
-            else:
-                reward += (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+            if is_in_turn:
+                reward = ((distance_reward ** 2) * avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+            elif not is_in_turn:
+                reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
@@ -809,15 +812,15 @@ class Reward:
             #     delta_speed = abs(speed - state.prev_speed)
             #     if delta_turn_angle == 0:
             #         reward += 0.1
-            #     if delta_speed == 0:
-            #         reward += 0.1
+                # if delta_speed == 0:
+                #     reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
                 reward *= 1 + ((prev_waypoint_index - 20)/12)
             if prev_waypoint_index >= 76 and prev_waypoint_index <= 85:
                 reward *= 1 + ((prev_waypoint_index - 76)/12)
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 117:
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
                 reward *= 1 + ((prev_waypoint_index - 110)/12)
                 
             # No more additions to rewards after this point.
