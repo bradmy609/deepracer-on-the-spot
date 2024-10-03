@@ -776,9 +776,9 @@ class Reward:
                 C = 1 # Distance multiplier
                 D = 0 # Speed multiplier
                 E = 0 # Squared distance multiplier
-            elif delta_angle < -3 or delta_angle > 3:
+            elif delta_angle < -5 or delta_angle > 5:
                 A = 3
-                B = 1.1
+                B = 1.5
                 C = 1.5 # Distance multiplier
                 D = 1 # Speed multiplier
                 E = 1 # Squared distance multiplier
@@ -826,8 +826,8 @@ class Reward:
             except:
                 optimal_speed_multiplier = 1
             
-            if (prev_waypoint_index >= 24 and prev_waypoint_index <= 29) or (prev_waypoint_index >= 76 and prev_waypoint_index <= 83):
-                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (C * DC) + (D * SC) + (distance_reward * DPC) # Add extra squared distance, extra C distance, and extra C capstone.
+            if (prev_waypoint_index >= 25 and prev_waypoint_index <= 30) or (prev_waypoint_index >= 76 and prev_waypoint_index <= 83):
+                reward += (C * DC) + (D * SC) + DPC + (E * 1 * SQDC) + (C * DC) + (D * SC) + (DPC) # Add extra squared distance, extra C distance, and extra D speed, and extra DPC.
             else:
                 reward += (C * DC) + (D * SC) + DPC + (optimal_speed_multiplier * distance_reward * DPC)
             
@@ -862,7 +862,9 @@ class Reward:
             
             # Punishing too fast or too slow
             speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.75:
+            if speed_diff_zero > 0.5:
+                reward *= 0.5
+            elif speed_diff_zero < -0.5:
                 reward *= 0.5
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
