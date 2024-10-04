@@ -758,7 +758,7 @@ class Reward:
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
-                delta_p_multiple = 4
+                delta_p_multiple = 5
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
@@ -825,6 +825,8 @@ class Reward:
                 reward *= 1 + ((prev_waypoint_index - 76)/25)
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
                 reward *= 1 + ((prev_waypoint_index - 110)/12)
+            if prev_waypoint_index >= 151 and prev_waypoint_index <= 155:
+                reward *= 0.9
                 
             # No more additions to rewards after this point.
             
