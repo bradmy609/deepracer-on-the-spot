@@ -758,27 +758,18 @@ class Reward:
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
-                delta_p_multiple = 6
+                delta_p_multiple = 5
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
-                delta_p_multiple = 8
+                delta_p_multiple = 7
                 capstone_multiple = 1
             
                 
             delta_p1 = progress - state.prev_progress
-            delta_p2 = progress - state.prev_progress2
-            delta_p3 = progress - state.prev_progress3
-            delta_p4 = progress - state.prev_progress4
             if delta_p1 > 0.8:
                 delta_p1 = 0.8
-            if delta_p2 > 0.8:
-                delta_p2 = 0.8
-            if delta_p3 > 0.8:
-                delta_p3 = 0.8
-            if delta_p4 > 0.8:
-                delta_p4 = 0.8
-            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
+            delta_p_reward = (delta_p1)
             avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
             
             try:
@@ -820,7 +811,7 @@ class Reward:
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward *= 1 + ((prev_waypoint_index - 20)/12)
+                reward *= 1 + ((prev_waypoint_index - 23)/12)
             if prev_waypoint_index >= 55 and prev_waypoint_index <= 85:
                 reward *= 1 + ((prev_waypoint_index - 55)/25)
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
