@@ -756,7 +756,7 @@ class Reward:
                 delta_p = 0.8
             
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
+            if delta_rl_angles[prev_waypoint_index] >= 6 or delta_rl_angles[prev_waypoint_index] <= -6:
                 is_in_turn = True
                 delta_p_multiple = 6
                 capstone_multiple = 1.5
@@ -807,7 +807,11 @@ class Reward:
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
+                if prev_waypoint_index >= 55 and prev_waypoint_index <= 196:
+                    bonus_reward = (avg_delta_p * distance_reward)/2
+                else:
+                    bonus_reward = (avg_delta_p * distance_reward)/10
+                reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
@@ -820,8 +824,8 @@ class Reward:
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward *= 1.25
-            if prev_waypoint_index >= 55 and prev_waypoint_index <= 85:
+                reward *= 1.5
+            if (prev_waypoint_index >= 57 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76) and (prev_waypoint_index >= 79 and prev_waypoint_index <= 87):
                 reward *= 1.25
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
                 reward *= 1.25
