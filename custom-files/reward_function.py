@@ -790,9 +790,7 @@ class Reward:
             speed_cap = optimal_speed + 0.75
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
-            LANE_REWARD = 0
             
-            delta_p = progress - state.prev_progress
             if delta_p > 0.8:
                 print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
                 delta_p = 0.8
@@ -807,17 +805,17 @@ class Reward:
                 delta_p_multiple = 8
                 capstone_multiple = 1
             
-                
             delta_p1 = progress - state.prev_progress
             delta_p2 = progress - state.prev_progress2
             delta_p3 = progress - state.prev_progress3
             delta_p4 = progress - state.prev_progress4
             
             dist_ratio = dist_ratios[prev_waypoint_index]
-                        
+            
             if delta_p1 > 0.8:
                 delta_p1 = 0.8
-            delta_p_reward = (delta_p1)
+            
+            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
             avg_delta_p = (delta_p_reward * dist_ratio * delta_p_multiple) ** 2
             
             try:
@@ -927,9 +925,7 @@ class Reward:
             ## Zero reward if off track ##
             track_width = params['track_width']
             distance_from_center = params['distance_from_center']
-
-            # Zero reward if the center of the car is off the track.
-            reward += LANE_REWARD
+            
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
