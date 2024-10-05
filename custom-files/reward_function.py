@@ -816,7 +816,7 @@ class Reward:
                 delta_p1 = 0.8
             
             delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
-            avg_delta_p = (delta_p_reward * dist_ratio * delta_p_multiple) ** 2
+            avg_delta_p_reward = (delta_p_reward * dist_ratio * delta_p_multiple) ** 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -837,8 +837,6 @@ class Reward:
             SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             DISTANCE_PUNISHMENT = 1
-
-            avg_delta_p_reward = avg_delta_p
             
             difficult_waypoints = [22, 23, 24, 25, 26, 27, 32, 33, 34, 35, 36, 61, 62, 63, 64, 65, 66, 69, 70, 71, 72, 73, 74, 75, 76, 80, 81, 82, 83, 84, 85, 86, 87, 117, 118, 119, 120, 121, 122, 162, 163, 164, 190, 191, 192, 193, 194]
             if prev_waypoint_index in difficult_waypoints:
@@ -849,11 +847,13 @@ class Reward:
             if is_in_turn:
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = progress_reward_multiple * ((avg_delta_p_reward * (1 + (distance_reward))) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                reward = avg_delta_p_reward * (1 + (distance_reward)) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = progress_reward_multiple * ((avg_delta_p_reward * (1 + (distance_reward))) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                reward = avg_delta_p_reward * (1 + (distance_reward)) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE))
+            # Give bonus reward on difficult waypoints
+            reward *= progress_reward_multiple
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
