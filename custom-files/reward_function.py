@@ -840,16 +840,22 @@ class Reward:
             # Progress component
             DISTANCE_PUNISHMENT = 1
 
-            avg_delta_p_reward = avg_delta_p 
+            avg_delta_p_reward = avg_delta_p
             
+            difficult_waypoints = [22, 23, 24, 25, 26, 2732, 33, 34, 35, 36, 61, 62, 63, 64, 65, 66, 69, 70, 71, 72, 73, 74, 75, 76, 81, 82, 83, 84, 85, 86, 87, 117, 118, 119, 120, 121, 122, 149, 150, 151, 162, 163, 164, 190, 191, 192, 193, 194]
+            if prev_waypoint_index in difficult_waypoints:
+                progress_reward_multiple = 1.5
+            else:
+                progress_reward_multiple = 1
+                
             if is_in_turn:
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p_reward) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE))
+                reward = progress_reward_multiple * (avg_delta_p_reward * (1 + (distance_reward))) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p_reward) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE))
+                reward = progress_reward_multiple * (avg_delta_p_reward * (1 + distance_reward)) (avg_delta_p_reward * (1 + (distance_reward))) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * SPEED_BONUS * distance_reward * DISTANCE_MULTIPLE) + (0.5 * SPEED_BONUS * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
