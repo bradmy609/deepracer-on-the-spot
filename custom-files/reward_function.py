@@ -822,7 +822,7 @@ class Reward:
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
-                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
+                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.5)
             except:
                 print('Error with scaled_multiplier.')
                 scaled_multiplier = 4/optimal_speed
@@ -863,8 +863,8 @@ class Reward:
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
                 reward *= 1 + ((prev_waypoint_index - 23)/12)
-            if prev_waypoint_index >= 76 and prev_waypoint_index <= 86:
-                reward *= 1 + ((prev_waypoint_index - 76)/12)
+            if prev_waypoint_index >= 55 and prev_waypoint_index <= 88:
+                reward *= 1 + ((prev_waypoint_index - 55)/25)
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
                 reward *= 1 + ((prev_waypoint_index - 110)/12)
             if prev_waypoint_index >= 151 and prev_waypoint_index <= 155:
