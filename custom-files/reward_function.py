@@ -494,7 +494,7 @@ class Reward:
 
             car_point = [round(x, 3), round(y, 3)]
             closest_point = find_closest_point_on_raceline(car_point, race_line)
-            percentage_progress = calculate_progress_on_raceline(closest_point, race_line)
+            _, percentage_progress, _ = calculate_progress_on_raceline(closest_point, race_line)
             current_progress = percentage_progress
             delta_p = current_progress - state.prev_progress
                 
