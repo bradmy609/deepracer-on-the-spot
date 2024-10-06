@@ -801,48 +801,54 @@ class Reward:
             DISTANCE_PUNISHMENT = 1
             
             if is_in_turn:
-                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                reward = (avg_delta_p) + (avg_delta_p * distance_reward) * (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
-                if prev_waypoint_index >= 55 and prev_waypoint_index <= 196:
-                    bonus_reward = (avg_delta_p * distance_reward)
+                if (prev_waypoint_index >= 55 and prev_waypoint_index <= 196) or (prev_waypoint_index >= 30 and prev_waypoint_index <= 36):
+                    bonus_reward = (avg_delta_p * distance_reward) * 2
                     if prev_waypoint_index >= 140 and prev_waypoint_index <= 143:
                         bonus_reward *= 2.0
                     elif prev_waypoint_index >= 80 and prev_waypoint_index <= 87:
-                        bonus_reward *= 2.0
+                        bonus_reward *= 3.0
                     elif prev_waypoint_index >= 148 and prev_waypoint_index <= 151:
                         bonus_reward *= 2.0
-                    elif prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
+                    elif prev_waypoint_index >= 186 and prev_waypoint_index <= 194:
                         bonus_reward *= 2.0
                     elif prev_waypoint_index >= 117 and prev_waypoint_index <= 123:
                         bonus_reward *= 2.0
-                    elif prev_waypoint_index >= 162 and prev_waypoint_index <= 166:
-                        bonus_reward *= 2.0
+                    elif prev_waypoint_index >= 158 and prev_waypoint_index <= 166:
+                        bonus_reward *= 1.5
                 else:
-                    bonus_reward = (avg_delta_p * distance_reward)/4
+                    bonus_reward = (avg_delta_p * distance_reward)
                 reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 30:
+                reward += ((distance_reward ** 2) * DISTANCE_MULTIPLE)
+                
             # Bonuses for not changing steering.
-            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-            #     delta_speed = abs(speed - state.prev_speed)
-            #     if delta_turn_angle == 0:
-            #         reward += 0.1
-                # if delta_speed == 0:
-                #     reward += 0.1
+            
+            if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+                delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+                delta_speed = abs(speed - state.prev_speed)
+                if delta_turn_angle == 0:
+                    reward += 0.1
+                if delta_speed == 0:
+                    reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 19 and prev_waypoint_index <= 22:
                 reward *= 0.8
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
+                reward *= 2
+                if prev_waypoint_index >= 29 and prev_waypoint_index <= 34:
+                    reward *= 2
+            if (prev_waypoint_index >= 57 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76) and (prev_waypoint_index >= 77 and prev_waypoint_index <= 87):
                 reward *= 1.50
-            if (prev_waypoint_index >= 57 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76) and (prev_waypoint_index >= 79 and prev_waypoint_index <= 87):
-                reward *= 1.35
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
-                reward *= 1.30
+                reward *= 1.50
                 
             # No more additions to rewards after this point.
             
@@ -877,13 +883,6 @@ class Reward:
                 reward *= 0.85
             elif direction_diff >= 15:
                 reward *= 0.9
-            
-            # Punishing too fast or too slow
-            speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.5:
-                reward *= 0.5
-            elif speed_diff_zero < -0.5:
-                reward *= 0.5
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
