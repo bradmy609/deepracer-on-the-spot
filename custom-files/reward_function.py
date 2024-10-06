@@ -808,9 +808,21 @@ class Reward:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                 if prev_waypoint_index >= 55 and prev_waypoint_index <= 196:
-                    bonus_reward = (avg_delta_p * distance_reward)/2
+                    bonus_reward = (avg_delta_p * distance_reward)
+                    if prev_waypoint_index >= 140 and prev_waypoint_index <= 143:
+                        bonus_reward *= 2.0
+                    elif prev_waypoint_index >= 80 and prev_waypoint_index <= 87:
+                        bonus_reward *= 2.0
+                    elif prev_waypoint_index >= 148 and prev_waypoint_index <= 151:
+                        bonus_reward *= 2.0
+                    elif prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
+                        bonus_reward *= 2.0
+                    elif prev_waypoint_index >= 117 and prev_waypoint_index <= 123:
+                        bonus_reward *= 2.0
+                    elif prev_waypoint_index >= 162 and prev_waypoint_index <= 166:
+                        bonus_reward *= 2.0
                 else:
-                    bonus_reward = (avg_delta_p * distance_reward)/10
+                    bonus_reward = (avg_delta_p * distance_reward)/4
                 reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
@@ -823,12 +835,14 @@ class Reward:
                 #     reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
+            if prev_waypoint_index >= 19 and prev_waypoint_index <= 22:
+                reward *= 0.8
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward *= 1.75
+                reward *= 1.50
             if (prev_waypoint_index >= 57 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76) and (prev_waypoint_index >= 79 and prev_waypoint_index <= 87):
-                reward *= 1.25
+                reward *= 1.35
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
-                reward *= 1.25
+                reward *= 1.30
                 
             # No more additions to rewards after this point.
             
