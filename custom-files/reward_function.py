@@ -258,7 +258,7 @@ class Reward:
                         min_distance = distance
                         closest_point = closest_point_on_seg
 
-                return closest_point, min_distance
+                return closest_point
             
             def calculate_progress_on_raceline(closest_point, raceline):
                 # Create a LineString from the raceline waypoints
@@ -274,7 +274,7 @@ class Reward:
                 # Calculate percentage progress
                 percentage_progress = (progress_distance / total_length) * 100
                 
-                return progress_distance, percentage_progress, total_length
+                return percentage_progress
 
             #################### RACING LINE ######################
 
@@ -519,13 +519,17 @@ class Reward:
 
             ############### OPTIMAL X,Y,SPEED,TIME ################
             reward = 0.1
-            point1 = race_line[prev_waypoint_index]
-            point2 = race_line[next_waypoint_index]
-            car_point = [x, y]
-            closest_point = closest_point_on_segment(car_point, point1, point2)
-            cumulative_distance, percentage_progress, total_length = calculate_progress_on_raceline(closest_point, race_line)
-            current_progress = percentage_progress
-            delta_p = current_progress - state.prev_progress
+
+            try:
+                car_point = [x, y]
+                closest_point = find_closest_point_on_raceline(car_point, race_line)
+                percentage_progress = calculate_progress_on_raceline(closest_point, race_line)
+                current_progress = percentage_progress
+                delta_p = current_progress - state.prev_progress
+            except Exception as e:
+                print(f'Error in progress calculation: {e}')
+                delta_p = 0.1
+                
             if delta_p >= 1:
                 delta_p = 1
             delta_p_reward = (delta_p * 8) ** 2
