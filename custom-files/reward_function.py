@@ -166,87 +166,118 @@ class Reward:
             
             def euclidean_distance(point1, point2):
                 """Calculate the Euclidean distance between two points."""
-                return ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2) ** 0.5
+                try:
+                    return ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2) ** 0.5
+                except (IndexError, TypeError) as e:
+                    print(f"Error in euclidean_distance: {e}, points: {point1}, {point2}")
+                    return 0.001  # Return a small number to avoid crashes in subsequent logic
 
             def closest_point_on_segment(p, a, b):
                 """Find the closest point on the segment ab to point p."""
-                ax, ay = a
-                bx, by = b
-                px, py = p
-    
-                # Calculate the projection of point p onto the line segment ab
-                abx, aby = bx - ax, by - ay
-                apx, apy = px - ax, py - ay
-                ab_ap_product = abx * apx + aby * apy
-                ab_ab_product = abx * abx + aby * aby
-                t = ab_ap_product / ab_ab_product
-    
-                # Clamp t to the range [0, 1] to ensure the closest point is on the segment
-                t = max(0, min(1, t))
-    
-                # Calculate the closest point
-                closest_x = ax + t * abx
-                closest_y = ay + t * aby
-    
-                return (closest_x, closest_y)
-    
+                try:
+                    ax, ay = a
+                    bx, by = b
+                    px, py = p
+
+                    # Calculate the projection of point p onto the line segment ab
+                    abx, aby = bx - ax, by - ay
+                    apx, apy = px - ax, py - ay
+                    ab_ap_product = abx * apx + aby * apy
+                    ab_ab_product = abx * abx + aby * aby
+                    
+                    if ab_ab_product == 0:
+                        return (ax, ay)  # Return one of the points if the segment has zero length
+
+                    t = ab_ap_product / ab_ab_product
+
+                    # Clamp t to the range [0, 1] to ensure the closest point is on the segment
+                    t = max(0, min(1, t))
+
+                    # Calculate the closest point
+                    closest_x = ax + t * abx
+                    closest_y = ay + t * aby
+
+                    return (closest_x, closest_y)
+                
+                except (TypeError, IndexError) as e:
+                    print(f"Error in closest_point_on_segment: {e}, point p: {p}, point a: {a}, point b: {b}")
+                    return p  # If error, return the input point as a fallback
+
             def find_closest_point_on_raceline(car_position, raceline):
                 """Find the closest point on the raceline to the car, considering all segments."""
-                closest_point = None
-                min_distance = float('inf')
-    
-                # Iterate through each segment of the raceline
-                for i in range(len(raceline) - 1):
-                    a = raceline[i]
-                    b = raceline[i + 1]
-    
-                    # Find the closest point on the current segment
-                    closest_point_on_seg = closest_point_on_segment(car_position, a, b)
-    
-                    # Calculate the distance from the car to the closest point
-                    distance = euclidean_distance(car_position, closest_point_on_seg)
-    
-                    # Update the closest point if a nearer one is found
-                    if distance < min_distance:
-                        min_distance = distance
-                        closest_point = closest_point_on_seg
-    
-                return closest_point
+                try:
+                    closest_point = None
+                    min_distance = float('inf')
+
+                    # Iterate through each segment of the raceline
+                    for i in range(len(raceline) - 1):
+                        a = raceline[i]
+                        b = raceline[i + 1]
+
+                        # Find the closest point on the current segment
+                        closest_point_on_seg = closest_point_on_segment(car_position, a, b)
+
+                        # Calculate the distance from the car to the closest point
+                        distance = euclidean_distance(car_position, closest_point_on_seg)
+
+                        # Update the closest point if a nearer one is found
+                        if distance < min_distance:
+                            min_distance = distance
+                            closest_point = closest_point_on_seg
+
+                    if closest_point is None:
+                        print(f"No closest point found on raceline for car_position: {car_position}")
+                        return car_position  # Fallback to the car's position if no closest point found
+
+                    return closest_point
                 
+                except (TypeError, IndexError) as e:
+                    print(f"Error in find_closest_point_on_raceline: {e}, car_position: {car_position}")
+                    return car_position  # Return car's position as a fallback
+
             def calculate_progress_on_raceline(closest_point, raceline):
                 """
                 Calculate the progress along the raceline up to the closest point.
                 """
-                total_length = 0
-                progress_distance = 0
-                found_closest_segment = False
-    
-                # Iterate through each segment of the raceline
-                for i in range(len(raceline) - 1):
-                    a = raceline[i]
-                    b = raceline[i + 1]
-    
-                    # Calculate the length of the current segment
-                    segment_length = euclidean_distance(a, b)
-                    total_length += segment_length
-    
-                    if not found_closest_segment:
-                        # Find the closest point on the current segment
-                        closest_point_on_seg = closest_point_on_segment(closest_point, a, b)
-    
-                        # Check if the closest point is on this segment
-                        if euclidean_distance(closest_point_on_seg, closest_point) < 1e-6:
-                            # Calculate the distance from the start of the raceline to the closest point
-                            progress_distance += euclidean_distance(a, closest_point_on_seg)
-                            found_closest_segment = True
-                        else:
-                            # Add the segment length to the progress distance
-                            progress_distance += segment_length
-    
-                # Calculate percentage progress
-                percentage_progress = (progress_distance / total_length) * 100
-    
-                return progress_distance, percentage_progress, total_length
+                try:
+                    total_length = 0
+                    progress_distance = 0
+                    found_closest_segment = False
+
+                    # Iterate through each segment of the raceline
+                    for i in range(len(raceline) - 1):
+                        a = raceline[i]
+                        b = raceline[i + 1]
+
+                        # Calculate the length of the current segment
+                        segment_length = euclidean_distance(a, b)
+                        total_length += segment_length
+
+                        if not found_closest_segment:
+                            # Find the closest point on the current segment
+                            closest_point_on_seg = closest_point_on_segment(closest_point, a, b)
+
+                            # Check if the closest point is on this segment
+                            if euclidean_distance(closest_point_on_seg, closest_point) < 1e-6:
+                                # Calculate the distance from the start of the raceline to the closest point
+                                progress_distance += euclidean_distance(a, closest_point_on_seg)
+                                found_closest_segment = True
+                            else:
+                                # Add the segment length to the progress distance
+                                progress_distance += segment_length
+
+                    if total_length == 0:
+                        print(f"Total length of raceline is zero, returning default progress.")
+                        return 0, 0, 0  # If no total length, return 0 progress
+
+                    # Calculate percentage progress
+                    percentage_progress = (progress_distance / total_length) * 100
+
+                    return progress_distance, percentage_progress, total_length
+                
+                except (TypeError, IndexError) as e:
+                    print(f"Error in calculate_progress_on_raceline: {e}, closest_point: {closest_point}")
+                    return 0, 0, 0  # Fallback to 0 progress
 
             #################### RACING LINE ######################
 
