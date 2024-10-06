@@ -10,9 +10,6 @@ class STATE:
         self.prev_distance = None
         self.prev_speed = None
         self.prev_progress = 0
-        self.prev_progress2 = 0
-        self.prev_progress3 = 0
-        self.prev_progress4 = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -21,9 +18,6 @@ class STATE:
         self.prev_distance = None
         self.prev_speed = None
         self.prev_progress = 0
-        self.prev_progress2 = 0
-        self.prev_progress3 = 0
-        self.prev_progress4 = 0
         
 state = STATE()
 
@@ -139,14 +133,6 @@ class Reward:
                     direction_diff = 360 - direction_diff
 
                 return direction_diff
-
-            # Gives back indexes that lie between start and end index of a cyclical list 
-            # (start index is included, end index is not)
-            def indexes_cyclical(start, end, array_len):
-                if end < start:
-                    end += array_len
-
-                return [index % array_len for index in range(start, end)]
             
             def find_border_points(params):
                 waypoints = params['waypoints']
@@ -179,102 +165,89 @@ class Reward:
                 
                 return inner_border1, outer_border1, inner_border2, outer_border2
             
-            def find_min_max_heading(params, inner_border2, outer_border2):
-                car_x = params['x']
-                car_y = params['y']
-                car_heading = params['heading']
+            def euclidean_distance(point1, point2):
+                """Calculate the Euclidean distance between two points."""
+                return ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2) ** 0.5
 
-                # Calculate the vector from the car to the inner border
-                inner_vector_x = inner_border2[0] - car_x
-                inner_vector_y = inner_border2[1] - car_y
-
-                # Calculate the vector from the car to the outer border
-                outer_vector_x = outer_border2[0] - car_x
-                outer_vector_y = outer_border2[1] - car_y
-
-                # Compute the angles in degrees
-                inner_heading = math.degrees(math.atan2(inner_vector_y, inner_vector_x))
-                outer_heading = math.degrees(math.atan2(outer_vector_y, outer_vector_x))
-
-                # Normalize angles to be within 0 to 360 degrees
-                inner_heading = (inner_heading + 360) % 360
-                outer_heading = (outer_heading + 360) % 360
-
-                # Normalize car heading to be within 0 to 360 degrees
-                car_heading = (car_heading + 360) % 360
-
-                # Get the min and max headings
-                min_heading = min(inner_heading, outer_heading)
-                max_heading = max(inner_heading, outer_heading)
-
-                # Check if the car's heading is within the range considering circular nature
-                if max_heading - min_heading <= 180:
-                    # Normal case where min_heading is less than max_heading and the angle difference is <= 180
-                    is_within_range = min_heading <= car_heading <= max_heading
-                else:
-                    # Case where angles wrap around, e.g., min_heading=60, max_heading=270, car_heading=350
-                    is_within_range = car_heading >= max_heading or car_heading <= min_heading
-
-                return min_heading, max_heading, is_within_range
-            
             def closest_point_on_segment(p, a, b):
-                a = np.array(a)
-                b = np.array(b)
-                p = np.array(p)
-
-                ab = b - a
-                ap = p - a
-
-                # Project vector ap onto ab to get the projection of point p onto the line
-                ab_length_squared = np.dot(ab, ab)
-                if ab_length_squared == 0:
-                    # a and b are the same point
-                    return a
-                
-                t = np.dot(ap, ab) / ab_length_squared
-                t = np.clip(t, 0, 1)  # Clamp t to the range [0, 1] to ensure the projection lies within the segment
-
-                closest_point = a + t * ab
-                return closest_point
-            
+                """Find the closest point on the segment ab to point p."""
+                ax, ay = a
+                bx, by = b
+                px, py = p
+    
+                # Calculate the projection of point p onto the line segment ab
+                abx, aby = bx - ax, by - ay
+                apx, apy = px - ax, py - ay
+                ab_ap_product = abx * apx + aby * apy
+                ab_ab_product = abx * abx + aby * aby
+                t = ab_ap_product / ab_ab_product
+    
+                # Clamp t to the range [0, 1] to ensure the closest point is on the segment
+                t = max(0, min(1, t))
+    
+                # Calculate the closest point
+                closest_x = ax + t * abx
+                closest_y = ay + t * aby
+    
+                return (closest_x, closest_y)
+    
             def find_closest_point_on_raceline(car_position, raceline):
                 """Find the closest point on the raceline to the car, considering all segments."""
                 closest_point = None
                 min_distance = float('inf')
-
+    
                 # Iterate through each segment of the raceline
                 for i in range(len(raceline) - 1):
                     a = raceline[i]
                     b = raceline[i + 1]
-
+    
                     # Find the closest point on the current segment
                     closest_point_on_seg = closest_point_on_segment(car_position, a, b)
-
+    
                     # Calculate the distance from the car to the closest point
-                    distance = np.linalg.norm(np.array(car_position) - closest_point_on_seg)
-
+                    distance = euclidean_distance(car_position, closest_point_on_seg)
+    
                     # Update the closest point if a nearer one is found
                     if distance < min_distance:
                         min_distance = distance
                         closest_point = closest_point_on_seg
-
+    
                 return closest_point
-            
+                
             def calculate_progress_on_raceline(closest_point, raceline):
-                # Create a LineString from the raceline waypoints
-                raceline_line = LineString(raceline)
-                
-                # Find the total length of the raceline
-                total_length = raceline_line.length
-                
-                # Project the closest point onto the raceline to find its position
-                point_on_raceline = Point(closest_point)
-                progress_distance = raceline_line.project(point_on_raceline)  # Distance from start to closest point
-                
+                """
+                Calculate the progress along the raceline up to the closest point.
+                """
+                total_length = 0
+                progress_distance = 0
+                found_closest_segment = False
+    
+                # Iterate through each segment of the raceline
+                for i in range(len(raceline) - 1):
+                    a = raceline[i]
+                    b = raceline[i + 1]
+    
+                    # Calculate the length of the current segment
+                    segment_length = euclidean_distance(a, b)
+                    total_length += segment_length
+    
+                    if not found_closest_segment:
+                        # Find the closest point on the current segment
+                        closest_point_on_seg = closest_point_on_segment(closest_point, a, b)
+    
+                        # Check if the closest point is on this segment
+                        if euclidean_distance(closest_point_on_seg, closest_point) < 1e-6:
+                            # Calculate the distance from the start of the raceline to the closest point
+                            progress_distance += euclidean_distance(a, closest_point_on_seg)
+                            found_closest_segment = True
+                        else:
+                            # Add the segment length to the progress distance
+                            progress_distance += segment_length
+    
                 # Calculate percentage progress
                 percentage_progress = (progress_distance / total_length) * 100
-                
-                return percentage_progress
+    
+                return progress_distance, percentage_progress, total_length
 
             #################### RACING LINE ######################
 
@@ -521,7 +494,7 @@ class Reward:
             reward = 0.1
 
             try:
-                car_point = [x, y]
+                car_point = [round(x, 3), round(y, 3)]
                 closest_point = find_closest_point_on_raceline(car_point, race_line)
                 percentage_progress = calculate_progress_on_raceline(closest_point, race_line)
                 current_progress = percentage_progress
@@ -558,9 +531,6 @@ class Reward:
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
             distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-            
-            inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
-            min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
                     
             # Zero reward if obviously wrong direction (e.g. spin)
             direction_diff = racing_direction_diff(
@@ -593,8 +563,6 @@ class Reward:
             # Punishing erratic steering or steering out of range of valid directions.
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
                 reward *= 0.5
-            if not is_within_range:
-                reward *= 0.8
                 
             if direction_diff > 30:
                 reward *= 0.75
@@ -614,12 +582,7 @@ class Reward:
 
             #################### RETURN REWARD ####################
             
-            state.prev_turn_angle = steering_angle
-            state.prev_speed = speed
             state.prev_progress = current_progress
-            state.prev_progress2 = state.prev_progress
-            state.prev_progress3 = state.prev_progress2
-            state.prev_progress4 = state.prev_progress3
 
         except Exception as e:
             print(f'Error in reward calculation: {e}')
