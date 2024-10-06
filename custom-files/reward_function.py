@@ -540,6 +540,7 @@ class Reward:
                 print(f'Car point: {car_point}')
                 print(f'Percentage progress: {percentage_progress}')
                 print(f'Current progress: {current_progress}, Delta progress: {delta_p}')
+                print(f'Delta progress reward: {(min(delta_p * 6)**2, 64)}')
                 
             delta_p = abs(delta_p)
             if delta_p >= 1:
