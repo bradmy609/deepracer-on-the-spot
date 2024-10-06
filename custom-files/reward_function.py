@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from shapely.geometry import LineString, Point
 
 class STATE:
     def __init__(self):
@@ -33,26 +34,6 @@ class Reward:
 
     def reward_function(self, params):
         try:
-            def update_and_calculate_reward(new_delta_progress, delta_progress_list):
-                # FILO: Add new delta-progress value to the end and remove the oldest one
-                delta_progress_list.append(new_delta_progress)  # Add new value
-                delta_progress_list.pop(0)  # Remove the oldest value (first in the list)
-
-                # Check if the list contains any zeros
-                if 0 in delta_progress_list:
-                    return 0  # If any zero values, return 0 as reward
-
-                # Calculate the average of the non-zero values
-                avg_delta_progress = sum(delta_progress_list) / len(delta_progress_list)
-
-                # Return the average as the reward
-                return avg_delta_progress
-            
-            def normalize_delta_angle(angle, old_min=0, old_max=18.4, new_min=0.1, new_max=1):
-                # Apply min-max normalization formula
-                normalized_angle = ((angle - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-                return normalized_angle
-            
             ################## HELPER FUNCTIONS ###################
             def reset_state(steps):
                 if steps <= 2:
@@ -236,228 +217,66 @@ class Reward:
 
                 return min_heading, max_heading, is_within_range
             
-            def scale_value(x, old_min=1, old_max=2.9, new_min=1, new_max=2):
-                # Scale the value from the old range to the new range
-                scaled_value = new_min + ((x - old_min) / (old_max - old_min)) * (new_max - new_min)
-                return scaled_value
+            def closest_point_on_segment(p, a, b):
+                a = np.array(a)
+                b = np.array(b)
+                p = np.array(p)
+
+                ab = b - a
+                ap = p - a
+
+                # Project vector ap onto ab to get the projection of point p onto the line
+                ab_length_squared = np.dot(ab, ab)
+                if ab_length_squared == 0:
+                    # a and b are the same point
+                    return a
+                
+                t = np.dot(ap, ab) / ab_length_squared
+                t = np.clip(t, 0, 1)  # Clamp t to the range [0, 1] to ensure the projection lies within the segment
+
+                closest_point = a + t * ab
+                return closest_point
+            
+            def find_closest_point_on_raceline(car_position, raceline):
+                """Find the closest point on the raceline to the car, considering all segments."""
+                closest_point = None
+                min_distance = float('inf')
+
+                # Iterate through each segment of the raceline
+                for i in range(len(raceline) - 1):
+                    a = raceline[i]
+                    b = raceline[i + 1]
+
+                    # Find the closest point on the current segment
+                    closest_point_on_seg = closest_point_on_segment(car_position, a, b)
+
+                    # Calculate the distance from the car to the closest point
+                    distance = np.linalg.norm(np.array(car_position) - closest_point_on_seg)
+
+                    # Update the closest point if a nearer one is found
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_point = closest_point_on_seg
+
+                return closest_point, min_distance
+            
+            def calculate_progress_on_raceline(closest_point, raceline):
+                # Create a LineString from the raceline waypoints
+                raceline_line = LineString(raceline)
+                
+                # Find the total length of the raceline
+                total_length = raceline_line.length
+                
+                # Project the closest point onto the raceline to find its position
+                point_on_raceline = Point(closest_point)
+                progress_distance = raceline_line.project(point_on_raceline)  # Distance from start to closest point
+                
+                # Calculate percentage progress
+                percentage_progress = (progress_distance / total_length) * 100
+                
+                return progress_distance, percentage_progress, total_length
 
             #################### RACING LINE ######################
-
-            delta_rl_angles = [0.0,
-            0.23899301931345462,
-            0.18436071594925352,
-            0.12000842886214969,
-            0.0880490941751475,
-            0.05569602663140927,
-            0.056818338599327944,
-            0.049238629517162735,
-            0.04752293695284493,
-            0.031189862879415386,
-            0.04604920371883736,
-            0.052575019432225645,
-            0.14231961099983437,
-            1.1940139410189659,
-            2.2259830641281724,
-            3.2361889968515243,
-            4.2268382999033065,
-            5.2637681472298254,
-            6.339691065020247,
-            7.503936960609451,
-            8.979089242197404,
-            11.02780930446886,
-            16.862333803103468,
-            14.095933227028752,
-            12.019486930117978,
-            11.192824735891577,
-            12.029499019657521,
-            10.589592576334155,
-            9.175025000174912,
-            8.157968187211111,
-            7.2010458613666515,
-            6.278057034068979,
-            5.237275710447136,
-            4.2766377719406705,
-            3.460224577260533,
-            2.714069573284803,
-            2.0855691676673587,
-            1.5599526218059054,
-            1.117954291876913,
-            0.7628494942950965,
-            0.41276931013618423,
-            0.11661593814739035,
-            0.0005888243483127553,
-            2.269266019538918e-07,
-            0.05977376514096022,
-            0.25953911222632087,
-            0.5329235950999305,
-            0.8169182000436308,
-            1.1105324545242183,
-            1.4378471673243212,
-            1.804974008754641,
-            2.267455063504883,
-            2.7750458009714976,
-            3.457346581348247,
-            4.398939147160206,
-            5.379014938930197,
-            6.678068642449034,
-            8.194580765505862,
-            11.053618774684423,
-            9.409956743129953,
-            7.911104075224046,
-            7.038883512739858,
-            6.222749338957954,
-            5.671983263962318,
-            5.262769070746117,
-            4.976986418725232,
-            4.692922411884183,
-            4.656472989631425,
-            5.153252467355287,
-            6.040336595434837,
-            4.682085319072712,
-            4.6721844065611435,
-            4.7474692589124174,
-            4.906217257951425,
-            5.621365904750007,
-            6.375706500906233,
-            7.412640884749749,
-            8.820495011641128,
-            11.26394451367048,
-            14.425313990100136,
-            9.941225388947174,
-            7.446508861203085,
-            5.019289133618173,
-            2.3961076519518087,
-            1.1510301401957577,
-            1.1458219806992247,
-            1.1728693000448231,
-            1.2183699845647595,
-            1.3440155740917987,
-            1.433872714789743,
-            1.5281908117138698,
-            1.69003726607707,
-            1.8495823707064574,
-            1.9559053020506383,
-            2.0132059158919446,
-            1.955702297198144,
-            2.104867888006254,
-            2.261764637699173,
-            2.5050384372352426,
-            2.823567281750371,
-            3.2400867361828602,
-            3.780648140454389,
-            4.648077494292977,
-            5.66304425713588,
-            7.026628978145027,
-            8.829860943545668,
-            11.198119503535395,
-            14.33743474512579,
-            18.33685531714667,
-            13.53860401563503,
-            11.080709921271307,
-            9.449853320969169,
-            8.107462397211066,
-            6.863989162120674,
-            6.396259545916507,
-            6.81463820076624,
-            5.427005682863182,
-            4.418943298481793,
-            3.4518053883269886,
-            2.5352747496128245,
-            1.6923358493547767,
-            0.8500621141889155,
-            0.6232239632932419,
-            0.4975078207672823,
-            0.36370866261654555,
-            0.2388046123748495,
-            0.11417801971651897,
-            0.16543345372593876,
-            0.30118145406322583,
-            0.45077991166652964,
-            0.6313839943323387,
-            0.8256999909589808,
-            1.0459592846686974,
-            1.3152396178412005,
-            1.7354622486631683,
-            2.210044139759077,
-            2.765629669728696,
-            3.573469694004473,
-            4.564334734979582,
-            2.8384242103994666,
-            2.317398505457618,
-            1.9046389329123485,
-            1.5216166895531273,
-            1.21502878455982,
-            0.9247542713757753,
-            0.6876838855368419,
-            0.508817688512579,
-            0.50,
-            0.6181685032387918,
-            0.9317879975774304,
-            1.2645054120050077,
-            1.6647958287693427,
-            2.123467696920443,
-            2.6346314354900073,
-            3.274421476458599,
-            3.9424547907017313,
-            5.045285784931309,
-            6.560702223235751,
-            8.485927476672884,
-            11.155186444370315,
-            8.499595498839653,
-            6.906803118057383,
-            5.708228921310592,
-            4.634083721787135,
-            3.6577148606456262,
-            2.7247103629865705,
-            1.746993552718152,
-            0.9178604387791438,
-            0.06952145205872284,
-            0.17347169581205435,
-            0.2620578136973677,
-            0.3086491647029561,
-            0.32758547682476546,
-            0.3188026628017724,
-            0.3055960645122582,
-            0.3335592464039223,
-            0.36980531613619405,
-            0.4164230780946241,
-            0.48562519540899984,
-            0.5852219903318314,
-            0.6877966559280253,
-            0.9575793942516952,
-            1.9177625089828894,
-            2.906379212646641,
-            4.15843500741812,
-            5.566655295675332,
-            7.282939110468817,
-            11.017946224478578,
-            8.956828304438318,
-            7.434781417086668,
-            6.059240359572755,
-            5.200265870383134,
-            4.5055477691158785,
-            3.939760207989025,
-            3.4763922467069506,
-            3.088101940247185,
-            2.7611700387227813,
-            2.501223786686211,
-            2.2837432657933334,
-            2.0895963667150284,
-            1.9092965991274014,
-            1.7387055110629035,
-            1.576325286725762,
-            1.4628300232893992,
-            1.2669335947175853,
-            1.130935703988996,
-            1.0042462615624572,
-            0.8865994529441537,
-            0.7774964528930184,
-            0.6764647946909577,
-            0.5832930712465441,
-            0.49811398763029047,
-            0.4212330017340662,
-            0.34314381752574263,
-            0.5418649230508947]
 
             # Optimal racing line
             # Each row: [x,y,speed,timeFromPreviousPoint]
@@ -675,6 +494,8 @@ class Reward:
             [0.59272, -5.3592, 4.0, 0.06626],
             [0.32938, -5.36884, 4.0, 0.06588],
             [0.06683, -5.37652, 4.0, 0.06567]]
+            
+            race_line = [sublist[:2] for sublist in racing_track]
 
             ################## INPUT PARAMETERS ###################
 
@@ -697,6 +518,17 @@ class Reward:
             is_offtrack = params['is_offtrack']
 
             ############### OPTIMAL X,Y,SPEED,TIME ################
+            reward = 0.1
+            point1 = race_line[prev_waypoint_index]
+            point2 = race_line[next_waypoint_index]
+            car_point = [x, y]
+            closest_point = closest_point_on_segment(car_point, point1, point2)
+            cumulative_distance, percentage_progress, total_length = calculate_progress_on_raceline(closest_point, race_line)
+            current_progress = percentage_progress
+            delta_p = current_progress - state.prev_progress
+            if delta_p >= 1:
+                delta_p = 1
+            delta_p_reward = (delta_p * 8) ** 2
             
             try:
                 reset_state(steps)
@@ -719,23 +551,9 @@ class Reward:
 
             ################ REWARD AND PUNISHMENT ################
 
-            ## Define the default reward ##
-            reward = 0.1
-
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
             distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-                
-            ## Reward if speed is close to optimal speed ##
-            SPEED_DIFF_NO_REWARD = 1
-            SPEED_MULTIPLE = 2
-            speed_diff = abs(optimals[2]-speed)
-            if speed_diff <= SPEED_DIFF_NO_REWARD:
-                # we use quadratic punishment (not linear) bc we're not as confident with the optimal speed
-                # so, we do not punish small deviations from optimal speed
-                speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
-            else:
-                speed_reward = 0
             
             inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
             min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
@@ -743,92 +561,9 @@ class Reward:
             # Zero reward if obviously wrong direction (e.g. spin)
             direction_diff = racing_direction_diff(
                 optimals[0:2], optimals_second[0:2], [x, y], heading)
-            
-            optimal_speed = optimals[2]
-            speed_cap = optimal_speed + 0.75
-            STEERING_PUNISHMENT = 1
-            SPEED_PUNISHMENT = 1
-            LANE_REWARD = 0
-            
-            delta_p = progress - state.prev_progress
-            if delta_p > 0.8:
-                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
-                delta_p = 0.8
-            
-            is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 6 or delta_rl_angles[prev_waypoint_index] <= -6:
-                is_in_turn = True
-                delta_p_multiple = 6
-                capstone_multiple = 1.5
-            else:
-                is_in_turn = False
-                delta_p_multiple = 8
-                capstone_multiple = 1
-            
-                
-            delta_p1 = progress - state.prev_progress
-            delta_p2 = progress - state.prev_progress2
-            delta_p3 = progress - state.prev_progress3
-            delta_p4 = progress - state.prev_progress4
-            if delta_p1 > 0.8:
-                delta_p1 = 0.8
-            if delta_p2 > 0.8:
-                delta_p2 = 0.8
-            if delta_p3 > 0.8:
-                delta_p3 = 0.8
-            if delta_p4 > 0.8:
-                delta_p4 = 0.8
-            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
-            avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
-            
-            try:
-                scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
-                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.9)
-            except:
-                print('Error with scaled_multiplier.')
-                scaled_multiplier = 4/optimal_speed
-            
-            DISTANCE_MULTIPLE = scaled_multiplier
-            DISTANCE_EXPONENT = scaled_multiplier
-            SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
-                    
-            # Distance component
-            DC = (distance_reward) * DISTANCE_MULTIPLE
-            SQDC = distance_reward ** DISTANCE_EXPONENT
-            # Speed component
-            SC = (speed_reward ** 2) * SPEED_MULTIPLE
-            # Progress component
-            DISTANCE_PUNISHMENT = 1
-            
-            if is_in_turn:
-                reward = (avg_delta_p) + (avg_delta_p * distance_reward) * (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
-                if dist > (track_width * 0.5):
-                    DISTANCE_PUNISHMENT = 0.5
-            else:
-                if dist > (track_width * 0.25):
-                    DISTANCE_PUNISHMENT = 0.5
-                if (prev_waypoint_index >= 55 and prev_waypoint_index <= 196) or (prev_waypoint_index >= 30 and prev_waypoint_index <= 36):
-                    bonus_reward = (avg_delta_p * distance_reward) * 2
-                    if prev_waypoint_index >= 140 and prev_waypoint_index <= 143:
-                        bonus_reward *= 2.0
-                    elif prev_waypoint_index >= 80 and prev_waypoint_index <= 87:
-                        bonus_reward *= 3.0
-                    elif prev_waypoint_index >= 148 and prev_waypoint_index <= 151:
-                        bonus_reward *= 2.0
-                    elif prev_waypoint_index >= 186 and prev_waypoint_index <= 194:
-                        bonus_reward *= 2.0
-                    elif prev_waypoint_index >= 117 and prev_waypoint_index <= 123:
-                        bonus_reward *= 2.0
-                    elif prev_waypoint_index >= 158 and prev_waypoint_index <= 166:
-                        bonus_reward *= 1.5
-                else:
-                    bonus_reward = (avg_delta_p * distance_reward)
-                reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
-            
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 30:
-                reward += ((distance_reward ** 2) * DISTANCE_MULTIPLE)
-                
+
             # Bonuses for not changing steering.
+            reward = delta_p_reward + (delta_p_reward * distance_reward)
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -837,18 +572,6 @@ class Reward:
                     reward += 0.1
                 if delta_speed == 0:
                     reward += 0.1
-            
-            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 19 and prev_waypoint_index <= 22:
-                reward *= 0.8
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward *= 2
-                if prev_waypoint_index >= 29 and prev_waypoint_index <= 34:
-                    reward *= 2
-            if (prev_waypoint_index >= 57 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76) and (prev_waypoint_index >= 77 and prev_waypoint_index <= 87):
-                reward *= 1.50
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
-                reward *= 1.50
                 
             # No more additions to rewards after this point.
             
@@ -862,12 +585,6 @@ class Reward:
                     reward *= 0.1
                 if delta_turn_angle > 30:
                     reward *= 0.1
-            
-            if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
-                if speed > 2.5:
-                    SPEED_PUNISHMENT = 0.5
-                if steering_angle > 0:
-                    STEERING_PUNISHMENT *= 0.5
             
             # Punishing erratic steering or steering out of range of valid directions.
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
@@ -884,37 +601,26 @@ class Reward:
             elif direction_diff >= 15:
                 reward *= 0.9
 
-            if speed > speed_cap and speed_cap < 4:
-                reward *= 0.1
-            
-            reward *= DISTANCE_PUNISHMENT
-            reward *= STEERING_PUNISHMENT
-            reward *= SPEED_PUNISHMENT
-
             ## Zero reward if off track ##
             track_width = params['track_width']
             distance_from_center = params['distance_from_center']
+            
+            if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
+                reward = min(reward, 0.001)
 
-            # Zero reward if the center of the car is off the track.
-            reward += LANE_REWARD
+            #################### RETURN REWARD ####################
+            
+            state.prev_turn_angle = steering_angle
+            state.prev_speed = speed
+            state.prev_progress = current_progress
+            state.prev_progress2 = state.prev_progress
+            state.prev_progress3 = state.prev_progress2
+            state.prev_progress4 = state.prev_progress3
+
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
                 reward += 1
-
-        if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
-            reward = min(reward, 0.001)
-
-        #################### RETURN REWARD ####################
-        
-        state.prev_turn_angle = steering_angle
-        state.prev_speed_diff = speed_diff
-        state.prev_distance = dist
-        state.prev_speed = speed
-        state.prev_progress = progress
-        state.prev_progress2 = state.prev_progress
-        state.prev_progress3 = state.prev_progress2
-        state.prev_progress4 = state.prev_progress3
 
         # Always return a float value
         return float(reward)
