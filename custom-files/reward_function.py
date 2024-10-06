@@ -1,6 +1,5 @@
 import numpy as np
 import math
-from shapely.geometry import LineString, Point
 
 class STATE:
     def __init__(self):
