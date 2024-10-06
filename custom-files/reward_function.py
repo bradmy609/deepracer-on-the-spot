@@ -492,15 +492,11 @@ class Reward:
             ############### OPTIMAL X,Y,SPEED,TIME ################
             reward = 0.1
 
-            try:
-                car_point = [round(x, 3), round(y, 3)]
-                closest_point = find_closest_point_on_raceline(car_point, race_line)
-                percentage_progress = calculate_progress_on_raceline(closest_point, race_line)
-                current_progress = percentage_progress
-                delta_p = current_progress - state.prev_progress
-            except Exception as e:
-                print(f'Error in progress calculation: {e}')
-                delta_p = 0.1
+            car_point = [round(x, 3), round(y, 3)]
+            closest_point = find_closest_point_on_raceline(car_point, race_line)
+            percentage_progress = calculate_progress_on_raceline(closest_point, race_line)
+            current_progress = percentage_progress
+            delta_p = current_progress - state.prev_progress
                 
             if delta_p >= 1:
                 delta_p = 1
