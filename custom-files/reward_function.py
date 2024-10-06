@@ -521,6 +521,11 @@ class Reward:
             is_offtrack = params['is_offtrack']
 
             ############### OPTIMAL X,Y,SPEED,TIME ################
+            try:
+                reset_state(steps)
+            except:
+                print('Error with reset_state.')
+                
             reward = 0.1
 
             car_point = [round(x, 3), round(y, 3)]
@@ -528,15 +533,18 @@ class Reward:
             _, percentage_progress, _ = calculate_progress_on_raceline(closest_point, race_line)
             current_progress = percentage_progress
             delta_p = current_progress - state.prev_progress
+            
+            if steps % 10 == 0:
+                print(f'Closest waypoint: {prev_waypoint_index}')
+                print(f'Closest point: {closest_point}')
+                print(f'Car point: {car_point}')
+                print(f'Percentage progress: {percentage_progress}')
+                print(f'Current progress: {current_progress}, Delta progress: {delta_p}')
                 
+            delta_p = abs(delta_p)
             if delta_p >= 1:
                 delta_p = 1
-            delta_p_reward = (delta_p * 8) ** 2
-            
-            try:
-                reset_state(steps)
-            except:
-                print('Error with reset_state.')
+            delta_p_reward = (delta_p * 6) ** 2
 
             # Get closest indexes for racing line (and distances to all points on racing line)
             closest_index, second_closest_index = closest_2_racing_points_index(
@@ -556,14 +564,21 @@ class Reward:
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
+            
             distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
+            distance_reward = min(distance_reward, 1.0)
                     
             # Zero reward if obviously wrong direction (e.g. spin)
             direction_diff = racing_direction_diff(
                 optimals[0:2], optimals_second[0:2], [x, y], heading)
+            
+            delta_p_reward = min(delta_p_reward, 64)  # This limits the max value for delta_p_reward to 64
 
-            # Bonuses for not changing steering.
+                # Calculate final reward
             reward = delta_p_reward + (delta_p_reward * distance_reward)
+
+            # Ensure reward is within allowed range [-1e5, 1e5]
+            reward = max(min(reward, 1e5), -1e5)
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
