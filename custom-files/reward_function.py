@@ -36,50 +36,54 @@ class Reward:
                 return abs(abs(x1-x2)**2 + abs(y1-y2)**2)**0.5
 
             def closest_2_racing_points_index(racing_coords, car_coords):
+                try:
+                    # Calculate all distances to racing points
+                    distances = []
+                    for i in range(len(racing_coords)):
+                        distance = dist_2_points(x1=racing_coords[i][0], x2=car_coords[0],
+                                                y1=racing_coords[i][1], y2=car_coords[1])
+                        distances.append(distance)
 
-                # Calculate all distances to racing points
-                distances = []
-                for i in range(len(racing_coords)):
-                    distance = dist_2_points(x1=racing_coords[i][0], x2=car_coords[0],
-                                            y1=racing_coords[i][1], y2=car_coords[1])
-                    distances.append(distance)
+                    # Get index of the closest racing point
+                    closest_index = distances.index(min(distances))
 
-                # Get index of the closest racing point
-                closest_index = distances.index(min(distances))
+                    # Get index of the second closest racing point
+                    distances_no_closest = distances.copy()
+                    distances_no_closest[closest_index] = 999
+                    second_closest_index = distances_no_closest.index(
+                        min(distances_no_closest))
+                except Exception as e:
+                    print(f'Failure in closest_2_racing_points_index: {e}')
 
-                # Get index of the second closest racing point
-                distances_no_closest = distances.copy()
-                distances_no_closest[closest_index] = 999
-                second_closest_index = distances_no_closest.index(
-                    min(distances_no_closest))
-
-                return [closest_index, second_closest_index]
+                    return [closest_index, second_closest_index]
 
             def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
-                
-                # Calculate the distances between 2 closest racing points
-                a = abs(dist_2_points(x1=closest_coords[0],
-                                    x2=second_closest_coords[0],
-                                    y1=closest_coords[1],
-                                    y2=second_closest_coords[1]))
-
-                # Distances between car and closest and second closest racing point
-                b = abs(dist_2_points(x1=car_coords[0],
-                                    x2=closest_coords[0],
-                                    y1=car_coords[1],
-                                    y2=closest_coords[1]))
-                c = abs(dist_2_points(x1=car_coords[0],
-                                    x2=second_closest_coords[0],
-                                    y1=car_coords[1],
-                                    y2=second_closest_coords[1]))
-
-                # Calculate distance between car and racing line (goes through 2 closest racing points)
-                # try-except in case a=0 (rare bug in DeepRacer)
                 try:
-                    distance = abs(-(a**4) + 2*(a**2)*(b**2) + 2*(a**2)*(c**2) -
-                                (b**4) + 2*(b**2)*(c**2) - (c**4))**0.5 / (2*a)
-                except:
-                    distance = b
+                    # Calculate the distances between 2 closest racing points
+                    a = abs(dist_2_points(x1=closest_coords[0],
+                                        x2=second_closest_coords[0],
+                                        y1=closest_coords[1],
+                                        y2=second_closest_coords[1]))
+
+                    # Distances between car and closest and second closest racing point
+                    b = abs(dist_2_points(x1=car_coords[0],
+                                        x2=closest_coords[0],
+                                        y1=car_coords[1],
+                                        y2=closest_coords[1]))
+                    c = abs(dist_2_points(x1=car_coords[0],
+                                        x2=second_closest_coords[0],
+                                        y1=car_coords[1],
+                                        y2=second_closest_coords[1]))
+
+                    # Calculate distance between car and racing line (goes through 2 closest racing points)
+                    # try-except in case a=0 (rare bug in DeepRacer)
+                    try:
+                        distance = abs(-(a**4) + 2*(a**2)*(b**2) + 2*(a**2)*(c**2) -
+                                    (b**4) + 2*(b**2)*(c**2) - (c**4))**0.5 / (2*a)
+                    except:
+                        distance = b
+                except Exception as e:
+                    print(f'Failure in dist_to_racing_line: {e}')
 
                 return distance
 
@@ -203,8 +207,9 @@ class Reward:
                     print(f"Error in closest_point_on_segment: {e}, point p: {p}, point a: {a}, point b: {b}")
                     return p  # If error, return the input point as a fallback
 
-            def find_closest_point_on_raceline(car_position, raceline):
+            def find_closest_point_on_raceline(car_position, racing_track):
                 """Find the closest point on the raceline to the car, considering all segments."""
+                raceline = [sublist[:2] for sublist in racing_track]
                 try:
                     closest_point = None
                     min_distance = float('inf')
@@ -235,11 +240,12 @@ class Reward:
                     print(f"Error in find_closest_point_on_raceline: {e}, car_position: {car_position}")
                     return car_position  # Return car's position as a fallback
 
-            def calculate_progress_on_raceline(closest_point, raceline):
+            def calculate_progress_on_raceline(closest_point, racing_track):
                 """
                 Calculate the progress along the raceline up to the closest point.
                 """
                 try:
+                    raceline = [sublist[:2] for sublist in racing_track]
                     total_length = 0
                     progress_distance = 0
                     found_closest_segment = False
@@ -497,8 +503,6 @@ class Reward:
             [0.59272, -5.3592, 4.0, 0.06626],
             [0.32938, -5.36884, 4.0, 0.06588],
             [0.06683, -5.37652, 4.0, 0.06567]]
-            
-            race_line = [sublist[:2] for sublist in racing_track]
 
             ################## INPUT PARAMETERS ###################
 
@@ -529,8 +533,8 @@ class Reward:
             reward = 0.1
 
             car_point = [round(x, 3), round(y, 3)]
-            closest_point = find_closest_point_on_raceline(car_point, race_line)
-            _, percentage_progress, _ = calculate_progress_on_raceline(closest_point, race_line)
+            closest_point = find_closest_point_on_raceline(car_point, racing_track)
+            _, percentage_progress, _ = calculate_progress_on_raceline(closest_point, racing_track)
             current_progress = percentage_progress
             delta_p = current_progress - state.prev_progress
             
@@ -540,7 +544,6 @@ class Reward:
                 print(f'Car point: {car_point}')
                 print(f'Percentage progress: {percentage_progress}')
                 print(f'Current progress: {current_progress}, Delta progress: {delta_p}')
-                print(f'Delta progress reward: {(min(delta_p * 6)**2, 64)}')
                 
             delta_p = abs(delta_p)
             if delta_p >= 1:
