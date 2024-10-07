@@ -549,43 +549,43 @@ class Reward:
             if delta_p >= 1:
                 delta_p = 1
             delta_p_reward = (delta_p * 6) ** 2
-            print('0')
+            
             # Get closest indexes for racing line (and distances to all points on racing line)
             closest_index, second_closest_index = closest_2_racing_points_index(
                 racing_track, [x, y])
-            print('1')
+            
             # Get optimal [x, y, speed, time] for closest and second closest index
             optimals = racing_track[closest_index]
-            print('2')
+            
             optimals_second = racing_track[second_closest_index]
-            print('3')
+            
             # Save first racingpoint of episode for later
             if self.verbose == True:
                 self.first_racingpoint_index = 0 # this is just for testing purposes
             if self.first_racingpoint_index is None:
                 self.first_racingpoint_index = closest_index
-            print('4')
+            
             ################ REWARD AND PUNISHMENT ################
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-            print('a')
+            
             distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-            print('b')
+            
             distance_reward = min(distance_reward, 1.0)
-            print('c')
+            
             # Zero reward if obviously wrong direction (e.g. spin)
             direction_diff = racing_direction_diff(
                 optimals[0:2], optimals_second[0:2], [x, y], heading)
-            print('d')
+            
             delta_p_reward = min(delta_p_reward, 64)  # This limits the max value for delta_p_reward to 64
-            print('e')
+            
                 # Calculate final reward
             reward = delta_p_reward + (delta_p_reward * distance_reward)
-            print('f')
+            
             # Ensure reward is within allowed range [-1e5, 1e5]
             reward = max(min(reward, 1e5), -1e5)
-            print('g')
+            
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
                 delta_speed = abs(speed - state.prev_speed)
@@ -593,9 +593,9 @@ class Reward:
                     reward += 0.1
                 if delta_speed == 0:
                     reward += 0.1
-            print('h')
+            
             # No more additions to rewards after this point.
-            print('i')
+            
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -606,11 +606,11 @@ class Reward:
                     reward *= 0.1
                 if delta_turn_angle > 30:
                     reward *= 0.1
-            print('j')
+
             # Punishing erratic steering or steering out of range of valid directions.
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
                 reward *= 0.5
-            print('k')
+                
             if direction_diff > 30:
                 reward *= 0.75
             elif direction_diff >= 25:
@@ -619,11 +619,9 @@ class Reward:
                 reward *= 0.85
             elif direction_diff >= 15:
                 reward *= 0.9
-            print('l')
             
             if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
                 reward = min(reward, 0.001)
-            print('m')
             #################### RETURN REWARD ####################
             
             state.prev_progress = current_progress
