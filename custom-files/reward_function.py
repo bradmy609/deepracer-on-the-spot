@@ -1068,9 +1068,9 @@ class Reward:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                 if prev_waypoint_index >= 55 and prev_waypoint_index <= 196:
-                    bonus_reward = (avg_delta_p * distance_reward)
+                    bonus_reward = (avg_delta_p * distance_reward) * 1.5
                 else:
-                    bonus_reward = (avg_delta_p * distance_reward)/4
+                    bonus_reward = (avg_delta_p * distance_reward)
                 reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             reward_multiplier = waypoint_multiplier[prev_waypoint_index]
             reward *= reward_multiplier
