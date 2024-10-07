@@ -759,7 +759,7 @@ class Reward:
             if delta_rl_angles[prev_waypoint_index] >= 6 or delta_rl_angles[prev_waypoint_index] <= -6:
                 is_in_turn = True
                 delta_p_multiple = 6
-                capstone_multiple = 2.0
+                capstone_multiple = 2.25
             else:
                 is_in_turn = False
                 delta_p_multiple = 8
@@ -830,9 +830,9 @@ class Reward:
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 25:
                 reward *= 1.5
-            if prev_waypoint_index >= 26 and prev_waypoint_index <= 29:
+            if prev_waypoint_index >= 26 and prev_waypoint_index <= 28:
                 reward *= 2.0
-            if prev_waypoint_index >= 30 and prev_waypoint_index <= 33:
+            if prev_waypoint_index >= 29 and prev_waypoint_index <= 33:
                 reward *= 2.50
             if (prev_waypoint_index >= 59 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76):
                 reward *= 1.50
@@ -874,13 +874,6 @@ class Reward:
                 reward *= 0.85
             elif direction_diff >= 15:
                 reward *= 0.9
-            
-            # Punishing too fast or too slow
-            speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.5:
-                reward *= 0.5
-            elif speed_diff_zero < -0.5:
-                reward *= 0.5
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
