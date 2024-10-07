@@ -242,49 +242,6 @@ class Reward:
                 return scaled_value
 
             #################### RACING LINE ######################
-            
-            dist_ratios = [0.871, 0.878, 0.885, 0.8924880463492187, 0.8999715520807736, 0.9065871504806597,
-            0.9157709089726116, 0.9266885868282947, 0.940244374573718, 0.9506784281914341, 0.9686748681091675,
-            1.0, 0.9986601697057764, 0.988511539171358, 0.9691421850034927, 0.9414655074227315, 0.9071920476716875,
-            0.8686508163218751, 0.8277216651637014, 0.7882738079739195, 0.7516222608061622, 0.7154408168464638,
-            0.6730464278519614, 0.6521414453890398, 0.6470106512132406, 0.6550914758733253, 0.672349641030654,
-            0.6982608961932913, 0.7301714638498639, 0.7669579163734872, 0.8057657050041604, 0.844393018114005,
-            0.8794416780267497, 0.9093997524600217, 0.935806259724637, 0.956421664749967, 0.972010621043011, 0.9834646082256164,
-            0.9914211023764813, 0.9966000282489454, 0.9992636712065645, 1.0, 1.0, 1.0, 0.9995192831065924, 0.9974592795732877,
-            0.99322244848894, 0.9867279981767774, 0.9779819995986183, 0.9669556853970055, 0.9536792104747505, 0.9375650406029093,
-            0.9189693326032146, 0.8997658226171033, 0.8766999667619114, 0.8550239641760633, 0.8361896445698779,
-            0.816617195680465, 0.8026975938687596, 0.8004505968936582, 0.8013608308946853, 0.8082024233263048,
-            0.8105612512293897, 0.8170622065766521, 0.8230018304078973, 0.8285846105056788, 0.833550212237712,
-            0.8390865254943708, 0.8452225855285329, 0.8466415694294013, 0.8432745625785392, 0.8382272670182106,
-            0.8345426937237148, 0.8251676129563712, 0.8135681990862852, 0.8009325020543285, 0.7866797362817107,
-            0.7724932222345571, 0.7618379213200945, 0.7694216931527382, 0.7925060417857146, 0.8169354153269666,
-            0.8433000816781532, 0.8593391402568116, 0.9322497355449701, 0.9345812921606967, 0.9337314065792989,
-            0.9339617774259346, 0.9317427275619271, 0.9305621605927015, 0.9281777866042233, 0.9248993928558382,
-            0.9207738993060318, 0.9163957047736853, 0.9111348042882703, 0.9064827582505427, 0.902488146174887,
-            0.8952883454967013,0.888856059348305, 0.8802725070107024, 0.8707057797226915, 0.8602446576967547,
-            0.844843376213378, 0.8285735557195577, 0.8076306973901307, 0.7858986411796056, 0.7632336674122365,
-            0.7401237175264499, 0.7219263206740119, 0.7136699795934853, 0.714901312139085, 0.7236976079999543,
-            0.737743189065317, 0.7548301098536849, 0.7758927695458134, 0.804729528959462, 0.8292780172596115,
-            0.8520945194692808, 0.8713951604727261, 0.8882712743069163, 0.8999194719409661, 0.9061250813908435,
-            0.9628001481857406, 0.9630328939743285, 0.9639072445355767, 0.9645023807438837, 0.9652901810027484,
-            0.9543417649536096, 0.9494687692149338, 0.9434241682555959, 0.936906619605373, 0.9302899164889146,
-            0.9236806925544271, 0.9172904965913227, 0.9109711519075596, 0.9053504835509021, 0.9000525943506563,
-            0.8966076879879186, 0.8971913590636905, 0.8991830788905795, 0.9038692140221493, 0.909344498614699,
-            0.9139125778180986, 0.9197951315345537, 0.9264484204645111, 0.9318614186518932, 0.9395757937678224,
-            0.9347254116194124, 0.9204335896815984, 0.9070695660750075, 0.8939696696492091, 0.8802061167389789,
-            0.8685892883308939, 0.8547959922811114, 0.836817704382126, 0.8230622640648221, 0.8096130213694331,
-            0.7996773151258108, 0.7967659359285757, 0.8063986939063871, 0.8236646471169073, 0.8452568139587805,
-            0.8672269743216287, 0.8886567516767719, 0.9107005450635868, 0.9279696047720568, 0.9400187798205352,
-            0.9466329286649499, 0.9759167335130229, 0.9764216987143051, 0.9770860913468954, 0.9776503745947105,
-            0.9783817289191744, 0.9767947870979431, 0.9797160873588411, 0.979348089979325, 0.9790541407382046,
-            0.9787340958929542, 0.9786506147241061, 0.9767663001042698, 0.9104318969954115, 0.9027561709573522,
-            0.8903157559883109, 0.8759466502829503, 0.8609996557016053, 0.8483968899155454, 0.8362035489967317,
-            0.8346027046887895, 0.8397013581717658, 0.8480122514702922, 0.8567903659059439, 0.8668955967973829,
-            0.8770063261322659, 0.8872136707300926, 0.8967620342979393, 0.9048167823878129, 0.9119829171576366,
-            0.9189266424301834, 0.9241354355709528, 0.9292255984807326, 0.9318880696723002, 0.9328857477277346,
-            0.9322491848979095, 0.9295344966527632, 0.9248341654636273, 0.9185132083585058, 0.9107778217240752,
-            0.9023573699023707, 0.8938446184546178, 0.8858312586250008, 0.8790057723428316, 0.8739572040228827,
-            0.8711383727027402, 0.869, 0.875]
 
             delta_rl_angles = [0.0,
             0.23899301931345462,
@@ -791,6 +748,7 @@ class Reward:
             speed_cap = optimal_speed + 0.75
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
+            LANE_REWARD = 0
             
             delta_p = progress - state.prev_progress
             if delta_p > 0.8:
@@ -800,8 +758,8 @@ class Reward:
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 6 or delta_rl_angles[prev_waypoint_index] <= -6:
                 is_in_turn = True
-                delta_p_multiple = 8
-                capstone_multiple = 3.0
+                delta_p_multiple = 6
+                capstone_multiple = 1.5
             else:
                 is_in_turn = False
                 delta_p_multiple = 8
@@ -821,12 +779,11 @@ class Reward:
             if delta_p4 > 0.8:
                 delta_p4 = 0.8
             delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
-            dist_ratio = dist_ratios[prev_waypoint_index]
-            avg_delta_p = (delta_p_reward * dist_ratio * delta_p_multiple) ** 2
+            avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
-                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.9)
+                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 4.0)
             except:
                 print('Error with scaled_multiplier.')
                 scaled_multiplier = 4/optimal_speed
@@ -844,17 +801,17 @@ class Reward:
             DISTANCE_PUNISHMENT = 1
             
             if is_in_turn:
-                bonus_reward = (avg_delta_p * distance_reward)
-                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                bonus_reward = avg_delta_p * distance_reward
+                reward = avg_delta_p + bonus_reward + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                 if prev_waypoint_index >= 55 and prev_waypoint_index <= 196:
-                    bonus_reward = (avg_delta_p * distance_reward)
+                    bonus_reward = avg_delta_p * distance_reward * 1.5
                 else:
-                    bonus_reward = (avg_delta_p * distance_reward)/4
+                    bonus_reward = avg_delta_p * distance_reward
                 reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
@@ -867,16 +824,18 @@ class Reward:
                     reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 25:
+                reward *= 1.5
+            if prev_waypoint_index >= 26 and prev_waypoint_index <= 29:
                 reward *= 2.0
-            if (prev_waypoint_index >= 57 and prev_waypoint_index <= 87):
-                reward *= 2.0
+            if prev_waypoint_index >= 30 and prev_waypoint_index <= 33:
+                reward *= 2.50
+            if (prev_waypoint_index >= 59 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76):
+                reward *= 1.50
+            if (prev_waypoint_index >= 79 and prev_waypoint_index <= 87):
+                reward *= 2.50
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
-                reward *= 1.75
-            if prev_waypoint_index >= 33 and prev_waypoint_index <= 36:
-                reward *= 1.25
-            if prev_waypoint_index >= 188 and prev_waypoint_index <= 195:
-                reward *= 1.25
+                reward *= 1.50
                 
             # No more additions to rewards after this point.
             
@@ -911,6 +870,13 @@ class Reward:
                 reward *= 0.85
             elif direction_diff >= 15:
                 reward *= 0.9
+            
+            # Punishing too fast or too slow
+            speed_diff_zero = optimals[2]-speed
+            if speed_diff_zero > 0.5:
+                reward *= 0.5
+            elif speed_diff_zero < -0.5:
+                reward *= 0.5
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
@@ -924,6 +890,7 @@ class Reward:
             distance_from_center = params['distance_from_center']
 
             # Zero reward if the center of the car is off the track.
+            reward += LANE_REWARD
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
