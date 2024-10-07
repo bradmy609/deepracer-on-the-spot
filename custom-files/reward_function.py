@@ -54,8 +54,7 @@ class Reward:
                         min(distances_no_closest))
                 except Exception as e:
                     print(f'Failure in closest_2_racing_points_index: {e}')
-
-                    return [closest_index, second_closest_index]
+                return [closest_index, second_closest_index]
 
             def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
                 try:
