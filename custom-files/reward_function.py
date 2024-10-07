@@ -759,11 +759,15 @@ class Reward:
             if delta_rl_angles[prev_waypoint_index] >= 6 or delta_rl_angles[prev_waypoint_index] <= -6:
                 is_in_turn = True
                 delta_p_multiple = 6
-                capstone_multiple = 1.5
+                capstone_multiple = 2.0
             else:
                 is_in_turn = False
                 delta_p_multiple = 8
                 capstone_multiple = 1
+            if prev_waypoint_index >= 81 and prev_waypoint_index <= 87:
+                delta_p_multiple = 10
+            if prev_waypoint_index >= 187 and prev_waypoint_index <= 195:
+                delta_p_multiple = 10
             
                 
             delta_p1 = progress - state.prev_progress
