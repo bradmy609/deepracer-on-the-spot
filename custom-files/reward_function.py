@@ -536,6 +536,8 @@ class Reward:
             closest_point = find_closest_point_on_raceline(car_point, racing_track)
             _, percentage_progress, _ = calculate_progress_on_raceline(closest_point, racing_track)
             current_progress = percentage_progress
+            if state.prev_progress >= 98 and current_progress <= 2:
+                delta_p = (100 - state.prev_progress) + current_progress
             delta_p = current_progress - state.prev_progress
             
             if steps % 10 == 0:
@@ -583,8 +585,14 @@ class Reward:
                 # Calculate final reward
             reward = delta_p_reward + (delta_p_reward * distance_reward)
             
-            # Ensure reward is within allowed range [-1e5, 1e5]
-            reward = max(min(reward, 1e5), -1e5)
+            if prev_waypoint_index >= 20 and prev_waypoint_index <= 24:
+                reward *= 2
+            if prev_waypoint_index >= 25 and prev_waypoint_index <= 33:
+                reward *= 3
+            if prev_waypoint_index >= 56 and prev_waypoint_index <= 87:
+                reward *= 2
+            if prev_waypoint_index >= 106 and prev_waypoint_index <= 118:
+                reward *= 1.5
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
