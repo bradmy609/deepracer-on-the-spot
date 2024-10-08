@@ -675,6 +675,222 @@ class Reward:
             [0.59272, -5.3592, 4.0, 0.06626],
             [0.32938, -5.36884, 4.0, 0.06588],
             [0.06683, -5.37652, 4.0, 0.06567]]
+            
+            waypoint_multipliers = {0: 1.220713059188307,
+            1: 1.0,
+            2: 1.0166872263416882,
+            3: 1.0,
+            4: 1.0,
+            5: 1.0,
+            6: 1.0,
+            7: 1.0,
+            8: 1.0,
+            9: 1.0,
+            10: 1.0,
+            11: 1.0,
+            12: 1.0584885489180482,
+            13: 1.0,
+            14: 1.0,
+            15: 1.1243240001948829,
+            16: 1.0,
+            17: 1.014589801343317,
+            18: 1.3209167162010436,
+            19: 1.8146844263782527,
+            20: 1.4672079033599061,
+            21: 1.0488813680210056,
+            22: 1.1367942402425162,
+            23: 1.0,
+            24: 1.0,
+            25: 1.3241583869985303,
+            26: 1.4110873839380627,
+            27: 1.3427865506499088,
+            28: 1.383597907999963,
+            29: 1.0,
+            30: 1.1693262342238402,
+            31: 1.0515173395209287,
+            32: 1.0,
+            33: 1.0326737990003718,
+            34: 1.0,
+            35: 1.5186643852952788,
+            36: 1.264515585154587,
+            37: 1.2063259734045333,
+            38: 1.059355699863343,
+            39: 1.2560236802331182,
+            40: 1.1918761720115691,
+            41: 1.0,
+            42: 1.1477542275614048,
+            43: 1.0,
+            44: 1.1973514585736351,
+            45: 1.2432553397816843,
+            46: 1.008610168807722,
+            47: 1.065049684567785,
+            48: 1.012548855482277,
+            49: 1.0,
+            50: 1.4358188953766633,
+            51: 1.263674005804476,
+            52: 1.3453880099020556,
+            53: 1.375736592300461,
+            54: 1.0,
+            55: 1.1141275081795528,
+            56: 1.2397308957468967,
+            57: 1.3948298307606473,
+            58: 1.1839176624729673,
+            59: 1.682085786375105,
+            60: 1.068303782863695,
+            61: 2.0269585486976793,
+            62: 2.698278498318073,
+            63: 1.763139799354691,
+            64: 1.6771863521755903,
+            65: 2.3195039354250104,
+            66: 2.473431226244754,
+            67: 1.5853722982613752,
+            68: 2.011465352509303,
+            69: 2.4280881234116256,
+            70: 1.0,
+            71: 2.0064876433802628,
+            72: 1.28288460880572,
+            73: 1.5438690387356742,
+            74: 1.4891884915513374,
+            75: 1.2475828083089013,
+            76: 1.7105225646434987,
+            77: 1.5925933790584588,
+            78: 1.8100421136465108,
+            79: 1.4447874476866547,
+            80: 1.1201553282055112,
+            81: 1.72922622890344,
+            82: 2.560819462227913,
+            83: 3.3546165114224693,
+            84: 3.023736330192007,
+            85: 2.349587255838724,
+            86: 1.2110105075345037,
+            87: 5.0733951160116355,
+            88: 2.3316726642469083,
+            89: 2.754795640076767,
+            90: 1.7566356913239765,
+            91: 1.0,
+            92: 1.0158644159626162,
+            93: 1.0,
+            94: 1.1773709307117208,
+            95: 1.0,
+            96: 1.0769904578645433,
+            97: 1.0,
+            98: 1.0,
+            99: 1.5451890538807425,
+            100: 1.103789308696756,
+            101: 1.4586969945979589,
+            102: 1.0,
+            103: 1.0,
+            104: 1.1486331265793706,
+            105: 1.8149039915788454,
+            106: 1.705912122780182,
+            107: 1.0148918463589063,
+            108: 1.1658816396959382,
+            109: 1.9213403270121236,
+            110: 2.094913549900841,
+            111: 1.6090363481311043,
+            112: 1.9758940920766648,
+            113: 1.9910535327926517,
+            114: 2.141419332733736,
+            115: 1.5086748805632384,
+            116: 1.0,
+            117: 1.0,
+            118: 1.0479214478082723,
+            119: 1.1532961203118512,
+            120: 1.1311620050223594,
+            121: 1.1381182353097388,
+            122: 1.0,
+            123: 1.0312822275696116,
+            124: 1.0,
+            125: 1.0,
+            126: 1.0,
+            127: 1.0,
+            128: 1.0,
+            129: 1.0,
+            130: 1.0,
+            131: 1.0,
+            132: 1.0,
+            133: 1.0825596039275263,
+            134: 1.167892304757604,
+            135: 1.0,
+            136: 1.0,
+            137: 1.0,
+            138: 1.0,
+            139: 1.0,
+            140: 1.0,
+            141: 1.0,
+            142: 1.0,
+            143: 1.0,
+            144: 1.1048380859784999,
+            145: 1.0,
+            146: 1.0,
+            147: 1.0,
+            148: 1.0,
+            149: 1.0,
+            150: 1.0,
+            151: 1.1252011297019342,
+            152: 1.2338012181730693,
+            153: 1.0,
+            154: 1.0,
+            155: 1.0,
+            156: 1.0,
+            157: 1.0,
+            158: 2.14504815633111,
+            159: 1.712182176183546,
+            160: 2.402825723050307,
+            161: 1.60926939169617,
+            162: 1.0,
+            163: 1.1291014610572905,
+            164: 1.3337423476532804,
+            165: 1.4272597089341699,
+            166: 1.2801529356040402,
+            167: 1.0,
+            168: 1.0,
+            169: 1.0,
+            170: 1.0443973305204233,
+            171: 1.0,
+            172: 1.0,
+            173: 1.0,
+            174: 1.0,
+            175: 1.0,
+            176: 1.0,
+            177: 1.0,
+            178: 1.0,
+            179: 1.0,
+            180: 1.0,
+            181: 1.0,
+            182: 1.0,
+            183: 1.0,
+            184: 1.0,
+            185: 1.0,
+            186: 1.0,
+            187: 1.0282882086191116,
+            188: 1.0961146389763752,
+            189: 1.1324814556161642,
+            190: 1.652328130335643,
+            191: 1.722247418064079,
+            192: 1.500585228239013,
+            193: 1.7468265983463376,
+            194: 1.240146006523168,
+            195: 1.0,
+            196: 1.0310022372748548,
+            197: 1.1655917320693139,
+            198: 1.2064278475718628,
+            199: 1.183091259716137,
+            200: 1.0,
+            201: 1.0,
+            202: 1.0,
+            203: 1.0,
+            204: 1.0,
+            205: 1.1300456538444152,
+            206: 1.0,
+            207: 1.0,
+            208: 1.0,
+            209: 1.0,
+            210: 1.0,
+            211: 1.0,
+            212: 1.0,
+            213: 1.0,
+            214: 1.075438420396048}
 
             ################## INPUT PARAMETERS ###################
 
@@ -778,7 +994,7 @@ class Reward:
                 delta_p3 = 0.8
             if delta_p4 > 0.8:
                 delta_p4 = 0.8
-            delta_p_reward = (delta_p1)
+            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
             avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
             
             try:
@@ -801,7 +1017,7 @@ class Reward:
             DISTANCE_PUNISHMENT = 1
             
             if is_in_turn:
-                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                reward = (avg_delta_p) + bonus_reward + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
             else:
@@ -812,7 +1028,17 @@ class Reward:
                 else:
                     bonus_reward = (avg_delta_p * distance_reward)/10
                 reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
-            
+                
+            prev_wp_dist = dist_2_points(x, waypoints[prev_waypoint_index][0], y, waypoints[prev_waypoint_index][1])
+            next_wp_dist = dist_2_points(x, waypoints[next_waypoint_index][0], y, waypoints[next_waypoint_index][1])
+            if prev_wp_dist < next_wp_dist:
+                closest_waypoint_index = prev_waypoint_index
+            elif next_wp_dist < prev_wp_dist:
+                closest_waypoint_index = next_waypoint_index
+            else:
+                closest_waypoint_index = prev_waypoint_index
+            waypoint_multiplier = waypoint_multipliers[closest_waypoint_index]
+            reward *= waypoint_multiplier
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
             #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -823,23 +1049,11 @@ class Reward:
                 #     reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 27:
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
                 reward *= 1.75
-            if prev_waypoint_index >= 28 and prev_waypoint_index <= 33:
-                reward *= 2.25
             if (prev_waypoint_index >= 57 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76) and (prev_waypoint_index >= 79 and prev_waypoint_index <= 87):
                 reward *= 1.25
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
-                reward *= 1.25
-            if prev_waypoint_index >= 34 and prev_waypoint_index <= 55:
-                reward *= 1.5
-            if prev_waypoint_index >= 60 and prev_waypoint_index <= 100:
-                reward *= 1.25
-            if prev_waypoint_index >= 113 and prev_waypoint_index <= 120:
-                reward *= 1.5
-            if prev_waypoint_index >= 161 and prev_waypoint_index <= 164:
-                reward *= 1.5
-            if prev_waypoint_index >= 190 and prev_waypoint_index <= 194:
                 reward *= 1.25
                 
             # No more additions to rewards after this point.
