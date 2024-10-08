@@ -817,15 +817,11 @@ class Reward:
             delta_p4 = progress - state.prev_progress4
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
-            if delta_p2 > 1.0:
-                delta_p2 = 1.0
-            if delta_p3 > 1.0:
-                delta_p3 = 1.0
-            if delta_p4 > 1.0:
-                delta_p4 = 0.8
-            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
-            dist_ratio = dist_ratios[prev_waypoint_index]
-            avg_delta_p = (delta_p_reward * dist_ratio * delta_p_multiple) ** 2
+
+            linear_delta_p = (delta_p1 * 10)
+            squared_delta_p = (delta_p1 ** 2) * 20
+            cubed_delta_p = (delta_p1 ** 3) * 40
+            delta_p_reward = linear_delta_p + squared_delta_p + cubed_delta_p
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -837,6 +833,8 @@ class Reward:
             DISTANCE_MULTIPLE = scaled_multiplier
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
+            
+            reward += delta_p_reward
                     
             # Distance component
             DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -846,25 +844,6 @@ class Reward:
             # Progress component
             DISTANCE_PUNISHMENT = 1
             
-            bonus_reward = (avg_delta_p * distance_reward)
-            if is_in_turn:
-                reward = (avg_delta_p) + bonus_reward + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
-                if dist > (track_width * 0.5):
-                    DISTANCE_PUNISHMENT = 0.5
-            else:
-                if dist > (track_width * 0.25):
-                    DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
-                
-            # Bonuses for not changing steering.
-            if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-                delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-                delta_speed = abs(speed - state.prev_speed)
-                if delta_turn_angle == 0:
-                    reward += 0.1
-                if delta_speed == 0:
-                    reward += 0.1
-            
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 25:
                 reward *= 1.50
@@ -872,9 +851,9 @@ class Reward:
                 reward *= 2.5
             if prev_waypoint_index >= 29 and prev_waypoint_index <= 33:
                 reward *= 2.0
-            if (prev_waypoint_index >= 57 and prev_waypoint_index <= 85):
+            if (prev_waypoint_index >= 59 and prev_waypoint_index <= 85):
                 reward *= 2.0
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
+            if prev_waypoint_index >= 108 and prev_waypoint_index <= 118:
                 reward *= 1.5
             if prev_waypoint_index >= 34 and prev_waypoint_index <= 36:
                 reward *= 1.25
