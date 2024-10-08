@@ -996,7 +996,7 @@ class Reward:
                 delta_p3 = 0.8
             if delta_p4 > 0.8:
                 delta_p4 = 0.8
-            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4)/4
+            delta_p_reward = (delta_p1)
             avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
             
             try:
@@ -1032,14 +1032,6 @@ class Reward:
                 reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             waypoint_multiple = waypoint_multiples[prev_waypoint_index]
             reward *= waypoint_multiple
-            # Bonuses for not changing steering.
-            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-            #     delta_speed = abs(speed - state.prev_speed)
-            #     if delta_turn_angle == 0:
-            #         reward += 0.1
-                # if delta_speed == 0:
-                #     reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 27:
@@ -1047,6 +1039,8 @@ class Reward:
             if prev_waypoint_index >= 28 and prev_waypoint_index <= 33:
                 reward *= 2
             if (prev_waypoint_index >= 57 and prev_waypoint_index <= 66) or (prev_waypoint_index >= 70 and prev_waypoint_index <= 76) and (prev_waypoint_index >= 79 and prev_waypoint_index <= 87):
+                reward *= 1.25
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
                 reward *= 1.25
                 
             # No more additions to rewards after this point.
