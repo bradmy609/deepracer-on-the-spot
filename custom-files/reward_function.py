@@ -856,8 +856,6 @@ class Reward:
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + bonus_reward + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
                 
-            reward_multiplier = waypoint_multiplier[prev_waypoint_index]
-            reward *= reward_multiplier
             # Bonuses for not changing steering.
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
