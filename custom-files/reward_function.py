@@ -817,10 +817,16 @@ class Reward:
             delta_p4 = progress - state.prev_progress4
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
+            if delta_p2 > 1.0:
+                delta_p2 = 1.0
+            if delta_p3 > 1.0:
+                delta_p3 = 1.0
+            if delta_p4 > 1.0:
+                delta_p4 = 1.0
 
-            linear_delta_p = (delta_p1 * 10)
-            squared_delta_p = (delta_p1 ** 2) * 20
-            cubed_delta_p = (delta_p1 ** 3) * 40
+            linear_delta_p = (delta_p1 * 10) + (delta_p2 * 10) + (delta_p3 * 10) + (delta_p4 * 10)
+            squared_delta_p = ((delta_p1 ** 2) * 20) + ((delta_p2 **2) * 20) + ((delta_p3 ** 2) * 20) + ((delta_p4 ** 2) * 20) 
+            cubed_delta_p = ((delta_p1 ** 3) * 40) + ((delta_p2 ** 3) * 40) + ((delta_p3 ** 3) * 40) + ((delta_p4 ** 3) * 40)
             delta_p_reward = linear_delta_p + squared_delta_p + cubed_delta_p
             
             try:
