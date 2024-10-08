@@ -1077,13 +1077,6 @@ class Reward:
             elif direction_diff >= 15:
                 reward *= 0.9
             
-            # Punishing too fast or too slow
-            speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.5:
-                reward *= 0.5
-            elif speed_diff_zero < -0.5:
-                reward *= 0.5
-
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
             
