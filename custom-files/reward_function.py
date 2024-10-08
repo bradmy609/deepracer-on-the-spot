@@ -823,7 +823,15 @@ class Reward:
                 delta_p3 = 1.0
             if delta_p4 > 1.0:
                 delta_p4 = 1.0
-
+            
+            DISTANCE_PUNISHMENT = 1
+            if is_in_turn:
+                if dist > (track_width * 0.5):
+                    DISTANCE_PUNISHMENT = 0.5
+            else:
+                if dist > (track_width * 0.25):
+                    DISTANCE_PUNISHMENT = 0.5
+                    
             linear_delta_p = (delta_p1 * 10)
             squared_delta_p = ((delta_p1 ** 2) * 10)
             cubed_delta_p = ((delta_p1 ** 3) * 10)
