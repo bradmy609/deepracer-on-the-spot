@@ -783,9 +783,8 @@ class Reward:
                     DISTANCE_PUNISHMENT = 0.5
                     
             linear_delta_p = (delta_p1 * 10)
-            squared_delta_p = ((delta_p1 ** 2) * 20)
-            cubed_delta_p = ((delta_p1 ** 3) * 40)
-            delta_p_reward = (linear_delta_p + squared_delta_p + cubed_delta_p)
+            squared_delta_p = ((delta_p1 ** 2) * 25)
+            delta_p_reward = (linear_delta_p + squared_delta_p)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
