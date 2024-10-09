@@ -781,7 +781,7 @@ class Reward:
             delta_p_reward = (delta_p1)
             sq_dp = (delta_p_reward * delta_p_multiple) ** 2
             lin_dp = (delta_p_reward * delta_p_multiple)
-            avg_delta_p = sq_dp + lin_dp
+            avg_delta_p = sq_dp
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
