@@ -832,13 +832,12 @@ class Reward:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                     
-            linear_delta_p = (delta_p1 * 10) * distance_reward
-            squared_delta_p = ((delta_p1 ** 2) * 25) * distance_reward
+            linear_delta_p = (delta_p1 * 10)
+            squared_delta_p = ((delta_p1 ** 2) * 25)
             delta_p_reward = (linear_delta_p + squared_delta_p)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
-                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.9)
             except:
                 print('Error with scaled_multiplier.')
                 scaled_multiplier = 4/optimal_speed
@@ -866,6 +865,13 @@ class Reward:
                 reward += (DC + SC)
             if prev_waypoint_index >= 188 and prev_waypoint_index <= 193:
                 reward += (DC + SC)
+            
+            if dist >= (track_width * 0.7):
+                reward = 0.001
+            elif dist >= (track_width * 0.5):
+                reward *= 0.25
+            elif dist >= (track_width * 0.25):
+                reward *= 0.5
                 
             # No more additions to rewards after this point.
             
