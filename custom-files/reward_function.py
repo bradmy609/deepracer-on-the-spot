@@ -751,29 +751,33 @@ class Reward:
             SPEED_PUNISHMENT = 1
             
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 6 or delta_rl_angles[prev_waypoint_index] <= -6:
+            if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 is_in_turn = True
             else:
                 is_in_turn = False
-            
                 
             delta_p1 = progress - state.prev_progress
             
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
+            if delta_p1 <= 0:
+                print('Error with delta_progress at step:', steps)
+                print('Delta progress:', progress)
+                print('Previous progress:', state.prev_progress)
+                print('Delta progress:', delta_p1)
             
             DISTANCE_PUNISHMENT = 1
             if is_in_turn:
                 if dist > (track_width * 0.5):
-                    DISTANCE_PUNISHMENT = 0.5
+                    DISTANCE_PUNISHMENT = 0.1
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                     
             linear_delta_p = (delta_p1 * 10)
             squared_delta_p = ((delta_p1 ** 2) * 10)
-            cubed_delta_p = ((delta_p1 ** 3) * 10)
-            delta_p_reward = linear_delta_p + squared_delta_p + cubed_delta_p
+            delta_p_reward = linear_delta_p + squared_delta_p
+            reward = delta_p_reward * distance_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -785,8 +789,6 @@ class Reward:
             DISTANCE_MULTIPLE = scaled_multiplier
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
-            
-            reward += delta_p_reward
                     
             # Distance component
             DC = (distance_reward) * DISTANCE_MULTIPLE
