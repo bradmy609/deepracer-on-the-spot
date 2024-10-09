@@ -812,6 +812,8 @@ class Reward:
                 reward += (DC + SC)
             if (prev_waypoint_index >= 59 and prev_waypoint_index <= 66):
                 reward += (DC + SC)
+            if (prev_waypoint_index >= 72 and prev_waypoint_index <= 75):
+                reward += (DC + SC)
             if prev_waypoint_index >= 80 and prev_waypoint_index <= 86:
                 reward += (DC + SC)
             if prev_waypoint_index >= 188 and prev_waypoint_index <= 193:
