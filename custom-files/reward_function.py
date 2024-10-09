@@ -807,18 +807,16 @@ class Reward:
             DISTANCE_PUNISHMENT = 1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 33:
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
+                reward += (DC + SC) * 4
+            if (prev_waypoint_index >= 55 and prev_waypoint_index <= 66):
                 reward += (DC + SC) * 2
-            if (prev_waypoint_index >= 59 and prev_waypoint_index <= 66):
-                reward += (DC + SC) * 2
-            if (prev_waypoint_index >= 72 and prev_waypoint_index <= 75):
-                reward += (DC + SC) * 2
-            if prev_waypoint_index >= 80 and prev_waypoint_index <= 86:
-                reward += (DC + SC) * 2
+            if (prev_waypoint_index >= 73 and prev_waypoint_index <= 84):
+                reward += (DC + SC) * 4
             if prev_waypoint_index >= 188 and prev_waypoint_index <= 193:
                 reward += (DC + SC) * 1
             if prev_waypoint_index >= 108 and prev_waypoint_index <= 116:
-                reward += (DC + SC) * 1
+                reward += (DC + SC) * 2
             if prev_waypoint_index >= 159 and prev_waypoint_index <= 163:
                 reward += (DC + SC) * 1
             
