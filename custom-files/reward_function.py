@@ -785,7 +785,7 @@ class Reward:
             linear_delta_p = (delta_p1 * 10)
             squared_delta_p = ((delta_p1 ** 2) * 20)
             cubed_delta_p = ((delta_p1 ** 3) * 40)
-            delta_p_reward = (linear_delta_p + squared_delta_p + cubed_delta_p) * (1 + distance_reward)
+            delta_p_reward = (linear_delta_p + squared_delta_p + cubed_delta_p)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -809,19 +809,19 @@ class Reward:
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 33:
-                reward += (DC + SC)
+                reward += (DC + SC) * 2
             if (prev_waypoint_index >= 59 and prev_waypoint_index <= 66):
-                reward += (DC + SC)
+                reward += (DC + SC) * 2
             if (prev_waypoint_index >= 72 and prev_waypoint_index <= 75):
-                reward += (DC + SC)
+                reward += (DC + SC) * 2
             if prev_waypoint_index >= 80 and prev_waypoint_index <= 86:
-                reward += (DC + SC)
+                reward += (DC + SC) * 2
             if prev_waypoint_index >= 188 and prev_waypoint_index <= 193:
-                reward += (DC + SC)
+                reward += (DC + SC) * 1
             if prev_waypoint_index >= 108 and prev_waypoint_index <= 116:
-                reward += (DC + SC)
+                reward += (DC + SC) * 1
             if prev_waypoint_index >= 159 and prev_waypoint_index <= 163:
-                reward += (DC + SC)
+                reward += (DC + SC) * 1
             
             if dist >= (track_width * 0.75):
                 reward = 0.001
