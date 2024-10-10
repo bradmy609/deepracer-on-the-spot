@@ -979,16 +979,11 @@ class Reward:
                 
             delta_p1 = progress - state.prev_progress
             delta_p2 = progress - state.prev_progress2
-            delta_p3 = progress - state.prev_progress3
-            delta_p4 = progress - state.prev_progress4
+
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             if delta_p2 > 1.0:
                 delta_p2 = 1.0
-            if delta_p3 > 1.0:
-                delta_p3 = 1.0
-            if delta_p4 > 1.0:
-                delta_p4 = 1.0
             
             DISTANCE_PUNISHMENT = 1
             if is_in_turn:
@@ -1000,10 +995,9 @@ class Reward:
             
             waypoint_multiple = waypoint_multipliers[prev_waypoint_index]
             
-            linear_delta_p = (delta_p1 * 10) * waypoint_multiple
-            squared_delta_p = ((delta_p1 ** 2) * 20)
-            cubed_delta_p = ((delta_p1 ** 3) * 40)
-            delta_p_reward = (linear_delta_p + squared_delta_p + cubed_delta_p)
+            dp1 = ((delta_p1 ** 2) * 36)
+            dp2 = ((delta_p2 ** 2) * 36)
+            delta_p_reward = (dp1 + dp2)
             
             
             try:
@@ -1028,17 +1022,19 @@ class Reward:
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward += (DC + SC) * 4
-            if (prev_waypoint_index >= 55 and prev_waypoint_index <= 66):
-                reward += (DC + SC) * 2
-            if (prev_waypoint_index >= 73 and prev_waypoint_index <= 84):
-                reward += (DC + SC) * 4
+                reward += (delta_p_reward * distance_reward * 3)
+            if (prev_waypoint_index >= 58 and prev_waypoint_index <= 66):
+                reward += (delta_p_reward * distance_reward * 3)
+            if (prev_waypoint_index >= 73 and prev_waypoint_index <= 77):
+                reward += (delta_p_reward * distance_reward * 3)
+            if (prev_waypoint_index >= 80 and prev_waypoint_index <= 84):
+                reward += (delta_p_reward * distance_reward * 4)
             if prev_waypoint_index >= 188 and prev_waypoint_index <= 193:
-                reward += (DC + SC) * 1
+                reward += (delta_p_reward * distance_reward)
             if prev_waypoint_index >= 108 and prev_waypoint_index <= 116:
-                reward += (DC + SC) * 2
+                reward += (delta_p_reward * distance_reward)
             if prev_waypoint_index >= 159 and prev_waypoint_index <= 163:
-                reward += (DC + SC) * 1
+                reward += (delta_p_reward * distance_reward)
             
             if dist >= (track_width * 0.75):
                 reward = 0.001
@@ -1059,7 +1055,7 @@ class Reward:
                 if delta_turn_angle > 30:
                     reward *= 0.1
             
-            if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
+            if prev_waypoint_index >= 19 and prev_waypoint_index <= 27:
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle > 0:
