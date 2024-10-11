@@ -833,7 +833,7 @@ class Reward:
                 reward *= 1.25
             
             if optimal_speed > 3.5 and speed >= optimal_speed:
-                reward += 2 * distance_reward
+                reward += 1 * distance_reward
                 
             # No more additions to rewards after this point.
             
@@ -897,7 +897,8 @@ class Reward:
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
         
-        reward = min(100, reward)
+        reward = min(150, reward)
+        reward = max(0, reward)
 
         #################### RETURN REWARD ####################
         
