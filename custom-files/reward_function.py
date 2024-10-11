@@ -813,8 +813,10 @@ class Reward:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
-                if speed >= optimal_speed:
+                if speed >= optimal_speed:    
                     reward += (0.5 + max(0, (distance_reward * 1.5)))
+                    if steps % 5 == 0:
+                        print(f'Optimal speed: {optimal_speed}, Current speed: {speed}, Distance reward: {distance_reward}, Progress reward: {avg_delta_p}, Reward: {reward}')
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
