@@ -815,8 +815,8 @@ class Reward:
             #     delta_speed = abs(speed - state.prev_speed)
             #     if delta_turn_angle == 0:
             #         reward += 0.1
-                # if delta_speed == 0:
-                #     reward += 0.1
+            #     if delta_speed == 0:
+            #         reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
@@ -831,12 +831,6 @@ class Reward:
                 reward *= 1 + ((prev_waypoint_index - 85)/15)
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
                 reward *= 1 + ((prev_waypoint_index - 110)/12)
-            if prev_waypoint_index >= 120 and prev_waypoint_index <= 153:
-                reward += avg_delta_p * 0.2
-            if prev_waypoint_index >= 161 and prev_waypoint_index <= 183:
-                reward += avg_delta_p * 0.2
-            if prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
-                reward += avg_delta_p * 0.4
             
             if optimal_speed >= 3.5 and speed >= optimal_speed:
                 reward += (1 * distance_reward)
