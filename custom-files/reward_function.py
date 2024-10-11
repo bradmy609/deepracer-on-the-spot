@@ -750,6 +750,11 @@ class Reward:
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
             
+            delta_p = progress - state.prev_progress
+            if delta_p > 0.8:
+                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
+                delta_p = 0.8
+            
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
@@ -757,7 +762,7 @@ class Reward:
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
-                delta_p_multiple = 8.0
+                delta_p_multiple = 9
                 capstone_multiple = 1
             
                 
@@ -765,25 +770,15 @@ class Reward:
             delta_p2 = progress - state.prev_progress2
             delta_p3 = progress - state.prev_progress3
             delta_p4 = progress - state.prev_progress4
-            
-            if delta_p1 > 1.0:
-                delta_p1 = 1.0
-            if delta_p2 > 1.0:
-                delta_p2 = 1.0
-            if delta_p3 > 1.0:
-                delta_p3 = 1.0
-            if delta_p4 > 1.0:
-                delta_p4 = 1.0
-            if delta_p1 < 0:
-                delta_p1 = 0
-            if delta_p2 < 0:
-                delta_p2 = 0
-            if delta_p3 < 0:
-                delta_p3 = 0
-            if delta_p4 < 0:
-                delta_p4 = 0
-                
-            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
+            if delta_p1 > 1:
+                delta_p1 = 1
+            if delta_p2 > 1:
+                delta_p2 = 1
+            if delta_p3 > 1:
+                delta_p3 = 1
+            if delta_p4 > 1:
+                delta_p4 = 1
+            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4) / 5
             avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
             
             try:
@@ -813,33 +808,29 @@ class Reward:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
-                if speed >= optimal_speed:    
-                    reward += (distance_reward * 1.5)
-                    if steps % 5 == 0:
-                        print(f'Optimal speed: {optimal_speed}, Current speed: {speed}, Distance reward: {distance_reward}, Progress reward: {avg_delta_p}, Reward: {reward}')
-            
-            # Bonuses for not changing steering.
-            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-            #     delta_speed = abs(speed - state.prev_speed)
-            #     if delta_turn_angle == 0:
-            #         reward += 0.1
-            #     if delta_speed == 0:
-            #         reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
                 reward *= 1 + ((prev_waypoint_index - 20)/12)
-            if prev_waypoint_index >= 55 and prev_waypoint_index <= 69:
+            if prev_waypoint_index >= 55 and prev_waypoint_index <= 67:
                 reward *= 1 + ((prev_waypoint_index - 55)/15)
-            if prev_waypoint_index >= 72 and prev_waypoint_index <= 76:
-                reward *= 1 + ((prev_waypoint_index - 69)/12)
-            if prev_waypoint_index >= 81 and prev_waypoint_index <= 88:
-                reward *= 1 + ((prev_waypoint_index - 80)/12)
+            if prev_waypoint_index >= 71 and prev_waypoint_index <= 76:
+                reward *= 1 + ((prev_waypoint_index - 72)/12)
+            if prev_waypoint_index >= 80 and prev_waypoint_index <= 88:
+                reward *= 1 + ((prev_waypoint_index - 78)/12)
             if prev_waypoint_index >= 89 and prev_waypoint_index <= 100:
                 reward *= 1 + ((prev_waypoint_index - 85)/15)
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
                 reward *= 1 + ((prev_waypoint_index - 110)/12)
+            if prev_waypoint_index >= 161 and prev_waypoint_index <= 183:
+                reward += avg_delta_p * 0.4
+            if prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
+                reward += avg_delta_p * 0.4
+            if prev_waypoint_index >= 117 and prev_waypoint_index <= 153:
+                reward += avg_delta_p * 0.2
+                
+            if optimal_speed > 3.5 and speed >= optimal_speed:
+                reward += distance_reward * 1
                 
             # No more additions to rewards after this point.
             
@@ -878,9 +869,9 @@ class Reward:
             # Punishing too fast or too slow
             speed_diff_zero = optimals[2]-speed
             if speed_diff_zero > 0.5:
-                reward *= 0.75
+                reward *= 0.5
             elif speed_diff_zero < -0.5:
-                reward *= 0.75
+                reward *= 0.5
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
@@ -893,7 +884,8 @@ class Reward:
             track_width = params['track_width']
             distance_from_center = params['distance_from_center']
 
-        # Zero reward if the center of the car is off the track.
+            # Zero reward if the center of the car is off the track.
+            reward += LANE_REWARD
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
