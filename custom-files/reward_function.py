@@ -762,24 +762,24 @@ class Reward:
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
-                delta_p_multiple = 8
+                delta_p_multiple = 9
                 capstone_multiple = 1
             
                 
-            delta_p1 = (progress - state.prev_progress)
-            delta_p2 = (progress - state.prev_progress2) / 2
-            delta_p3 = (progress - state.prev_progress3) / 3
-            delta_p4 = (progress - state.prev_progress4) / 4
-            if delta_p1 > 1.0:
-                delta_p1 = 1.0
-            if delta_p2 > 1.5:
-                delta_p2 = 1.5
-            if delta_p3 > 2.0:
-                delta_p3 = 2.0
-            if delta_p4 > 2.5:
-                delta_p4 = 2.5
-            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4) / 5
+            delta_p1 = progress - state.prev_progress
+            
+            if delta_p1 > 0.8:
+                delta_p1 = 0.8
+                
+            delta_p_reward = (delta_p1)
             avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
+            if steps >= 2 and steps <= 5:
+                total_prog_multiplier = 5
+            else:
+                total_prog_multiplier = 20
+                
+            progress_per_step_reward = (((progress/steps) * total_prog_multiplier) ** 2)
+            avg_delta_p = delta_p_reward + progress_per_step_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -810,30 +810,30 @@ class Reward:
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
-            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-            #     delta_speed = abs(speed - state.prev_speed)
-            #     if delta_turn_angle == 0:
-            #         reward += 0.1
-            #     if delta_speed == 0:
-            #         reward += 0.1
+            if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+                delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+                delta_speed = abs(speed - state.prev_speed)
+                if delta_turn_angle == 0:
+                    reward += 0.1
+                if delta_speed == 0:
+                    reward += 0.1
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
-                reward *= 1 + ((prev_waypoint_index - 20)/12)
-            if prev_waypoint_index >= 55 and prev_waypoint_index <= 66:
-                reward *= 1 + ((prev_waypoint_index - 55)/15)
-            if prev_waypoint_index >= 71 and prev_waypoint_index <= 76:
-                reward *= 1.4
-            if prev_waypoint_index >= 81 and prev_waypoint_index <= 88:
-                reward *= 1 + ((prev_waypoint_index - 78)/12)
-            if prev_waypoint_index >= 89 and prev_waypoint_index <= 100:
-                reward *= 1 + ((prev_waypoint_index - 85)/15)
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
-                reward *= 1 + ((prev_waypoint_index - 110)/12)
+                reward *= 1 + ((prev_waypoint_index - 20)/15)
+            if prev_waypoint_index >= 57 and prev_waypoint_index <= 66:
+                reward *= 1.30
+            if prev_waypoint_index >= 71 and prev_waypoint_index <= 73:
+                reward *= 1.35
+            if prev_waypoint_index >= 74 and prev_waypoint_index <= 76:
+                reward *= 1.25
+            if prev_waypoint_index >= 81 and prev_waypoint_index <= 86:
+                reward *= 1.35
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
+                reward *= 1.25
             
-            if optimal_speed >= 3.5 and speed >= optimal_speed:
-                reward += (1 * distance_reward)
+            if optimal_speed > 3.5 and speed >= optimal_speed:
+                reward += 2 * distance_reward
                 
             # No more additions to rewards after this point.
             
