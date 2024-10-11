@@ -770,15 +770,15 @@ class Reward:
             
             if delta_p1 > 0.8:
                 delta_p1 = 0.8
-                
-            delta_p_reward = (delta_p1)
-            avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
+            
             if steps >= 2 and steps <= 5:
                 total_prog_multiplier = 5
             else:
                 total_prog_multiplier = 20
                 
             progress_per_step_reward = (((progress/steps) * total_prog_multiplier) ** 2)
+            delta_p_reward = (delta_p_reward * delta_p_multiple) ** 2
+            
             avg_delta_p = delta_p_reward + progress_per_step_reward
             
             try:
