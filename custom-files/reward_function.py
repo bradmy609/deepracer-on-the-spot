@@ -777,7 +777,7 @@ class Reward:
                 total_prog_multiplier = 20
                 
             progress_per_step_reward = (((progress/steps) * total_prog_multiplier) ** 2)
-            delta_p_reward = (delta_p_reward * delta_p_multiple) ** 2
+            delta_p_reward = (delta_p1 * delta_p_multiple) ** 2
             
             avg_delta_p = delta_p_reward + progress_per_step_reward
             
