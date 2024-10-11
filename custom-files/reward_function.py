@@ -757,7 +757,7 @@ class Reward:
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
-                delta_p_multiple = 8
+                delta_p_multiple = 8.0
                 capstone_multiple = 1
             
                 
@@ -765,6 +765,7 @@ class Reward:
             delta_p2 = progress - state.prev_progress2
             delta_p3 = progress - state.prev_progress3
             delta_p4 = progress - state.prev_progress4
+            
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             if delta_p2 > 1.0:
@@ -773,6 +774,15 @@ class Reward:
                 delta_p3 = 1.0
             if delta_p4 > 1.0:
                 delta_p4 = 1.0
+            if delta_p1 < 0:
+                delta_p1 = 0
+            if delta_p2 < 0:
+                delta_p2 = 0
+            if delta_p3 < 0:
+                delta_p3 = 0
+            if delta_p4 < 0:
+                delta_p4 = 0
+                
             delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
             avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
             
@@ -804,7 +814,7 @@ class Reward:
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
                 if speed >= optimal_speed:
-                    reward += (distance_reward * 1.5)
+                    reward += (0.5 + max(0, (distance_reward * 1.5)))
             
             # Bonuses for not changing steering.
             # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
@@ -866,9 +876,9 @@ class Reward:
             # Punishing too fast or too slow
             speed_diff_zero = optimals[2]-speed
             if speed_diff_zero > 0.5:
-                reward *= 0.5
+                reward *= 0.75
             elif speed_diff_zero < -0.5:
-                reward *= 0.5
+                reward *= 0.75
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
@@ -881,8 +891,7 @@ class Reward:
             track_width = params['track_width']
             distance_from_center = params['distance_from_center']
 
-            # Zero reward if the center of the car is off the track.
-            reward += LANE_REWARD
+        # Zero reward if the center of the car is off the track.
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
