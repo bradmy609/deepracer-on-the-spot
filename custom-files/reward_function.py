@@ -1,4 +1,3 @@
-
 import numpy as np
 import math
 
@@ -676,222 +675,6 @@ class Reward:
             [0.59272, -5.3592, 4.0, 0.06626],
             [0.32938, -5.36884, 4.0, 0.06588],
             [0.06683, -5.37652, 4.0, 0.06567]]
-            
-            waypoint_multipliers = {0: 1.0,
-            1: 1.244203440602846,
-            2: 1.0058813826407789,
-            3: 1.0,
-            4: 1.0,
-            5: 1.0,
-            6: 1.0,
-            7: 1.0,
-            8: 1.0,
-            9: 1.0,
-            10: 1.0,
-            11: 1.0,
-            12: 1.0,
-            13: 1.1319034389236398,
-            14: 1.0,
-            15: 1.0,
-            16: 1.0,
-            17: 1.0,
-            18: 1.1524876406315225,
-            19: 1.1777141305244767,
-            20: 1.0215074632795174,
-            21: 1.0,
-            22: 1.0,
-            23: 1.7231601118913287,
-            24: 2.3753296919228633,
-            25: 3.1564628667484516,
-            26: 4.4860694579226745,
-            27: 5.274763437975209,
-            28: 7.298955219779652,
-            29: 6.0316877033374725,
-            30: 4.450612919789971,
-            31: 3.3147839363561484,
-            32: 1.602220162852822,
-            33: 1.0520046266950955,
-            34: 1.382099117827155,
-            35: 1.4647947292107617,
-            36: 1.0183780770381212,
-            37: 1.0,
-            38: 1.0,
-            39: 1.0,
-            40: 1.0,
-            41: 1.0,
-            42: 1.0,
-            43: 1.0,
-            44: 1.1982529708962149,
-            45: 1.5715921827695774,
-            46: 1.0,
-            47: 1.0,
-            48: 1.0,
-            49: 1.0,
-            50: 1.0,
-            51: 1.0,
-            52: 1.0,
-            53: 1.0153800266479565,
-            54: 1.1124606926302745,
-            55: 2.8047013432337264,
-            56: 2.470113868100107,
-            57: 2.1666774965207547,
-            58: 2.5772333177731976,
-            59: 2.6718777656312267,
-            60: 2.4154132746080688,
-            61: 2.4998831576350233,
-            62: 1.9370478798151183,
-            63: 1.3162940635402849,
-            64: 1.0282323008582113,
-            65: 1.0,
-            66: 2.3096460071274927,
-            67: 1.7043495404265652,
-            68: 1.4672809359101746,
-            69: 1.0863714510373006,
-            70: 1.0,
-            71: 1.0,
-            72: 1.0,
-            73: 1.0,
-            74: 1.0,
-            75: 1.0,
-            76: 3.3717079819204954,
-            77: 4.091150924544795,
-            78: 4.699898026938808,
-            79: 6.220436206416815,
-            80: 6.216671245518008,
-            81: 3.8825479104454974,
-            82: 3.9375168185391742,
-            83: 2.8120927911407194,
-            84: 2.2666972767666436,
-            85: 1.6774375816647242,
-            86: 1.1526330679948726,
-            87: 1.667912768081302,
-            88: 1.9761878905984294,
-            89: 1.4139415236161943,
-            90: 1.1633896091005607,
-            91: 1.0804673201498896,
-            92: 1.0,
-            93: 1.0,
-            94: 1.0,
-            95: 1.0,
-            96: 1.0,
-            97: 1.5862868022021903,
-            98: 2.3957897903465306,
-            99: 1.583662546602509,
-            100: 1.2826763296952788,
-            101: 1.2259805906382415,
-            102: 1.1182197159399996,
-            103: 1.2515220361264763,
-            104: 1.2309115542906157,
-            105: 1.2166061004815065,
-            106: 1.009978374268826,
-            107: 1.0,
-            108: 2.4150474841202048,
-            109: 2.124867535851628,
-            110: 2.335450612026923,
-            111: 2.662069113385569,
-            112: 2.2451383421753297,
-            113: 1.9547376387832094,
-            114: 2.0250626613247364,
-            115: 1.8482732239107889,
-            116: 1.5221488052329748,
-            117: 1.2570564531130082,
-            118: 1.1651206949577566,
-            119: 3.193512716205003,
-            120: 1.3017624588496948,
-            121: 1.0,
-            122: 1.0,
-            123: 1.0,
-            124: 1.0,
-            125: 1.0,
-            126: 1.0,
-            127: 1.0,
-            128: 1.0,
-            129: 1.5246041820341756,
-            130: 1.3391618759744794,
-            131: 1.0,
-            132: 1.0,
-            133: 1.0,
-            134: 1.0,
-            135: 1.0,
-            136: 1.0,
-            137: 1.0,
-            138: 1.0,
-            139: 1.0,
-            140: 1.6952656575224025,
-            141: 1.1152069223677603,
-            142: 1.0,
-            143: 1.0,
-            144: 1.0,
-            145: 1.0,
-            146: 1.0,
-            147: 1.0,
-            148: 1.0,
-            149: 1.0,
-            150: 1.0433898356923004,
-            151: 1.5076854338753312,
-            152: 1.0985194986611289,
-            153: 1.0,
-            154: 1.0,
-            155: 1.0,
-            156: 1.0114816540928753,
-            157: 1.0,
-            158: 1.0132939367848481,
-            159: 1.0,
-            160: 1.0,
-            161: 1.5026491497946064,
-            162: 1.2611295912912945,
-            163: 1.1586875178373643,
-            164: 1.1059292662820708,
-            165: 1.0006103150722718,
-            166: 1.0,
-            167: 1.0,
-            168: 1.0,
-            169: 1.0,
-            170: 1.0,
-            171: 1.0,
-            172: 1.3728495539657963,
-            173: 1.0,
-            174: 1.0,
-            175: 1.0,
-            176: 1.0,
-            177: 1.0,
-            178: 1.0,
-            179: 1.0,
-            180: 1.0,
-            181: 1.0,
-            182: 1.415374007243174,
-            183: 1.4293824801955135,
-            184: 1.126079366849312,
-            185: 1.0,
-            186: 1.0,
-            187: 1.0,
-            188: 1.0,
-            189: 1.0,
-            190: 1.003447507470496,
-            191: 1.0,
-            192: 1.0,
-            193: 1.5097875942036856,
-            194: 1.103770204018739,
-            195: 1.0,
-            196: 1.0,
-            197: 1.0,
-            198: 1.0,
-            199: 1.0,
-            200: 1.0,
-            201: 1.0,
-            202: 1.0,
-            203: 1.0,
-            204: 1.0,
-            205: 1.0,
-            206: 1.0,
-            207: 1.0,
-            208: 1.0,
-            209: 1.0,
-            210: 1.0,
-            211: 1.0,
-            212: 1.0,
-            213: 1.0,
-            214: 1.0}
 
             ################## INPUT PARAMETERS ###################
 
@@ -965,42 +748,37 @@ class Reward:
             speed_cap = optimal_speed + 0.75
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
-            
-            delta_p = progress - state.prev_progress
-            if delta_p > 0.8:
-                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
-                delta_p = 0.8
+            LANE_REWARD = 0
             
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 6 or delta_rl_angles[prev_waypoint_index] <= -6:
+            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
+                delta_p_multiple = 6
+                capstone_multiple = 1.5
             else:
                 is_in_turn = False
+                delta_p_multiple = 8
+                capstone_multiple = 1
+            
                 
             delta_p1 = progress - state.prev_progress
             delta_p2 = progress - state.prev_progress2
-
+            delta_p3 = progress - state.prev_progress3
+            delta_p4 = progress - state.prev_progress4
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             if delta_p2 > 1.0:
                 delta_p2 = 1.0
-            
-            DISTANCE_PUNISHMENT = 1
-            if is_in_turn:
-                if dist > (track_width * 0.5):
-                    DISTANCE_PUNISHMENT = 0.5
-            else:
-                if dist > (track_width * 0.25):
-                    DISTANCE_PUNISHMENT = 0.5
-            
-            dp1 = ((delta_p1 ** 2) * 36)
-            dp2 = ((delta_p2 ** 2) * 18)
-            delta_p_reward = (dp1 + dp2)
-            modulated_delta_p_reward = delta_p_reward * distance_reward
-            
+            if delta_p3 > 1.0:
+                delta_p3 = 1.0
+            if delta_p4 > 1.0:
+                delta_p4 = 1.0
+            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
+            avg_delta_p = (delta_p_reward * delta_p_multiple) ** 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
+                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.9)
             except:
                 print('Error with scaled_multiplier.')
                 scaled_multiplier = 4/optimal_speed
@@ -1008,8 +786,6 @@ class Reward:
             DISTANCE_MULTIPLE = scaled_multiplier
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
-            
-            reward += delta_p_reward + modulated_delta_p_reward
                     
             # Distance component
             DC = (distance_reward) * DISTANCE_MULTIPLE
@@ -1019,30 +795,42 @@ class Reward:
             # Progress component
             DISTANCE_PUNISHMENT = 1
             
-            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward += (delta_p_reward * distance_reward * 5)
-            if (prev_waypoint_index >= 58 and prev_waypoint_index <= 66):
-                reward += (delta_p_reward * distance_reward * 3)
-            if (prev_waypoint_index >= 73 and prev_waypoint_index <= 77):
-                reward += (delta_p_reward * distance_reward * 3)
-            if (prev_waypoint_index >= 80 and prev_waypoint_index <= 84):
-                reward += (delta_p_reward * distance_reward * 5)
-            if prev_waypoint_index >= 188 and prev_waypoint_index <= 193:
-                reward += (delta_p_reward * distance_reward)
-            if prev_waypoint_index >= 108 and prev_waypoint_index <= 116:
-                reward += (delta_p_reward * distance_reward)
-            if prev_waypoint_index >= 159 and prev_waypoint_index <= 163:
-                reward += (delta_p_reward * distance_reward)
+            if is_in_turn:
+                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                if dist > (track_width * 0.5):
+                    DISTANCE_PUNISHMENT = 0.5
+            else:
+                if dist > (track_width * 0.25):
+                    DISTANCE_PUNISHMENT = 0.5
+                reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
+                if speed >= optimal_speed:
+                    reward += (distance_reward * 1.5)
             
-            if dist >= (track_width * 0.75):
-                reward = 0.001
-            elif dist >= (track_width * 0.5):
-                reward *= 0.25
-            elif dist >= (track_width * 0.25):
-                reward *= 0.5
+            # Bonuses for not changing steering.
+            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+            #     delta_speed = abs(speed - state.prev_speed)
+            #     if delta_turn_angle == 0:
+            #         reward += 0.1
+            #     if delta_speed == 0:
+            #         reward += 0.1
+            
+            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
+                reward *= 1 + ((prev_waypoint_index - 20)/12)
+            if prev_waypoint_index >= 55 and prev_waypoint_index <= 69:
+                reward *= 1 + ((prev_waypoint_index - 55)/15)
+            if prev_waypoint_index <= 72 and prev_waypoint_index <= 76:
+                reward *= 1 + ((prev_waypoint_index - 70)/12)
+            if prev_waypoint_index >= 81 and prev_waypoint_index <= 88:
+                reward *= 1 + ((prev_waypoint_index - 80)/12)
+            if prev_waypoint_index >= 89 and prev_waypoint_index <= 100:
+                reward *= 1 + ((prev_waypoint_index - 85)/15)
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
+                reward *= 1 + ((prev_waypoint_index - 110)/12)
                 
             # No more additions to rewards after this point.
+            
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -1054,7 +842,7 @@ class Reward:
                 if delta_turn_angle > 30:
                     reward *= 0.1
             
-            if prev_waypoint_index >= 19 and prev_waypoint_index <= 27:
+            if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
                 if speed > 2.5:
                     SPEED_PUNISHMENT = 0.5
                 if steering_angle > 0:
@@ -1074,6 +862,13 @@ class Reward:
                 reward *= 0.85
             elif direction_diff >= 15:
                 reward *= 0.9
+            
+            # Punishing too fast or too slow
+            speed_diff_zero = optimals[2]-speed
+            if speed_diff_zero > 0.5:
+                reward *= 0.5
+            elif speed_diff_zero < -0.5:
+                reward *= 0.5
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
@@ -1087,6 +882,7 @@ class Reward:
             distance_from_center = params['distance_from_center']
 
             # Zero reward if the center of the car is off the track.
+            reward += LANE_REWARD
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
