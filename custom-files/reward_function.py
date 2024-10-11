@@ -766,10 +766,10 @@ class Reward:
                 capstone_multiple = 1
             
                 
-            delta_p1 = progress - state.prev_progress
-            delta_p2 = progress - state.prev_progress2 / 2
-            delta_p3 = progress - state.prev_progress3 / 3
-            delta_p4 = progress - state.prev_progress4 / 4
+            delta_p1 = (progress - state.prev_progress)
+            delta_p2 = (progress - state.prev_progress2) / 2
+            delta_p3 = (progress - state.prev_progress3) / 3
+            delta_p4 = (progress - state.prev_progress4) / 4
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             if delta_p2 > 1.5:
