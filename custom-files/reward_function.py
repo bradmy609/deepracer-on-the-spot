@@ -832,8 +832,8 @@ class Reward:
                 reward *= 1 + ((prev_waypoint_index - 20)/12)
             if prev_waypoint_index >= 55 and prev_waypoint_index <= 69:
                 reward *= 1 + ((prev_waypoint_index - 55)/15)
-            if prev_waypoint_index <= 72 and prev_waypoint_index <= 76:
-                reward *= 1 + ((prev_waypoint_index - 70)/12)
+            if prev_waypoint_index >= 72 and prev_waypoint_index <= 76:
+                reward *= 1 + ((prev_waypoint_index - 69)/12)
             if prev_waypoint_index >= 81 and prev_waypoint_index <= 88:
                 reward *= 1 + ((prev_waypoint_index - 80)/12)
             if prev_waypoint_index >= 89 and prev_waypoint_index <= 100:
