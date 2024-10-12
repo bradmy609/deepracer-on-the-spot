@@ -821,23 +821,19 @@ class Reward:
                 reward = (combined_reward) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
-            if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-                delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-                delta_speed = abs(speed - state.prev_speed)
-                if delta_turn_angle == 0:
-                    reward += 0.1
-                if delta_speed == 0:
-                    reward += 0.1
-            
-            if optimal_speed > 3.5 and speed >= optimal_speed:
-                reward += 1 * distance_reward
+            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+            #     delta_speed = abs(speed - state.prev_speed)
+            #     if delta_turn_angle == 0:
+            #         reward += 0.1
+            #     if delta_speed == 0:
+            #         reward += 0.1
                 
             # No more additions to rewards after this point.
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-                delta_speed = abs(speed - state.prev_speed)
                 if state.prev_turn_angle > 10 and steering_angle < -10:
                     reward *= 0.1
                 elif state.prev_turn_angle < -10 and steering_angle > 10:
@@ -865,13 +861,6 @@ class Reward:
                 reward *= 0.85
             elif direction_diff >= 15:
                 reward *= 0.9
-            
-            # Punishing too fast or too slow
-            speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.5:
-                reward *= 0.5
-            elif speed_diff_zero < -0.5:
-                reward *= 0.5
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
