@@ -750,13 +750,8 @@ class Reward:
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
             
-            delta_p = progress - state.prev_progress
-            if delta_p > 0.8:
-                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
-                delta_p = 0.8
-            
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
+            if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 is_in_turn = True
                 delta_p_multiple = 6
                 capstone_multiple = 1
@@ -807,7 +802,7 @@ class Reward:
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 33:
                 reward *= 1 + ((prev_waypoint_index - 20)/15)
             if prev_waypoint_index >= 55 and prev_waypoint_index <= 66:
                 reward *= 1.25
