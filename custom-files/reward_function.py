@@ -8,6 +8,7 @@ class STATE:
         self.prev_speed_diff = None
         self.prev_distance = None
         self.prev_speed = None
+        self.prog_dict = {}
         self.prev_progress = 0
         self.prev_progress2 = 0
         self.prev_progress3 = 0
@@ -19,6 +20,7 @@ class STATE:
         self.prev_speed_diff = None
         self.prev_distance = None
         self.prev_speed = None
+        self.prog_dict = {}
         self.prev_progress = 0
         self.prev_progress2 = 0
         self.prev_progress3 = 0
@@ -766,18 +768,23 @@ class Reward:
                 capstone_multiple = 1
             
                 
-            delta_p1 = progress - state.prev_progress
-            
             if delta_p1 > 0.8:
                 delta_p1 = 0.8
+                
+            delta_p1 = progress - state.prev_progress
+            state.prog_dict[steps] = delta_p1
+            all_delta_ps = list(state.prog_dict.values())
+            
+            if len(all_delta_ps) > 1:
+                avg_delta_p = sum(all_delta_ps) / len(all_delta_ps)
+            else:
+                avg_delta_p = delta_p1
+                
+            avg_delta_p_reward = ((avg_delta_p * 9) ** 2) * (1 + (progress/25))
             
             delta_p_reward = (delta_p1 * delta_p_multiple) ** 2
                 
-            if steps <= 5:
-                progress_per_step_reward = delta_p_reward
-                
-            progress_per_step_reward = (((progress/steps) ** 4) * 2500)
-            avg_delta_p = delta_p_reward + progress_per_step_reward
+            combine_delta_p_reward = delta_p_reward + avg_delta_p_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -799,13 +806,13 @@ class Reward:
             DISTANCE_PUNISHMENT = 1
             
             if is_in_turn:
-                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                reward = (combine_delta_p_reward) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
+                reward = (combine_delta_p_reward) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
