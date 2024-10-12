@@ -756,7 +756,7 @@ class Reward:
                 # Scaling with base 2 to adjust sharpness
                 max_progress = 0.35
                 min_progress = 0.18
-                scale_factor = 40  # Maximum reward
+                scale_factor = 30  # Maximum reward
 
                 # Normalize the progress to be between 0 and 1
                 normalized_progress = (progress_per_step - min_progress) / (max_progress - min_progress)
@@ -779,8 +779,8 @@ class Reward:
                 
             delta_p1 = progress - state.prev_progress
             
-            if delta_p1 > 0.8:
-                delta_p1 = 0.8
+            if delta_p1 > 1.0:
+                delta_p1 = 1.0
             
             delta_p_reward = (delta_p1 * delta_p_multiple) ** 2
             
@@ -790,7 +790,7 @@ class Reward:
             if pps_reward <= 0:
                 pps_reward = delta_p_reward
                 
-            combined_reward = delta_p_reward + pps_reward
+            combined_reward = (delta_p_reward + pps_reward) / 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -828,20 +828,6 @@ class Reward:
                     reward += 0.1
                 if delta_speed == 0:
                     reward += 0.1
-            
-            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
-                reward *= 1 + ((prev_waypoint_index - 20)/15)
-            if prev_waypoint_index >= 57 and prev_waypoint_index <= 66:
-                reward *= 1.30
-            if prev_waypoint_index >= 71 and prev_waypoint_index <= 73:
-                reward *= 1.35
-            if prev_waypoint_index >= 74 and prev_waypoint_index <= 76:
-                reward *= 1.25
-            if prev_waypoint_index >= 81 and prev_waypoint_index <= 86:
-                reward *= 1.35
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
-                reward *= 1.25
             
             if optimal_speed > 3.5 and speed >= optimal_speed:
                 reward += 1 * distance_reward
