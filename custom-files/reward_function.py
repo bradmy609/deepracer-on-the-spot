@@ -790,7 +790,7 @@ class Reward:
             if pps_reward <= 0:
                 pps_reward = delta_p_reward
                 
-            combined_reward = (delta_p_reward + pps_reward) / 2
+            combined_reward = (delta_p_reward + pps_reward) / 1.5
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
