@@ -1,12 +1,11 @@
 {
   "batch_size": 64,
-  "beta_entropy": 0.01,
-  "discount_factor": 0.96,
+  "discount_factor": 0.97,
   "e_greedy_value": 0.05,
   "epsilon_steps": 10000,
-  "exploration_type": "categorical",
-  "loss_type": "huber",
+  "exploration_type": "additive_noise",
+  "loss_type": "mean squared error",
   "lr": 0.0004,
-  "num_episodes_between_training": 20,
-  "num_epochs": 10
+  "num_episodes_between_training": 1,
+  "sac_alpha": 0.2
 }
