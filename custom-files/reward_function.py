@@ -790,7 +790,7 @@ class Reward:
             if pps_reward <= 0:
                 pps_reward = delta_p_reward
                 
-            combined_reward = (delta_p_reward + pps_reward) / 1.5
+            combined_reward = delta_p_reward + pps_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -821,13 +821,13 @@ class Reward:
                 reward = (combined_reward) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Bonuses for not changing steering.
-            # if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
-            #     delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-            #     delta_speed = abs(speed - state.prev_speed)
-            #     if delta_turn_angle == 0:
-            #         reward += 0.1
-            #     if delta_speed == 0:
-            #         reward += 0.1
+            if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
+                delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+                delta_speed = abs(speed - state.prev_speed)
+                if delta_turn_angle == 0:
+                    reward += 0.1
+                if delta_speed == 0:
+                    reward += 0.1
                 
             # No more additions to rewards after this point.
             
