@@ -755,8 +755,8 @@ class Reward:
             def scale_pps(progress_per_step):
                 # Scaling with base 2 to adjust sharpness
                 max_progress = 0.35
-                min_progress = 0.15
-                scale_factor = 30  # Maximum reward
+                min_progress = 0.18
+                scale_factor = 40  # Maximum reward
 
                 # Normalize the progress to be between 0 and 1
                 normalized_progress = (progress_per_step - min_progress) / (max_progress - min_progress)
