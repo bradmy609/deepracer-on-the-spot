@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np # type: ignore
 import math
 
 class STATE:
@@ -755,8 +755,8 @@ class Reward:
             def scale_pps(progress_per_step):
                 # Scaling with base 2 to adjust sharpness
                 max_progress = 0.35
-                min_progress = 0.18
-                scale_factor = 30  # Maximum reward
+                min_progress = 0.2
+                scale_factor = 25  # Maximum reward
 
                 # Normalize the progress to be between 0 and 1
                 normalized_progress = (progress_per_step - min_progress) / (max_progress - min_progress)
@@ -768,7 +768,7 @@ class Reward:
                 return res
             
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
+            if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 is_in_turn = True
                 delta_p_multiple = 6
                 capstone_multiple = 1.5
@@ -782,15 +782,15 @@ class Reward:
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             
-            delta_p_reward = (delta_p1 * delta_p_multiple) ** 2
+            delta_p_reward = ((delta_p1 * delta_p_multiple) ** 2)
             
-            pps = progress/steps
-            pps_reward = scale_pps(pps)
+            # pps = progress/steps
+            # pps_reward = scale_pps(pps)
             
             if pps_reward <= 0:
                 pps_reward = delta_p_reward
                 
-            combined_reward = delta_p_reward + pps_reward
+            combined_reward = delta_p_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -828,12 +828,27 @@ class Reward:
                     reward += 0.1
                 if delta_speed == 0:
                     reward += 0.1
+            
+            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
+                reward *= 1 + ((prev_waypoint_index - 20)/15)
+            if prev_waypoint_index >= 57 and prev_waypoint_index <= 66:
+                reward *= 1.30
+            if prev_waypoint_index >= 71 and prev_waypoint_index <= 73:
+                reward *= 1.35
+            if prev_waypoint_index >= 74 and prev_waypoint_index <= 76:
+                reward *= 1.25
+            if prev_waypoint_index >= 81 and prev_waypoint_index <= 86:
+                reward *= 1.35
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 116:
+                reward *= 1.25
                 
             # No more additions to rewards after this point.
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
+                delta_speed = abs(speed - state.prev_speed)
                 if state.prev_turn_angle > 10 and steering_angle < -10:
                     reward *= 0.1
                 elif state.prev_turn_angle < -10 and steering_angle > 10:
@@ -861,6 +876,13 @@ class Reward:
                 reward *= 0.85
             elif direction_diff >= 15:
                 reward *= 0.9
+            
+            # Punishing too fast or too slow
+            speed_diff_zero = optimals[2]-speed
+            if speed_diff_zero > 0.5:
+                reward *= 0.5
+            elif speed_diff_zero < -0.5:
+                reward *= 0.5
 
             if speed > speed_cap and speed_cap < 4:
                 reward *= 0.1
