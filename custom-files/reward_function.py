@@ -14,6 +14,8 @@ class STATE:
         self.prev_progress4 = 0
         self.prev_progress5 = 0
         self.prev_progress6 = 0
+        self.prev_progress7 = 0
+        self.prev_progress8 = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -27,6 +29,8 @@ class STATE:
         self.prev_progress4 = 0
         self.prev_progress5 = 0
         self.prev_progress6 = 0
+        self.prev_progress7 = 0
+        self.prev_progress8 = 0
         
 state = STATE()
 
@@ -784,11 +788,15 @@ class Reward:
                 delta_p5 = 3.0
             if delta_p6 > 3.5:
                 delta_p6 = 3.5
+            if delta_p7 > 4.0:
+                delta_p7 = 4.0
+            if delta_p8 > 4.5:
+                delta_p8 = 4.5
                 
-            avg_delta_p = (((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 6)
+            avg_delta_p = (((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6 + delta_p7 + delta_p8) / 8)
             squared_avg_delta_p = ((delta_p_multiple) ** 2)
             cubed_avg_delta_p = ((delta_p_multiple) ** 3)
-            avg_delta_p_reward = (squared_avg_delta_p + cubed_avg_delta_p) / 2
+            avg_delta_p_reward = (squared_avg_delta_p + cubed_avg_delta_p)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -831,6 +839,7 @@ class Reward:
                 reward *= 1.15
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
                 reward *= 1.1
+                
             if prev_waypoint_index >= 120 and prev_waypoint_index <= 153:
                 reward += avg_delta_p * 0.2
             if prev_waypoint_index >= 161 and prev_waypoint_index <= 183:
@@ -842,7 +851,6 @@ class Reward:
                 reward += (2 * distance_reward)
                 
             # No more additions to rewards after this point.
-            
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
@@ -912,6 +920,8 @@ class Reward:
         state.prev_progress4 = state.prev_progress3
         state.prev_progress5 = state.prev_progress4
         state.prev_progress6 = state.prev_progress5
+        state.prev_progress7 = state.prev_progress6
+        state.prev_progress8 = state.prev_progress7
 
         # Always return a float value
         return float(reward)
