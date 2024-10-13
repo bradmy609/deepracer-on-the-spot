@@ -795,19 +795,9 @@ class Reward:
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
-            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 33:
-                reward *= 1 + ((prev_waypoint_index - 20)/15)
-            if prev_waypoint_index >= 55 and prev_waypoint_index <= 66:
-                reward *= 1.25
-            if prev_waypoint_index >= 71 and prev_waypoint_index <= 76:
-                reward *= 1.25
-            if prev_waypoint_index >= 81 and prev_waypoint_index <= 86:
-                reward *= 1.3
-            if prev_waypoint_index >= 87 and prev_waypoint_index <= 100:
-                reward *= 1.2
-            if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
-                reward *= 1.25
+            if prev_waypoint_index >= 55:
+                if optimal_speed >= 3.5 and speed >= optimal_speed:
+                    reward += (distance_reward * 1.5)
                 
             # No more additions to rewards after this point.
             
