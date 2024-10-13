@@ -12,6 +12,12 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
+        self.prev_progress5 = 0
+        self.prev_progress6 = 0
+        self.prev_progress7 = 0
+        self.prev_progress8 = 0
+        self.prev_progress9 = 0
+        self.prev_progress10 = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -23,6 +29,12 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
+        self.prev_progress5 = 0
+        self.prev_progress6 = 0
+        self.prev_progress7 = 0
+        self.prev_progress8 = 0
+        self.prev_progress9 = 0
+        self.prev_progress10 = 0
         
 state = STATE()
 
@@ -753,7 +765,7 @@ class Reward:
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 is_in_turn = True
-                delta_p_multiple = 8
+                delta_p_multiple = 6
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
@@ -795,9 +807,8 @@ class Reward:
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
-            if prev_waypoint_index >= 55:
-                if optimal_speed >= 3.5 and speed >= optimal_speed:
-                    reward += (distance_reward * 1.5)
+            waypoint_multiplier = (next_waypoint_index / 20)
+            reward *= waypoint_multiplier
                 
             # No more additions to rewards after this point.
             
@@ -871,6 +882,12 @@ class Reward:
         state.prev_progress2 = state.prev_progress
         state.prev_progress3 = state.prev_progress2
         state.prev_progress4 = state.prev_progress3
+        state.prev_progress5 = state.prev_progress4
+        state.prev_progress6 = state.prev_progress5
+        state.prev_progress7 = state.prev_progress6
+        state.prev_progress8 = state.prev_progress7
+        state.prev_progress9 = state.prev_progress8
+        state.prev_progress10 = state.prev_progress9
 
         # Always return a float value
         return float(reward)
