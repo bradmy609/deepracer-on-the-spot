@@ -720,7 +720,7 @@ class Reward:
             ################ REWARD AND PUNISHMENT ################
 
             ## Define the default reward ##
-            reward = 0.1
+            reward = 1.0
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
