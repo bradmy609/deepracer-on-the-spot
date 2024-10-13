@@ -795,10 +795,10 @@ class Reward:
             if delta_p8 > 4.5:
                 delta_p8 = 4.5
                 
-            avg_delta_p = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6 + delta_p7 + delta_p8) / 7
+            avg_delta_p = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 6
             squared_avg_delta_p = ((avg_delta_p * delta_p_multiple) ** 2)
             cubed_avg_delta_p = ((avg_delta_p * delta_p_multiple) ** 3)
-            avg_delta_p_reward = (squared_avg_delta_p + cubed_avg_delta_p)
+            avg_delta_p_reward = (squared_avg_delta_p + cubed_avg_delta_p) / 2
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
