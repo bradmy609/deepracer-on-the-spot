@@ -1,4 +1,4 @@
-import numpy as np # type: ignore # 
+import numpy as np
 import math
 
 class STATE:
@@ -33,6 +33,25 @@ class Reward:
 
     def reward_function(self, params):
         try:
+            def update_and_calculate_reward(new_delta_progress, delta_progress_list):
+                # FILO: Add new delta-progress value to the end and remove the oldest one
+                delta_progress_list.append(new_delta_progress)  # Add new value
+                delta_progress_list.pop(0)  # Remove the oldest value (first in the list)
+
+                # Check if the list contains any zeros
+                if 0 in delta_progress_list:
+                    return 0  # If any zero values, return 0 as reward
+
+                # Calculate the average of the non-zero values
+                avg_delta_progress = sum(delta_progress_list) / len(delta_progress_list)
+
+                # Return the average as the reward
+                return avg_delta_progress
+            
+            def normalize_delta_angle(angle, old_min=0, old_max=18.4, new_min=0.1, new_max=1):
+                # Apply min-max normalization formula
+                normalized_angle = ((angle - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+                return normalized_angle
             
             ################## HELPER FUNCTIONS ###################
             def reset_state(steps):
@@ -701,7 +720,7 @@ class Reward:
             ################ REWARD AND PUNISHMENT ################
 
             ## Define the default reward ##
-            reward = 0.1
+            reward = 1.0
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
@@ -737,37 +756,30 @@ class Reward:
                 delta_p = 0.8
             
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
+            if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 is_in_turn = True
+                delta_p_multiple = 6
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
+                delta_p_multiple = 8
                 capstone_multiple = 1
             
                 
-            delta_p1 = progress - state.prev_progress
-            delta_p2 = progress - state.prev_progress2
-            delta_p3 = progress - state.prev_progress3
-            delta_p4 = progress - state.prev_progress4
-            
-            def scale_delta_p(delta_p):
-                # Scaling with base 2 to adjust sharpness
-                res = (delta_p * 4) ** 3
-                if res <= 0:
-                    res = 0
-                return res
-            
-            if delta_p1 > 0.8:
-                delta_p1 = 0.8
-            if delta_p2 > 0.8:
-                delta_p2 = 0.8
-            if delta_p3 > 0.8:
-                delta_p3 = 0.8
-            if delta_p4 > 0.8:
-                delta_p4 = 0.8
-                
-            delta_p_reward = (scale_delta_p(delta_p1) + scale_delta_p(delta_p1) + scale_delta_p(delta_p2) + scale_delta_p(delta_p3) + scale_delta_p(delta_p4)) / 5
-            avg_delta_p = delta_p_reward
+            delta_p1 = (progress - state.prev_progress)
+            delta_p2 = (progress - state.prev_progress2) / 2
+            delta_p3 = (progress - state.prev_progress3) / 3
+            delta_p4 = (progress - state.prev_progress4) / 4
+            if delta_p1 > 1.0:
+                delta_p1 = 1.0
+            if delta_p2 > 1.5:
+                delta_p2 = 1.5
+            if delta_p3 > 2.0:
+                delta_p3 = 2.0
+            if delta_p4 > 2.5:
+                delta_p4 = 2.5
+            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4) / 5
+            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2) + ((delta_p_reward * (delta_p_multiple/2)) ** 3)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -780,6 +792,11 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                     
+            # Distance component
+            DC = (distance_reward) * DISTANCE_MULTIPLE
+            SQDC = distance_reward ** DISTANCE_EXPONENT
+            # Speed component
+            SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             DISTANCE_PUNISHMENT = 1
             
@@ -793,12 +810,27 @@ class Reward:
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
-            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
-                reward *= 1 + ((prev_waypoint_index - 20)/12)
-            if prev_waypoint_index >= 55 and prev_waypoint_index <= 85:
-                reward *= 1 + ((prev_waypoint_index - 55)/40)
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
+                reward *= 1.35
+            if prev_waypoint_index >= 55 and prev_waypoint_index <= 66:
+                reward *= 1.25
+            if prev_waypoint_index >= 71 and prev_waypoint_index <= 76:
+                reward *= 1.3
+            if prev_waypoint_index >= 81 and prev_waypoint_index <= 88:
+                reward *= 1.25
+            if prev_waypoint_index >= 89 and prev_waypoint_index <= 100:
+                reward *= 1.25
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
-                reward *= 1 + ((prev_waypoint_index - 110)/12)
+                reward *= 1.1
+            if prev_waypoint_index >= 120 and prev_waypoint_index <= 153:
+                reward += avg_delta_p * 0.1
+            if prev_waypoint_index >= 161 and prev_waypoint_index <= 183:
+                reward += avg_delta_p * 0.1
+            if prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
+                reward += avg_delta_p * 0.2
+            
+            if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
+                reward += (2 * distance_reward)
                 
             # No more additions to rewards after this point.
             
@@ -836,13 +868,10 @@ class Reward:
             
             # Punishing too fast or too slow
             speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.5:
+            if speed_diff_zero > 0.7:
                 reward *= 0.5
-            elif speed_diff_zero < -0.5:
+            elif speed_diff_zero < -0.7:
                 reward *= 0.5
-
-            if speed > speed_cap and speed_cap < 4:
-                reward *= 0.1
             
             reward *= DISTANCE_PUNISHMENT
             reward *= STEERING_PUNISHMENT
