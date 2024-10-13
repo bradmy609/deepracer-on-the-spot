@@ -12,12 +12,6 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
-        self.prev_progress5 = 0
-        self.prev_progress6 = 0
-        self.prev_progress7 = 0
-        self.prev_progress8 = 0
-        self.prev_progress9 = 0
-        self.prev_progress10 = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -29,12 +23,6 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
-        self.prev_progress5 = 0
-        self.prev_progress6 = 0
-        self.prev_progress7 = 0
-        self.prev_progress8 = 0
-        self.prev_progress9 = 0
-        self.prev_progress10 = 0
         
 state = STATE()
 
@@ -732,7 +720,7 @@ class Reward:
             ################ REWARD AND PUNISHMENT ################
 
             ## Define the default reward ##
-            reward = 1.0
+            reward = 0.1
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
@@ -762,8 +750,13 @@ class Reward:
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
             
+            delta_p = progress - state.prev_progress
+            if delta_p > 0.8:
+                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
+                delta_p = 0.8
+            
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
+            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
                 delta_p_multiple = 6
                 capstone_multiple = 1.5
@@ -773,16 +766,37 @@ class Reward:
                 capstone_multiple = 1
             
                 
-            delta_p1 = (progress - state.prev_progress)
-            delta_p2 = (progress - state.prev_progress2)
-            if delta_p1 > 1.0:
-                delta_p1 = 1.0
-            if delta_p2 > 2.0:
-                delta_p2 = 2.0
+            delta_p1 = progress - state.prev_progress
+            delta_p2 = progress - state.prev_progress2
+            delta_p3 = progress - state.prev_progress3
+            delta_p4 = progress - state.prev_progress4
+            
+            def scale_delta_p(delta_p):
+                # Scaling with base 2 to adjust sharpness
+                max_progress = 0.8
+                min_progress = 0.1
+                scale_factor = 30  # Maximum reward
+
+                # Normalize the progress to be between 0 and 1
+                normalized_progress = (delta_p - min_progress) / (max_progress - min_progress)
+
+                # Exponential scaling to sharply reward higher progress
+                res = scale_factor * (2 ** (normalized_progress) - 1)
+                if res <= 0:
+                    res = 0
+                return res
+            
+            if delta_p1 > 0.8:
+                delta_p1 = 0.8
+            if delta_p2 > 1.0:
+                delta_p2 = 1.0
+            if delta_p3 > 1.0:
+                delta_p3 = 1.0
+            if delta_p4 > 1.0:
+                delta_p4 = 1.0
                 
-            delta_p_reward = (delta_p1 * delta_p_multiple) ** 2
-            delta_p2_reward = (delta_p2 * delta_p_multiple * 0.5) ** 2
-            avg_delta_p = (delta_p_reward + delta_p2_reward)
+            delta_p_reward = (scale_delta_p(delta_p1) + scale_delta_p(delta_p2) + scale_delta_p(delta_p3) + scale_delta_p(delta_p4))
+            avg_delta_p = delta_p_reward / 4
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -795,6 +809,11 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                     
+            # Distance component
+            DC = (distance_reward) * DISTANCE_MULTIPLE
+            SQDC = distance_reward ** DISTANCE_EXPONENT
+            # Speed component
+            SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             DISTANCE_PUNISHMENT = 1
             
@@ -807,8 +826,13 @@ class Reward:
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
-            waypoint_multiplier = (next_waypoint_index / 20)
-            reward *= waypoint_multiplier
+            # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
+            if prev_waypoint_index >= 23 and prev_waypoint_index <= 32:
+                reward *= 1 + ((prev_waypoint_index - 20)/12)
+            if prev_waypoint_index >= 55 and prev_waypoint_index <= 85:
+                reward *= 1 + ((prev_waypoint_index - 55)/40)
+            if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
+                reward *= 1 + ((prev_waypoint_index - 110)/12)
                 
             # No more additions to rewards after this point.
             
@@ -882,12 +906,6 @@ class Reward:
         state.prev_progress2 = state.prev_progress
         state.prev_progress3 = state.prev_progress2
         state.prev_progress4 = state.prev_progress3
-        state.prev_progress5 = state.prev_progress4
-        state.prev_progress6 = state.prev_progress5
-        state.prev_progress7 = state.prev_progress6
-        state.prev_progress8 = state.prev_progress7
-        state.prev_progress9 = state.prev_progress8
-        state.prev_progress10 = state.prev_progress9
 
         # Always return a float value
         return float(reward)
