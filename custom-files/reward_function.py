@@ -12,6 +12,8 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
+        self.prev_progress5 = 0
+        self.prev_progress6 = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -23,6 +25,8 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
+        self.prev_progress5 = 0
+        self.prev_progress6 = 0
         
 state = STATE()
 
@@ -720,7 +724,7 @@ class Reward:
             ################ REWARD AND PUNISHMENT ################
 
             ## Define the default reward ##
-            reward = 1.0
+            reward = 0.1
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
@@ -749,11 +753,6 @@ class Reward:
             STEERING_PUNISHMENT = 1
             SPEED_PUNISHMENT = 1
             LANE_REWARD = 0
-            
-            delta_p = progress - state.prev_progress
-            if delta_p > 0.8:
-                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
-                delta_p = 0.8
             
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
@@ -824,9 +823,9 @@ class Reward:
                 reward *= 1.25
             if prev_waypoint_index >= 71 and prev_waypoint_index <= 76:
                 reward *= 1.2
-            if prev_waypoint_index >= 81 and prev_waypoint_index <= 88:
+            if prev_waypoint_index >= 81 and prev_waypoint_index <= 86:
                 reward *= 1.25
-            if prev_waypoint_index >= 89 and prev_waypoint_index <= 100:
+            if prev_waypoint_index >= 87 and prev_waypoint_index <= 100:
                 reward *= 1.15
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
                 reward *= 1.1
@@ -837,7 +836,7 @@ class Reward:
             if prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
                 reward += avg_delta_p * 0.4
             
-            if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
+            if optimal_speed >= 3.2 and speed >= optimal_speed:
                 reward += (2 * distance_reward)
                 
             # No more additions to rewards after this point.
@@ -876,9 +875,9 @@ class Reward:
             
             # Punishing too fast or too slow
             speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.7:
+            if speed_diff_zero > 0.6:
                 reward *= 0.5
-            elif speed_diff_zero < -0.7:
+            elif speed_diff_zero < -0.6:
                 reward *= 0.5
             
             reward *= DISTANCE_PUNISHMENT
@@ -909,6 +908,8 @@ class Reward:
         state.prev_progress2 = state.prev_progress
         state.prev_progress3 = state.prev_progress2
         state.prev_progress4 = state.prev_progress3
+        state.prev_progress5 = state.prev_progress4
+        state.prev_progress6 = state.prev_progress5
 
         # Always return a float value
         return float(reward)
