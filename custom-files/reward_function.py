@@ -1,4 +1,4 @@
-import numpy as np # type: ignore
+import numpy as np
 import math
 
 class STATE:
@@ -754,24 +754,23 @@ class Reward:
             if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 is_in_turn = True
                 delta_p_multiple = 6
-                capstone_multiple = 1
+                capstone_multiple = 1.5
             else:
                 is_in_turn = False
-                delta_p_multiple = 6
+                delta_p_multiple = 8
                 capstone_multiple = 1
             
                 
-            delta_p1 = progress - state.prev_progress
-            delta_p2 = progress - state.prev_progress2
-            
+            delta_p1 = (progress - state.prev_progress)
+            delta_p2 = (progress - state.prev_progress2)
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             if delta_p2 > 2.0:
                 delta_p2 = 2.0
                 
-            delta_p_reward = ((delta_p1 * delta_p_multiple) ** 2)
-            delta_p2_reward = ((delta_p2 * delta_p_multiple * 0.5) ** 2)
-            avg_delta_p = delta_p_reward + delta_p2_reward
+            delta_p_reward = (delta_p1 * delta_p_multiple) ** 2
+            delta_p2_reward = (delta_p2 * delta_p_multiple * 0.5) ** 2
+            avg_delta_p = (delta_p_reward + delta_p2_reward)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -784,11 +783,6 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                     
-            # Distance component
-            DC = (distance_reward) * DISTANCE_MULTIPLE
-            SQDC = distance_reward ** DISTANCE_EXPONENT
-            # Speed component
-            SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             DISTANCE_PUNISHMENT = 1
             
