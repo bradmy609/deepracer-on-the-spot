@@ -752,27 +752,19 @@ class Reward:
             
             def scale_delta_p(delta_p):
                 # Scaling with base 2 to adjust sharpness
-                max_progress = 1.0
-                min_progress = 0.1
-                scale_factor = 40  # Maximum reward
-
-                # Normalize the progress to be between 0 and 1
-                normalized_progress = (delta_p - min_progress) / (max_progress - min_progress)
-
-                # Exponential scaling to sharply reward higher progress
-                res = scale_factor * (2 ** (normalized_progress) - 1)
+                res = (delta_p * 4) ** 3
                 if res <= 0:
                     res = 0
                 return res
             
             if delta_p1 > 0.8:
                 delta_p1 = 0.8
-            if delta_p2 > 0.95:
-                delta_p2 = 0.95
-            if delta_p3 > 1.1:
-                delta_p3 = 1.1
-            if delta_p4 > 1.2:
-                delta_p4 = 1.2
+            if delta_p2 > 0.8:
+                delta_p2 = 0.8
+            if delta_p3 > 0.8:
+                delta_p3 = 0.8
+            if delta_p4 > 0.8:
+                delta_p4 = 0.8
                 
             delta_p_reward = (scale_delta_p(delta_p1) + scale_delta_p(delta_p2) + scale_delta_p(delta_p3) + scale_delta_p(delta_p4)) / 4
             avg_delta_p = delta_p_reward
