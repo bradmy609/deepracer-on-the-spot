@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np # type: ignore # 
 import math
 
 class STATE:
@@ -33,25 +33,6 @@ class Reward:
 
     def reward_function(self, params):
         try:
-            def update_and_calculate_reward(new_delta_progress, delta_progress_list):
-                # FILO: Add new delta-progress value to the end and remove the oldest one
-                delta_progress_list.append(new_delta_progress)  # Add new value
-                delta_progress_list.pop(0)  # Remove the oldest value (first in the list)
-
-                # Check if the list contains any zeros
-                if 0 in delta_progress_list:
-                    return 0  # If any zero values, return 0 as reward
-
-                # Calculate the average of the non-zero values
-                avg_delta_progress = sum(delta_progress_list) / len(delta_progress_list)
-
-                # Return the average as the reward
-                return avg_delta_progress
-            
-            def normalize_delta_angle(angle, old_min=0, old_max=18.4, new_min=0.1, new_max=1):
-                # Apply min-max normalization formula
-                normalized_angle = ((angle - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-                return normalized_angle
             
             ################## HELPER FUNCTIONS ###################
             def reset_state(steps):
@@ -758,11 +739,9 @@ class Reward:
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
-                delta_p_multiple = 6
                 capstone_multiple = 1.5
             else:
                 is_in_turn = False
-                delta_p_multiple = 8
                 capstone_multiple = 1
             
                 
@@ -773,9 +752,9 @@ class Reward:
             
             def scale_delta_p(delta_p):
                 # Scaling with base 2 to adjust sharpness
-                max_progress = 0.8
+                max_progress = 1.0
                 min_progress = 0.1
-                scale_factor = 30  # Maximum reward
+                scale_factor = 40  # Maximum reward
 
                 # Normalize the progress to be between 0 and 1
                 normalized_progress = (delta_p - min_progress) / (max_progress - min_progress)
@@ -788,15 +767,15 @@ class Reward:
             
             if delta_p1 > 0.8:
                 delta_p1 = 0.8
-            if delta_p2 > 1.0:
-                delta_p2 = 1.0
-            if delta_p3 > 1.0:
-                delta_p3 = 1.0
-            if delta_p4 > 1.0:
-                delta_p4 = 1.0
+            if delta_p2 > 0.95:
+                delta_p2 = 0.95
+            if delta_p3 > 1.1:
+                delta_p3 = 1.1
+            if delta_p4 > 1.2:
+                delta_p4 = 1.2
                 
-            delta_p_reward = (scale_delta_p(delta_p1) + scale_delta_p(delta_p2) + scale_delta_p(delta_p3) + scale_delta_p(delta_p4))
-            avg_delta_p = delta_p_reward / 4
+            delta_p_reward = (scale_delta_p(delta_p1) + scale_delta_p(delta_p2) + scale_delta_p(delta_p3) + scale_delta_p(delta_p4)) / 4
+            avg_delta_p = delta_p_reward
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
