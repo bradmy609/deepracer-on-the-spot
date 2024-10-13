@@ -770,6 +770,9 @@ class Reward:
             delta_p2 = (progress - state.prev_progress2) / 2
             delta_p3 = (progress - state.prev_progress3) / 3
             delta_p4 = (progress - state.prev_progress4) / 4
+            delta_p5 = (progress - state.prev_progress4) / 5
+            delta_p6 = (progress - state.prev_progress4) / 6
+            
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             if delta_p2 > 1.5:
@@ -778,8 +781,13 @@ class Reward:
                 delta_p3 = 2.0
             if delta_p4 > 2.5:
                 delta_p4 = 2.5
-            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4) / 5
-            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2) + ((delta_p_reward * (delta_p_multiple/2)) ** 3)
+            if delta_p5 > 3.0:
+                delta_p5 = 3.0
+            if delta_p6 > 3.5:
+                delta_p6 = 3.5
+                
+            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 6
+            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -812,22 +820,22 @@ class Reward:
             # Waypoint bonuses below to help incentivize the car to stay on track during hard waypoints.
             if prev_waypoint_index >= 23 and prev_waypoint_index <= 34:
                 reward *= 1.35
-            if prev_waypoint_index >= 55 and prev_waypoint_index <= 66:
+            if prev_waypoint_index >= 57 and prev_waypoint_index <= 66:
                 reward *= 1.25
             if prev_waypoint_index >= 71 and prev_waypoint_index <= 76:
-                reward *= 1.3
+                reward *= 1.2
             if prev_waypoint_index >= 81 and prev_waypoint_index <= 88:
                 reward *= 1.25
             if prev_waypoint_index >= 89 and prev_waypoint_index <= 100:
-                reward *= 1.25
+                reward *= 1.15
             if prev_waypoint_index >= 110 and prev_waypoint_index <= 119:
                 reward *= 1.1
             if prev_waypoint_index >= 120 and prev_waypoint_index <= 153:
-                reward += avg_delta_p * 0.1
-            if prev_waypoint_index >= 161 and prev_waypoint_index <= 183:
-                reward += avg_delta_p * 0.1
-            if prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
                 reward += avg_delta_p * 0.2
+            if prev_waypoint_index >= 161 and prev_waypoint_index <= 183:
+                reward += avg_delta_p * 0.2
+            if prev_waypoint_index >= 188 and prev_waypoint_index <= 194:
+                reward += avg_delta_p * 0.4
             
             if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
                 reward += (2 * distance_reward)
