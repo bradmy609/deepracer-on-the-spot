@@ -766,7 +766,7 @@ class Reward:
             if delta_p4 > 0.8:
                 delta_p4 = 0.8
                 
-            delta_p_reward = (scale_delta_p(delta_p1) + scale_delta_p(delta_p2) + scale_delta_p(delta_p3) + scale_delta_p(delta_p4)) / 4
+            delta_p_reward = (scale_delta_p(delta_p1) + scale_delta_p(delta_p1) + scale_delta_p(delta_p2) + scale_delta_p(delta_p3) + scale_delta_p(delta_p4)) / 5
             avg_delta_p = delta_p_reward
             
             try:
@@ -780,11 +780,6 @@ class Reward:
             DISTANCE_EXPONENT = scaled_multiplier
             SPEED_MULTIPLE = 3 - DISTANCE_MULTIPLE
                     
-            # Distance component
-            DC = (distance_reward) * DISTANCE_MULTIPLE
-            SQDC = distance_reward ** DISTANCE_EXPONENT
-            # Speed component
-            SC = (speed_reward ** 2) * SPEED_MULTIPLE
             # Progress component
             DISTANCE_PUNISHMENT = 1
             
