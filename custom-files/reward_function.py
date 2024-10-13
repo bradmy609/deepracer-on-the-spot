@@ -753,8 +753,8 @@ class Reward:
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
                 is_in_turn = True
-                delta_p_multiple = 6
-                capstone_multiple = 1.5
+                delta_p_multiple = 8
+                capstone_multiple = 1
             else:
                 is_in_turn = False
                 delta_p_multiple = 8
