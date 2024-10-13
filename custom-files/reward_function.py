@@ -775,6 +775,8 @@ class Reward:
             delta_p4 = (progress - state.prev_progress4) / 4
             delta_p5 = (progress - state.prev_progress5) / 5
             delta_p6 = (progress - state.prev_progress6) / 6
+            delta_p7 = (progress - state.prev_progress7) / 7
+            delta_p8 = (progress - state.prev_progress8) / 8
             
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
@@ -793,7 +795,7 @@ class Reward:
             if delta_p8 > 4.5:
                 delta_p8 = 4.5
                 
-            avg_delta_p = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 6
+            avg_delta_p = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6 + delta_p7 + delta_p8) / 8
             squared_avg_delta_p = ((avg_delta_p * delta_p_multiple) ** 2)
             cubed_avg_delta_p = ((avg_delta_p * delta_p_multiple) ** 3)
             avg_delta_p_reward = (squared_avg_delta_p + cubed_avg_delta_p)
