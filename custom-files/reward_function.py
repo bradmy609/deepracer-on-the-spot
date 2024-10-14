@@ -820,7 +820,7 @@ class Reward:
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
-                reward += (2 * distance_reward)
+                reward += (3 * distance_reward)
                 
             # No more additions to rewards after this point.
             
