@@ -12,8 +12,6 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
-        self.prev_progress5 = 0
-        self.prev_progress6 = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -25,8 +23,6 @@ class STATE:
         self.prev_progress2 = 0
         self.prev_progress3 = 0
         self.prev_progress4 = 0
-        self.prev_progress5 = 0
-        self.prev_progress6 = 0
         
 state = STATE()
 
@@ -774,9 +770,6 @@ class Reward:
             delta_p2 = (progress - state.prev_progress2) / 2
             delta_p3 = (progress - state.prev_progress3) / 3
             delta_p4 = (progress - state.prev_progress4) / 4
-            delta_p5 = (progress - state.prev_progress4) / 5
-            delta_p6 = (progress - state.prev_progress4) / 6
-            
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
             if delta_p2 > 1.5:
@@ -908,8 +901,6 @@ class Reward:
         state.prev_progress2 = state.prev_progress
         state.prev_progress3 = state.prev_progress2
         state.prev_progress4 = state.prev_progress3
-        state.prev_progress5 = state.prev_progress4
-        state.prev_progress6 = state.prev_progress5
 
         # Always return a float value
         return float(reward)
