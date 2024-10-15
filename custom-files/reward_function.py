@@ -803,10 +803,6 @@ class Reward:
                 delta_p7 = 4
             if delta_p8 > 4.5:
                 delta_p8 = 4.5
-            if delta_p9 > 5.0:
-                delta_p9 = 5.0
-            if delta_p10 > 5.5:
-                delta_p10 = 5.5
 
             delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6 + delta_p7 + delta_p8 + delta_p9 + delta_p10) / 9
             avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2)
@@ -822,16 +818,16 @@ class Reward:
             DISTANCE_PUNISHMENT = 1
             
             if is_in_turn:
-                reward = (avg_delta_p) + (avg_delta_p * distance_reward)
+                reward = (avg_delta_p)
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p) + (avg_delta_p * distance_reward)
+                reward = (avg_delta_p)
             
-            if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
-                reward += (4 * distance_reward)
+            # if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
+            #     reward += (4 * distance_reward)
                 
             if direction_diff > 30:
                 reward *= 0.75
