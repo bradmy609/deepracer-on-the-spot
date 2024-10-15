@@ -817,8 +817,6 @@ class Reward:
             except:
                 print('Error with scaled_multiplier.')
                 scaled_multiplier = 4/optimal_speed
-            
-            DISTANCE_MULTIPLE = scaled_multiplier
                 
             # Progress component
             DISTANCE_PUNISHMENT = 1
