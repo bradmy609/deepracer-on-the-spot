@@ -789,7 +789,7 @@ class Reward:
                 delta_p5 = 3.0
             if delta_p6 > 3.5:
                 delta_p6 = 3.5
-            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 7
+            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 6
             avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2) + ((delta_p_reward * (delta_p_multiple/2)) ** 3)
             
             try:
@@ -812,13 +812,13 @@ class Reward:
             DISTANCE_PUNISHMENT = 1
             
             if is_in_turn:
-                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+                reward = (avg_delta_p) + (capstone_multiple * ((0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
                 if dist > (track_width * 0.5):
                     DISTANCE_PUNISHMENT = 0.5
             else:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
+                reward = (avg_delta_p) + ((0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
             
             if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
                 reward += (3 * distance_reward)
@@ -828,25 +828,12 @@ class Reward:
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-                delta_speed = abs(speed - state.prev_speed)
                 if state.prev_turn_angle > 10 and steering_angle < -10:
                     reward *= 0.1
                 elif state.prev_turn_angle < -10 and steering_angle > 10:
                     reward *= 0.1
                 if delta_turn_angle > 30:
                     reward *= 0.1
-            
-            if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
-                if speed > 2.5:
-                    SPEED_PUNISHMENT = 0.5
-                if steering_angle > 0:
-                    STEERING_PUNISHMENT *= 0.5
-            
-            # Punishing erratic steering or steering out of range of valid directions.
-            if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
-                reward *= 0.5
-            if not is_within_range:
-                reward *= 0.8
                 
             if direction_diff > 30:
                 reward *= 0.75
@@ -854,15 +841,6 @@ class Reward:
                 reward *= 0.8
             elif direction_diff >= 20:
                 reward *= 0.85
-            elif direction_diff >= 15:
-                reward *= 0.9
-            
-            # Punishing too fast or too slow
-            speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.7:
-                reward *= 0.5
-            elif speed_diff_zero < -0.7:
-                reward *= 0.5
             
             reward *= DISTANCE_PUNISHMENT
             reward *= STEERING_PUNISHMENT
