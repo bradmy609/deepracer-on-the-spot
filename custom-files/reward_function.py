@@ -748,8 +748,6 @@ class Reward:
             direction_diff = racing_direction_diff(
                 optimals[0:2], optimals_second[0:2], [x, y], heading)
             
-            optimal_speed = optimals[2]
-            
             is_in_turn = False
             if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
@@ -762,36 +760,21 @@ class Reward:
             
                 
             delta_p1 = (progress - state.prev_progress)
-            delta_p2 = (progress - state.prev_progress2) / 2
-            delta_p3 = (progress - state.prev_progress3) / 3
-            delta_p4 = (progress - state.prev_progress4) / 4
             
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
-            if delta_p2 > 1.5:
-                delta_p2 = 1.5
-            if delta_p3 > 2.0:
-                delta_p3 = 2.0
-            if delta_p4 > 2.5:
-                delta_p4 = 2.5
 
-            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
+            delta_p_reward = (delta_p1) / 4
             avg_delta_p = ((delta_p_reward * delta_p_multiple) ** exp)
-            
-            try:
-                scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
-                SPEED_BONUS = scale_value(4/optimal_speed, 1, 2.9, 1, 2.9)
-            except:
-                print('Error with scaled_multiplier.')
-                scaled_multiplier = 4/optimal_speed
-                
-            # Progress component
-            DISTANCE_PUNISHMENT = 1
             
             if is_in_turn:
                 reward = (avg_delta_p)
+                if dist > 0.5:
+                    reward *= 0.5
             else:
                 reward = (avg_delta_p)
+                if dist > 0.25:
+                    reward *= 0.5
 
             ## Zero reward if off track ##
             track_width = params['track_width']
