@@ -728,31 +728,6 @@ class Reward:
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-            distance_reward = max(1e-3, 1 - (dist/(track_width*0.5)))
-                
-            ## Reward if speed is close to optimal speed ##
-            SPEED_DIFF_NO_REWARD = 1
-            SPEED_MULTIPLE = 2
-            speed_diff = abs(optimals[2]-speed)
-            if speed_diff <= SPEED_DIFF_NO_REWARD:
-                # we use quadratic punishment (not linear) bc we're not as confident with the optimal speed
-                # so, we do not punish small deviations from optimal speed
-                speed_reward = (1 - (speed_diff/(SPEED_DIFF_NO_REWARD))**2)**2
-            else:
-                speed_reward = 0
-            
-            inner_border1, outer_border1, inner_border2, outer_border2 = find_border_points(params)
-            min_heading, max_heading, is_within_range = find_min_max_heading(params, inner_border2, outer_border2)
-                    
-            # Zero reward if obviously wrong direction (e.g. spin)
-            direction_diff = racing_direction_diff(
-                optimals[0:2], optimals_second[0:2], [x, y], heading)
-            
-            optimal_speed = optimals[2]
-            speed_cap = optimal_speed + 0.75
-            STEERING_PUNISHMENT = 1
-            SPEED_PUNISHMENT = 1
-            LANE_REWARD = 0
             
             delta_p = progress - state.prev_progress
             if delta_p > 0.8:
@@ -769,9 +744,6 @@ class Reward:
                     exponent = 3 - ((angle_diff - 1) / (max_angle_diff - 1)) * (3 - 1.5)
                 
                 return exponent
-            
-            angle_diff = delta_rl_angles[prev_waypoint_index]
-            exponent = calculate_exponent(angle_diff)
                 
             delta_p1 = (progress - state.prev_progress)
             delta_p2 = (progress - state.prev_progress2) / 2
@@ -793,6 +765,9 @@ class Reward:
             if delta_p6 > 3.5:
                 delta_p6 = 3.5
                 
+            angle_diff = delta_rl_angles[prev_waypoint_index]
+            exponent = calculate_exponent(angle_diff)
+                
             delta_p_reward = (delta_p1 ** exponent)
             avg_delta_p = (delta_p_reward * 20)
 
@@ -801,9 +776,7 @@ class Reward:
             ## Zero reward if off track ##
             track_width = params['track_width']
             distance_from_center = params['distance_from_center']
-
-            # Zero reward if the center of the car is off the track.
-            reward += LANE_REWARD
+            
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
@@ -815,7 +788,6 @@ class Reward:
         #################### RETURN REWARD ####################
         
         state.prev_turn_angle = steering_angle
-        state.prev_speed_diff = speed_diff
         state.prev_distance = dist
         state.prev_speed = speed
         state.prev_progress = progress
