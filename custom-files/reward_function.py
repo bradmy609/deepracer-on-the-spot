@@ -13,11 +13,7 @@ class STATE:
         self.prev_progress3 = 0
         self.prev_progress4 = 0
         self.prev_progress5 = 0
-        self.prev_progress6 = 0
-        self.prev_progress7 = 0
-        self.prev_progress8 = 0
-        self.prev_progress9 = 0
-        self.prev_progress10 = 0
+        self.prev_progresss6 = 0
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -31,10 +27,6 @@ class STATE:
         self.prev_progress4 = 0
         self.prev_progress5 = 0
         self.prev_progress6 = 0
-        self.prev_progress7 = 0
-        self.prev_progress8 = 0
-        self.prev_progress9 = 0
-        self.prev_progress10 = 0
         
 state = STATE()
 
@@ -798,20 +790,8 @@ class Reward:
             
             if is_in_turn:
                 reward = (avg_delta_p)
-                if dist > (track_width * 0.5):
-                    DISTANCE_PUNISHMENT = 0.5
             else:
-                if dist > (track_width * 0.25):
-                    DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p)
-            
-            # if prev_waypoint_index >= 55 and optimal_speed >= 3.2 and speed >= optimal_speed:
-            #     reward += (4 * distance_reward)
-                
-            if direction_diff > 30:
-                reward *= 0.75
-
-            reward *= DISTANCE_PUNISHMENT
 
             ## Zero reward if off track ##
             track_width = params['track_width']
@@ -835,12 +815,6 @@ class Reward:
         state.prev_progress2 = state.prev_progress
         state.prev_progress3 = state.prev_progress2
         state.prev_progress4 = state.prev_progress3
-        state.prev_progress5 = state.prev_progress4
-        state.prev_progress6 = state.prev_progress5
-        state.prev_progress7 = state.prev_progress6
-        state.prev_progress8 = state.prev_progress7
-        state.prev_progress9 = state.prev_progress8
-        state.prev_progress10 = state.prev_progress9
 
         # Always return a float value
         return float(reward)
