@@ -757,35 +757,22 @@ class Reward:
                 optimals[0:2], optimals_second[0:2], [x, y], heading)
             
             optimal_speed = optimals[2]
-            speed_cap = optimal_speed + 0.75
-            STEERING_PUNISHMENT = 1
-            SPEED_PUNISHMENT = 1
-            LANE_REWARD = 0
-            
-            delta_p = progress - state.prev_progress
-            if delta_p > 0.8:
-                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
-                delta_p = 0.8
             
             is_in_turn = False
-            if delta_rl_angles[prev_waypoint_index] >= 5 or delta_rl_angles[prev_waypoint_index] <= -5:
+            if delta_rl_angles[prev_waypoint_index] >= 4 or delta_rl_angles[prev_waypoint_index] <= -4:
                 is_in_turn = True
-                delta_p_multiple = 6
+                delta_p_multiple = 8
+                exp = 2
             else:
                 is_in_turn = False
                 delta_p_multiple = 8
+                exp = 3
             
                 
             delta_p1 = (progress - state.prev_progress)
             delta_p2 = (progress - state.prev_progress2) / 2
             delta_p3 = (progress - state.prev_progress3) / 3
             delta_p4 = (progress - state.prev_progress4) / 4
-            delta_p5 = (progress - state.prev_progress5) / 5
-            delta_p6 = (progress - state.prev_progress6) / 6
-            delta_p7 = (progress - state.prev_progress7) / 7
-            delta_p8 = (progress - state.prev_progress8) / 8
-            delta_p9 = (progress - state.prev_progress9) / 9
-            delta_p10 = (progress - state.prev_progress10) / 10
             
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
@@ -795,17 +782,9 @@ class Reward:
                 delta_p3 = 2.0
             if delta_p4 > 2.5:
                 delta_p4 = 2.5
-            if delta_p5 > 3.0:
-                delta_p5 = 3.0
-            if delta_p6 > 3.5:
-                delta_p6 = 3.5
-            if delta_p7 > 4.0:
-                delta_p7 = 4
-            if delta_p8 > 4.5:
-                delta_p8 = 4.5
 
-            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6 + delta_p7 + delta_p8 + delta_p9 + delta_p10) / 9
-            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2)
+            delta_p_reward = (delta_p1 + delta_p2 + delta_p3 + delta_p4) / 4
+            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** exp)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -838,8 +817,6 @@ class Reward:
             track_width = params['track_width']
             distance_from_center = params['distance_from_center']
 
-            # Zero reward if the center of the car is off the track.
-            reward += LANE_REWARD
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
