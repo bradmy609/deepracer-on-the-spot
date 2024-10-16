@@ -14,6 +14,7 @@ class STATE:
         self.prev_progress4 = 0
         self.prev_progress5 = 0
         self.prev_progresss6 = 0
+        self.dp = {}
         
     # Optional: You could also define a reset method to reset all attributes
     def reset(self):
@@ -27,6 +28,7 @@ class STATE:
         self.prev_progress4 = 0
         self.prev_progress5 = 0
         self.prev_progress6 = 0
+        self.dp = {}
         
 state = STATE()
 
@@ -721,18 +723,11 @@ class Reward:
             if self.first_racingpoint_index is None:
                 self.first_racingpoint_index = closest_index
 
-            ################ REWARD AND PUNISHMENT ################
-
-            ## Define the default reward ##
-            reward = 1.0
+            reward = 0.1
 
             ## Reward if car goes close to optimal racing line ##
             dist = dist_to_racing_line(optimals[0:2], optimals_second[0:2], [x, y])
-            
-            delta_p = progress - state.prev_progress
-            if delta_p > 0.8:
-                print(f'Error with delta-p calculation: {delta_p} at waypoint: {prev_waypoint_index}')
-                delta_p = 0.8
+
             
             def calculate_exponent(angle_diff, max_angle_diff=21.14):
                 # Ensure angle_diff is within bounds
@@ -767,6 +762,8 @@ class Reward:
                 
             angle_diff = delta_rl_angles[prev_waypoint_index]
             exponent = calculate_exponent(angle_diff)
+            
+            state.dp[steps] = delta_p1
                 
             delta_p_reward = (delta_p1 ** exponent)
             avg_delta_p = (delta_p_reward * 20)
@@ -779,11 +776,14 @@ class Reward:
             
         except Exception as e:
             print(f'Error in reward calculation: {e}')
-            if distance_from_center <= track_width/2:
-                reward += 1
 
         if not all_wheels_on_track and distance_from_center >= (track_width/2)+0.05:
             reward = min(reward, 0.001)
+            
+        if progress == 100:
+            print(f'Lap completed in {steps} steps.')
+            print('Delta progress list:\n')
+            print(state.dp)
 
         #################### RETURN REWARD ####################
         
