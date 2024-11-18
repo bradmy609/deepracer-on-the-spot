@@ -546,8 +546,6 @@ class Reward:
             delta_p2 = (progress - state.prev_progress2) / 2
             delta_p3 = (progress - state.prev_progress3) / 3
             delta_p4 = (progress - state.prev_progress4) / 4
-            delta_p5 = (progress - state.prev_progress5) / 5
-            delta_p6 = (progress - state.prev_progress6) / 6
             
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
@@ -558,8 +556,8 @@ class Reward:
             if delta_p4 > 2.5:
                 delta_p4 = 2.5
                 
-            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 6
-            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2)
+            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4) / 4
+            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2) + (((delta_p_reward * delta_p_multiple)/2) ** 3)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -605,11 +603,6 @@ class Reward:
                 if delta_turn_angle > 30:
                     reward *= 0.1
             
-            if prev_waypoint_index >= 18 and prev_waypoint_index <= 27:
-                if speed > 2.5:
-                    SPEED_PUNISHMENT = 0.5
-                if steering_angle > 0:
-                    STEERING_PUNISHMENT *= 0.5
             
             # Punishing erratic steering or steering out of range of valid directions.
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
@@ -633,9 +626,6 @@ class Reward:
             elif speed_diff_zero < -0.6:
                 reward *= 0.5
             
-            reward *= DISTANCE_PUNISHMENT
-            reward *= STEERING_PUNISHMENT
-            reward *= SPEED_PUNISHMENT
 
             ## Zero reward if off track ##
             track_width = params['track_width']
