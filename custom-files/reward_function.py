@@ -546,6 +546,8 @@ class Reward:
             delta_p2 = (progress - state.prev_progress2) / 2
             delta_p3 = (progress - state.prev_progress3) / 3
             delta_p4 = (progress - state.prev_progress4) / 4
+            delta_p5 = (progress - state.prev_progress5) / 5
+            delta_p6 = (progress - state.prev_progress6) / 6
             
             if delta_p1 > 1.0:
                 delta_p1 = 1.0
@@ -555,9 +557,13 @@ class Reward:
                 delta_p3 = 2.0
             if delta_p4 > 2.5:
                 delta_p4 = 2.5
+            if delta_p5 > 3.0:
+                delta_p5 = 3.0
+            if delta_p6 > 3.5:
+                delta_p6 = 3.5
                 
-            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4) / 4
-            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2) + (((delta_p_reward * delta_p_multiple)/2) ** 3)
+            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 4
+            avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2)
             
             try:
                 scaled_multiplier = scale_value(4/optimal_speed, 1, 2.9, 1, 1.5)
@@ -586,9 +592,6 @@ class Reward:
                 if dist > (track_width * 0.25):
                     DISTANCE_PUNISHMENT = 0.5
                 reward = (avg_delta_p) + (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE))
-            
-            if optimal_speed >= 3.2 and speed >= optimal_speed:
-                reward += (2 * distance_reward)
                 
             # No more additions to rewards after this point.
             
@@ -607,8 +610,6 @@ class Reward:
             # Punishing erratic steering or steering out of range of valid directions.
             if speed > 2.5 and (steering_angle >= 20 or steering_angle <= -20):
                 reward *= 0.5
-            if not is_within_range:
-                reward *= 0.8
                 
             if direction_diff > 30:
                 reward *= 0.75
@@ -626,6 +627,7 @@ class Reward:
             elif speed_diff_zero < -0.6:
                 reward *= 0.5
             
+            reward *= DISTANCE_PUNISHMENT
 
             ## Zero reward if off track ##
             track_width = params['track_width']
