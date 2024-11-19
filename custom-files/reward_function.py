@@ -533,9 +533,6 @@ class Reward:
                 optimals[0:2], optimals_second[0:2], [x, y], heading)
             
             optimal_speed = optimals[2]
-            STEERING_PUNISHMENT = 1
-            SPEED_PUNISHMENT = 1
-            LANE_REWARD = 0
             
             is_in_turn = False
             delta_p_multiple = 6
@@ -584,21 +581,15 @@ class Reward:
             # Progress component
             DISTANCE_PUNISHMENT = 1
             
-            if is_in_turn:
-                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
-                if dist > (track_width * 0.5):
-                    DISTANCE_PUNISHMENT = 0.5
-            else:
-                if dist > (track_width * 0.25):
-                    DISTANCE_PUNISHMENT = 0.5
-                reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+            reward = (avg_delta_p) + (capstone_multiple * (SPEED_BONUS * speed_reward * SPEED_MULTIPLE + (0.5 * distance_reward * DISTANCE_MULTIPLE) + (0.5 * (distance_reward ** 2) * DISTANCE_MULTIPLE)))
+            if dist > (track_width * 0.5):
+                DISTANCE_PUNISHMENT = 0.5
                 
             # No more additions to rewards after this point.
             
             if state.prev_turn_angle is not None and state.prev_speed_diff is not None and state.prev_distance is not None and state.prev_speed is not None:
                 # Erratic steering punishments
                 delta_turn_angle = abs(steering_angle - state.prev_turn_angle)
-                delta_speed = abs(speed - state.prev_speed)
                 if state.prev_turn_angle > 10 and steering_angle < -10:
                     reward *= 0.1
                 elif state.prev_turn_angle < -10 and steering_angle > 10:
@@ -620,21 +611,12 @@ class Reward:
             elif direction_diff >= 15:
                 reward *= 0.9
             
-            # Punishing too fast or too slow
-            speed_diff_zero = optimals[2]-speed
-            if speed_diff_zero > 0.6:
-                reward *= 0.5
-            elif speed_diff_zero < -0.6:
-                reward *= 0.5
-            
             reward *= DISTANCE_PUNISHMENT
 
             ## Zero reward if off track ##
             track_width = params['track_width']
             distance_from_center = params['distance_from_center']
-
-            # Zero reward if the center of the car is off the track.
-            reward += LANE_REWARD
+            
         except Exception as e:
             print(f'Error in reward calculation: {e}')
             if distance_from_center <= track_width/2:
