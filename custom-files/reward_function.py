@@ -538,8 +538,8 @@ class Reward:
             LANE_REWARD = 0
             
             is_in_turn = False
-            delta_p_multiple = 8
-            capstone_multiple = 1
+            delta_p_multiple = 6
+            capstone_multiple = 1.5
             
                 
             delta_p1 = (progress - state.prev_progress)
@@ -562,7 +562,7 @@ class Reward:
             if delta_p6 > 3.5:
                 delta_p6 = 3.5
                 
-            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 4
+            delta_p_reward = ((delta_p1 * 2) + delta_p2 + delta_p3 + delta_p4 + delta_p5 + delta_p6) / 6
             avg_delta_p = ((delta_p_reward * delta_p_multiple) ** 2)
             
             try:
